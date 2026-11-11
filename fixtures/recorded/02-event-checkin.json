@@ -1,0 +1,221 @@
+{
+  "id": "02-event-checkin",
+  "title": "场景 A · 加签到、未签到提醒与签到率",
+  "kind": "patch",
+  "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。",
+  "model": "deepseek-flash",
+  "recordedAt": "2026-11-11T15:50:45.585Z",
+  "promptVersion": "planner-v1.1",
+  "temperature": 0.2,
+  "base": {
+    "version": 1,
+    "definition": {
+      "schemaVersion": 1,
+      "name": "校园讲座报名系统",
+      "description": "收集并管理校园讲座的报名信息，记录学生姓名、学号、专业与手机号，支持按专业查看报名分布并导出名单。",
+      "icon": "graduation",
+      "entities": [
+        {
+          "id": "lectureSignup",
+          "label": "讲座报名",
+          "displayField": "name",
+          "fields": [
+            {
+              "id": "name",
+              "label": "姓名",
+              "type": "string",
+              "required": true,
+              "description": "报名学生姓名"
+            },
+            {
+              "id": "studentId",
+              "label": "学号",
+              "type": "string",
+              "required": true,
+              "description": "报名学生学号"
+            },
+            {
+              "id": "major",
+              "label": "专业",
+              "type": "enum",
+              "required": true,
+              "options": [
+                "计算机科学与技术",
+                "电子信息工程",
+                "机械工程",
+                "工商管理",
+                "汉语言文学",
+                "外国语言文学",
+                "其他"
+              ]
+            },
+            {
+              "id": "phone",
+              "label": "手机号",
+              "type": "string",
+              "required": true,
+              "description": "用于接收讲座通知"
+            }
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "source",
+          "type": "CollectionSource",
+          "title": "报名数据",
+          "region": "main",
+          "order": 0,
+          "params": {
+            "entityId": "lectureSignup",
+            "sort": {
+              "field": "createdAt",
+              "dir": "desc"
+            }
+          }
+        },
+        {
+          "id": "metricTotal",
+          "type": "Metric",
+          "title": "报名总人数",
+          "region": "main",
+          "order": 1,
+          "width": "half",
+          "params": {
+            "label": "报名总人数",
+            "aggregate": "count",
+            "format": "number"
+          }
+        },
+        {
+          "id": "chartMajor",
+          "type": "Chart",
+          "title": "专业分布",
+          "region": "main",
+          "order": 2,
+          "width": "half",
+          "params": {
+            "kind": "donut",
+            "groupBy": "major"
+          }
+        },
+        {
+          "id": "tableSignup",
+          "type": "Table",
+          "title": "报名名单",
+          "region": "main",
+          "order": 3,
+          "width": "full",
+          "params": {
+            "columns": [
+              "name",
+              "studentId",
+              "major",
+              "phone",
+              "createdAt"
+            ],
+            "searchable": true,
+            "editable": true,
+            "allowDelete": false,
+            "pageSize": 20
+          }
+        },
+        {
+          "id": "formSignup",
+          "type": "Form",
+          "title": "新增报名",
+          "region": "aside",
+          "order": 1,
+          "params": {
+            "entityId": "lectureSignup",
+            "fields": [
+              "name",
+              "studentId",
+              "major",
+              "phone"
+            ],
+            "submitLabel": "提交报名",
+            "successMessage": "报名成功，请留意讲座通知。"
+          }
+        },
+        {
+          "id": "exportSignup",
+          "type": "CSVExport",
+          "title": "导出报名名单",
+          "region": "aside",
+          "order": 2,
+          "params": {
+            "columns": [
+              "name",
+              "studentId",
+              "major",
+              "phone",
+              "createdAt"
+            ],
+            "filename": "讲座报名名单"
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "id": "bSourceMetric",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "metricTotal",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bSourceChart",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "chartMajor",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bSourceTable",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "tableSignup",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bSourceExport",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "exportSignup",
+            "port": "rows"
+          }
+        }
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "reasoning": "用户需求：加签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。\n\n需要：\n1. 新增布尔字段 checkedIn（签到状态），default false。\n2. 新增 Filter 节点：筛选 major eq 计算机科学与技术 且 checkedIn eq false（未签到）。注意旧记录 checkedIn 虚拟填充 false。\n3. 新增 MessageDraft 绑定这个 Filter.result，模板提醒文案。\n4. Metric 显示签到率（ratio，where checkedIn eq true，format percent）。\n5. QuickAction 签到（搜索 name/studentId，set checkedIn true）——可选，但\"加一个签到功能\"意味着需要签到操作。加 QuickAction 比较合理。\n\n节点顺序安排：main 区现有 order 0-3。Metric 签到率 order 4 width half？但 Metric 报名总人数 order1 half，chart order2 half，table order3 full。新 metric order 4 half 会排在 table 之后。可以放在 order 4 width half。或者用 moveNode 调整。简单起见：签到率 Metric order 4 width half；Filter 节点是数据流节点无界面？Filter 是界面组件显示条件标签？规则里 Filter 有界面上显示条件标签，但 region 说明：有界面组件必填 region。Filter 有界面（显示条件标签），所以需要 region。放 main order 5？嗯。\n\n实际上 Filter 显示条件标签，属于界面组件。给它 region main, order 5, width half? 让它和 table 一起。让我们安排：\n- metricTotal order1 half\n- chartMajor order2 half\n- metricCheckin order 4 half（签到率）\n- tableSignup order3 full —— 需要调整顺序：让签到率 Metric 和 chart 并列？可以 moveNode chartMajor order3, table order4，metricCheckin order2。但尽量少动。简单：签到率 Metric order 4 width half，Filter order 5 width half，table order3 full 在它们之前。可接受但不美观。\n\n我选择：moveNode tableSignup order 5（full）；chartMajor order2 half；metricTotal order1 half；metricCheckin order3 half? 那 table order 5, filter order 4 half。这样布局：总人数、专业分布（第一行），签到率（half）+ 未签到筛选（half）… 嗯 filter 是个小标签组件。\n\n简化：不 moveNode，直接：\n- metricCheckin: order 4, width half\n- filterNoCheckin: order 5, width half\n- quickActionCheckin: aside order 3\n- messageDraft: aside order 4\n\nTable order 3 full 在 4、5 之前，视觉上没问题（表格在两行指标之间）。有点怪。还是 moveNode tableSignup 到 order 6 吧？那 table 在最后，指标都前面。那就：\n\nmain:\n1 metricTotal (order1 half)\n2 chartMajor (order2 half)\n3 metricCheckin (order3 half)  — 需要把 chart 和 metricTotal 保持\n嗯，宽度 half 的两个连续：metricTotal(order1,half), chartMajor(order2,half) → 同一行。metricCheckin(order3,half) 会与 order4 的什么并排。filterNoCheckin order4 half。然后 table order5 full。\n\n所以操作：addNode metricCheckin(order3,half)、addNode filterNoCheckin(order4,half)、moveNode tableSignup order5 full。\n\n绑定：\n- source.records → metricCheckin.rows (bMetricCheckin)\n- source.records → filterNoCheckin.input (bFilter)\n- filterNoCheckin.result → messageDraft.recipients (bFilterMsg)\n- filterNoCheckin.result → tableNoCheckin? 不，用户没要求列表。但 QuickAction 需要 rows 输入：QuickAction 搜索一条记录并修改。签到功能：可以把 QuickAction 绑定到所有记录（source.records）。这样任何报名者都能被签到。设置 set: {checkedIn: true}，availableWhen: checkedIn eq false。\n\nQuickAction 的 ask 参数可询问？不需要。\n\n字段：checkedIn enum 还是 boolean？boolean 更简单，default false。Chart 也可按 boolean 分组，但已有 Chart。ratio metric 需要 where: checkedIn eq true。\n\nMessageDraft template: \"{{name}}同学你好，讲座即将开始，请尽快到签到台完成签到。\" channelLabel: \"短信提醒\"。\n\nMetric checkinRatio: label \"签到率\", aggregate ratio, where {field checkedIn operator eq value true}, format percent.\n\n字段定义：{\"id\":\"checkedIn\",\"label\":\"已签到\",\"type\":\"boolean\",\"required\":false,\"default\":false} — 但 required true 时必须带 default，这里 required false + default false 也行。为了显示\"未签到\"，boolean 用 default false。\n\nFilter 表达式：{\"op\":\"and\",\"conditions\":[{\"field\":\"major\",\"operator\":\"eq\",\"value\":\"计算机科学与技术\"},{\"field\":\"checkedIn\",\"operator\":\"eq\",\"value\":false}]}\n\nFilter 节点 params: {\"filter\": expr, \"showChips\": true}。\n\norder 和 id 命名规范。\n\n现在绑定 id 命名：bMetricCheckin、bFilterInput、bFilterToMessage、bQuickAction。\n\nQuickAction 需要 rows 输入 → 绑定 source.records 到 quickAction.rows。\n\n节点数：现有 6 + 新增 4 = 10，OK。\n\n写出操作列表。注意 addField 的 field def 不要含 id 系统字段。\n\n另外 Metric 签到率 order3 half 与谁同排？chartMajor order2 half → 同一行。OK。\n\n最后 updateApp description? 可选，加签到相关描述。加一个 updateApp 修改 description 是合理的增量。可以做。\n\n写 JSON。",
+      "content": "{\"kind\":\"patch\",\"intent\":\"给讲座报名加签到功能：标记签到、找出计算机专业未签到的人生成提醒消息，并展示签到率\",\"summary\":\"新增“已签到”布尔字段，加入签到率指标、计算机专业未签到筛选、签到快捷操作与提醒消息草稿\",\"baseVersion\":1,\"operations\":[{\"op\":\"addField\",\"entityId\":\"lectureSignup\",\"field\":{\"id\":\"checkedIn\",\"label\":\"已签到\",\"type\":\"boolean\",\"required\":false,\"default\":false,\"description\":\"标记该报名学生是否已完成现场签到\"}},{\"op\":\"addNode\",\"node\":{\"id\":\"metricCheckinRate\",\"type\":\"Metric\",\"title\":\"签到率\",\"region\":\"main\",\"order\":3,\"width\":\"half\",\"params\":{\"label\":\"签到率\",\"aggregate\":\"ratio\",\"where\":{\"field\":\"checkedIn\",\"operator\":\"eq\",\"value\":true},\"format\":\"percent\"}}},{\"op\":\"addNode\",\"node\":{\"id\":\"filterNoCheckin\",\"type\":\"Filter\",\"title\":\"计算机专业未签到\",\"region\":\"main\",\"order\":4,\"width\":\"half\",\"params\":{\"filter\":{\"op\":\"and\",\"conditions\":[{\"field\":\"major\",\"operator\":\"eq\",\"value\":\"计算机科学与技术\"},{\"field\":\"checkedIn\",\"operator\":\"eq\",\"value\":false}]},\"showChips\":true}}},{\"op\":\"moveNode\",\"nodeId\":\"tableSignup\",\"region\":\"main\",\"order\":5,\"width\":\"full\"},{\"op\":\"addNode\",\"node\":{\"id\":\"quickCheckin\",\"type\":\"QuickAction\",\"title\":\"现场签到\",\"region\":\"aside\",\"order\":3,\"params\":{\"label\":\"签到登记\",\"searchFields\":[\"name\",\"studentId\"],\"set\":{\"checkedIn\":true},\"availableWhen\":{\"field\":\"checkedIn\",\"operator\":\"eq\",\"value\":false},\"buttonLabel\":\"标记已签到\"}}},{\"op\":\"addNode\",\"node\":{\"id\":\"draftReminder\",\"type\":\"MessageDraft\",\"title\":\"未签到提醒\",\"region\":\"aside\",\"order\":4,\"params\":{\"template\":\"{{name}}同学你好，讲座即将开始，你还没有签到，请尽快到签到台完成签到。\",\"channelLabel\":\"短信提醒\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"bSourceCheckinRate\",\"from\":{\"node\":\"source\",\"port\":\"records\"},\"to\":{\"node\":\"metricCheckinRate\",\"port\":\"rows\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"bSourceFilterNoCheckin\",\"from\":{\"node\":\"source\",\"port\":\"records\"},\"to\":{\"node\":\"filterNoCheckin\",\"port\":\"input\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"bSourceQuickCheckin\",\"from\":{\"node\":\"source\",\"port\":\"records\"},\"to\":{\"node\":\"quickCheckin\",\"port\":\"rows\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"bFilterToDraft\",\"from\":{\"node\":\"filterNoCheckin\",\"port\":\"result\"},\"to\":{\"node\":\"draftReminder\",\"port\":\"recipients\"}}},{\"op\":\"updateApp\",\"description\":\"收集并管理校园讲座的报名信息，支持现场签到、查看计算机专业未签到名单、生成提醒消息、按专业查看报名分布并统计签到率。\"}]}",
+      "usage": {
+        "promptTokens": 3201,
+        "completionTokens": 1913,
+        "reasoningTokens": 1254,
+        "totalTokens": 5114
+      },
+      "finishReason": "stop",
+      "ms": 11041
+    }
+  ]
+}
