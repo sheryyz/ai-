@@ -14,6 +14,8 @@
   --add: #15803d;
   --change: #b45309;
   --danger: #dc2626;
+  --on-morph: #ffffff;
+  --overlay: rgb(9 9 11 / 0.32);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,6 +31,8 @@
     --add: #4ade80;
     --change: #fbbf24;
     --danger: #f87171;
+    --on-morph: #0b0b0d;
+    --overlay: rgb(0 0 0 / 0.55);
   }
 }
 
@@ -44,6 +48,8 @@
   --add: #4ade80;
   --change: #fbbf24;
   --danger: #f87171;
+  --on-morph: #0b0b0d;
+  --overlay: rgb(0 0 0 / 0.55);
 }
 
 @theme inline {
@@ -58,6 +64,8 @@
   --color-add: var(--add);
   --color-change: var(--change);
   --color-danger: var(--danger);
+  --color-on-morph: var(--on-morph);
+  --color-overlay: var(--overlay);
   --font-sans: "Inter Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --radius-card: 10px;
@@ -74,6 +82,25 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

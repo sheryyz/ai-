@@ -21,6 +21,8 @@
 | `--add` | Diff 新增 | `#15803D` | `#4ADE80` |
 | `--change` | Diff 修改 | `#B45309` | `#FBBF24` |
 | `--danger` | 拒绝 / 风险 | `#DC2626` | `#F87171` |
+| `--on-morph` | 变形色 / 危险色按钮上的文字 | `#FFFFFF` | `#0B0B0D` |
+| `--overlay` | 对话框遮罩 | `rgb(9 9 11 / .32)` | `rgb(0 0 0 / .55)` |
 
 - 字体：Inter Variable（拉丁与数字）+ 系统中文字体（PingFang SC / Microsoft YaHei）；Schema、Diff、JSON 使用 JetBrains Mono。字体通过 npm 打包，**不依赖 Google Fonts**（评委网络环境不确定）。
 - 圆角 10px（卡片）/ 8px（控件）；阴影只用一层极浅阴影；间距 4 的倍数。
