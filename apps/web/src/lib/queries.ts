@@ -25,8 +25,8 @@ export const useRecords = (id: string) =>
   useQuery({ queryKey: keys.records(id), queryFn: () => api.records(id) })
 export const useVersions = (id: string) =>
   useQuery({ queryKey: keys.versions(id), queryFn: () => api.versions(id) })
-export const useOutbox = (id: string) =>
-  useQuery({ queryKey: keys.outbox(id), queryFn: () => api.outbox(id) })
+export const useOutbox = (id: string, enabled = true) =>
+  useQuery({ queryKey: keys.outbox(id), queryFn: () => api.outbox(id), enabled: enabled && Boolean(id) })
 
 export function useTimeZone(): string {
   return useHealth().data?.timeZone ?? DEFAULT_TIME_ZONE

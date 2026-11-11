@@ -89,7 +89,10 @@ export function AppRuntime({
       key={`${n.type}:${n.id}`}
       layout="position"
       {...GROW}
-      className={cn(inMain && (n.width === 'half' ? 'md:col-span-1' : 'md:col-span-2'), 'min-w-0')}
+      className={cn(
+        inMain && (n.width === 'half' ? '@lg/main:col-span-1' : '@lg/main:col-span-2'),
+        'min-w-0',
+      )}
       data-node={n.id}
     >
       {renderNode(n, graph.get(n.id), marks?.get(n.id))}
@@ -98,25 +101,29 @@ export function AppRuntime({
 
   return (
     <RuntimeContext.Provider value={ctx}>
-      <div
-        className={cn(
-          'grid items-start gap-4',
-          layout.aside.length ? 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]' : '',
-          className,
-        )}
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {layout.main.map((n) => item(n, true))}
-          </AnimatePresence>
+      {/* Container queries: the same layout adapts to the Runtime page and the narrower Studio preview. */}
+      <div className={cn('@container/app', className)}>
+        <div
+          className={cn(
+            'grid items-start gap-4',
+            layout.aside.length ? '@2xl/app:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]' : '',
+          )}
+        >
+          <div className="@container/main min-w-0">
+            <div className="grid grid-cols-1 gap-4 @lg/main:grid-cols-2">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {layout.main.map((n) => item(n, true))}
+              </AnimatePresence>
+            </div>
+          </div>
+          {layout.aside.length ? (
+            <aside className="flex flex-col gap-4">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {layout.aside.map((n) => item(n, false))}
+              </AnimatePresence>
+            </aside>
+          ) : null}
         </div>
-        {layout.aside.length ? (
-          <aside className="flex flex-col gap-4">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {layout.aside.map((n) => item(n, false))}
-            </AnimatePresence>
-          </aside>
-        ) : null}
       </div>
     </RuntimeContext.Provider>
   )

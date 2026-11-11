@@ -28,7 +28,7 @@ export function MessageDraftNode({ nodeId, title, params, ev, mark }: NodeProps<
   const { appId, entity, mode, timeZone } = useRuntime()
   const qc = useQueryClient()
   const recipients = asRows(ev?.inputs.recipients)
-  const outbox = useOutbox(appId)
+  const outbox = useOutbox(appId, mode === 'live')
   const [copied, setCopied] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const live = mode === 'live'
