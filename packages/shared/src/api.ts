@@ -2,6 +2,8 @@
  * HTTP response shapes shared by server and web (architecture.md §5).
  * Types only — no runtime code, so this module adds nothing to either bundle.
  */
+import type { MorphDiff } from './diff'
+import type { ValidationIssue } from './issues'
 import type { StoredRecord } from './runtime'
 import type { AppDefinition } from './schema'
 
@@ -78,4 +80,85 @@ export interface RecordsResponse {
 
 export interface ApiErrorBody {
   error: { code: string; message: string; details?: unknown }
+}
+
+// ── AI planner (architecture.md §3) ─────────────────────────────────────────
+
+/** Pipeline steps shown to the user: 理解 → 规划 → 生成 → 校验 → 自修复 → 就绪. */
+export type PlanStage = 'understand' | 'plan' | 'generate' | 'validate' | 'repair' | 'ready'
+export type StageStatus = 'running' | 'done' | 'failed' | 'skipped'
+
+export type ProposalStatus = 'pending' | 'approved' | 'rejected' | 'invalid' | 'refused'
+export type ProposalOrigin = 'live' | 'recorded' | 'manual'
+
+export interface TraceRound {
+  round: number
+  ms: number
+  reasoning: string
+  content: string
+  usage: {
+    promptTokens: number
+    completionTokens: number
+    reasoningTokens: number
+    totalTokens: number
+  } | null
+  finishReason: string | null
+  /** Error-level issues found in this round's output (empty when it passed). */
+  issues: ValidationIssue[]
+}
+
+export interface ProposalTrace {
+  origin: ProposalOrigin
+  model: string
+  promptVersion: string
+  temperature: number | null
+  context: string
+  rounds: TraceRound[]
+  totalMs: number
+  /** Notes about deterministic adjustments, e.g. replay rebasing — shown to the user, never hidden. */
+  notes: string[]
+  recording?: { id: string; recordedAt: string; model: string }
+}
+
+/** Why the pipeline stopped without a pending proposal. */
+export type PlanOutcome = 'pending' | 'refused' | 'blocked' | 'failed'
+
+export interface ProposalRecord {
+  id: string
+  appId: string | null
+  baseVersion: number | null
+  kind: 'create' | 'patch' | 'refusal'
+  intent: string
+  origin: ProposalOrigin
+  status: ProposalStatus
+  proposal: unknown
+  diff: MorphDiff | null
+  issues: ValidationIssue[]
+  trace: ProposalTrace
+  /** Definition the proposal would produce, for the ghost preview. */
+  after: AppDefinition | null
+  resultAppId: string | null
+  resultVersion: number | null
+  createdAt: string
+  decidedAt: string | null
+}
+
+export type PlanEvent =
+  | { type: 'stage'; stage: PlanStage; status: StageStatus; round?: number; detail?: string }
+  | { type: 'context'; summary: string; origin: ProposalOrigin; model: string }
+  | { type: 'thinking'; round: number; delta: string }
+  | { type: 'output'; round: number; delta: string }
+  | { type: 'issues'; round: number; issues: ValidationIssue[]; repairable: boolean }
+  | { type: 'result'; outcome: PlanOutcome; proposal: ProposalRecord }
+  | { type: 'error'; code: string; message: string }
+
+export interface RecordingInfo {
+  id: string
+  title: string
+  kind: 'create' | 'patch' | 'refusal'
+  intent: string
+  model: string
+  recordedAt: string
+  /** Patch recordings only replay onto an app whose current definition equals the recorded base. */
+  applicable?: boolean
 }
