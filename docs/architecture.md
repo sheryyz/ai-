@@ -145,6 +145,7 @@ GET definition + GET records
 | 前端 | React + Vite | 19.3 / 8.3 |
 | 样式 | Tailwind CSS v4 + Radix + Motion + lucide-react | 4.3 / 1.8 / 14.12 |
 | 路由 / 数据 | react-router + TanStack Query | 8.5 / 5.107 |
+| 前端小工具 | sonner（操作结果 Toast）、clsx + tailwind-merge（条件类名合并，避免 Tailwind 冲突类） | 2.0 / 2.1 / 3.7 |
 | 后端 | Express + tsx 直接运行 TS | 5.3 / 4.23 |
 | 数据库 | `node:sqlite`（Node 内置，无原生编译） | — |
 | 校验 | Zod | 4.6 |
