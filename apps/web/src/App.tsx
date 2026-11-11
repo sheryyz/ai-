@@ -7,6 +7,7 @@ import { ApiError } from './lib/api'
 import { HubPage } from './pages/HubPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RuntimePage } from './pages/RuntimePage'
+import { StudioPage } from './pages/StudioPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,8 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <HubPage /> },
       { path: '/apps/:id', element: <RuntimePage /> },
+      { path: '/apps/:id/studio', element: <StudioPage /> },
+      { path: '/studio/new', element: <StudioPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
