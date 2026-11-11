@@ -95,7 +95,7 @@ Number         一个数值
 | **Chart** | 是 | `rows: RecordSet<E>` ✱ | — | `kind: 'bar'\|'donut'`, `groupBy: Slug` | 无 |
 | **QuickAction** | 是 | `rows: RecordSet<E>` ✱ | — | `label`, `searchFields`, `ask?: Slug[]`, `set: Record<Slug, Value\|Token>`, `availableWhen?: FilterExpr`, `buttonLabel` | 更新记录 |
 | **MessageDraft** | 是 | `recipients: RecordSet<E>` ✱ | — | `template`（可含 `{{fieldId}}`）, `channelLabel` | 写入模拟发件箱 |
-| **CSVExport** | 是（按钮卡片） | `rows: RecordSet<E>` ✱ | — | `columns?: Slug[]`, `filename` | 无（下载文件） |
+| **CSVExport** | 是（按钮卡片） | `rows: RecordSet<E>` ✱ | — | `columns?: Slug[]`, `filename`（不含扩展名，末尾的 `.csv` 会被规范化去掉） | 无（下载文件） |
 
 ✱ = 必须恰好有一条绑定接入。
 

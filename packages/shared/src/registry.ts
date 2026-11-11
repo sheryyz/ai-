@@ -75,7 +75,14 @@ export const PARAM_SCHEMAS = {
   }),
   CSVExport: z.object({
     columns: z.array(SlugSchema).min(1).max(30).optional(),
-    filename: z.string().trim().min(1).max(40).default('导出数据'),
+    // Without extension; a trailing ".csv" (models often add one) is normalized away.
+    filename: z
+      .string()
+      .trim()
+      .min(1)
+      .max(44)
+      .transform((s) => s.replace(/\.csv$/i, '').trim() || '导出数据')
+      .default('导出数据'),
   }),
 } satisfies Record<ComponentType, z.ZodType>
 
@@ -200,7 +207,7 @@ export const REGISTRY: Record<ComponentType, ComponentSpec> = {
     type: 'CSVExport',
     label: '导出',
     description: '把输入记录导出为 CSV 文件（UTF-8，Excel 可直接打开）。',
-    paramsDoc: 'columns?: 字段 id 数组（默认全部字段）；filename?',
+    paramsDoc: 'columns?: 字段 id 数组（默认全部字段）；filename?: 文件名（不含 .csv 后缀）',
     visual: true,
     inputs: [RS('rows', '导出的记录', true)],
     outputs: [],

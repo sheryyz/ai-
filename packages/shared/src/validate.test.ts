@@ -23,6 +23,14 @@ describe('templates', () => {
     const chart = def.nodes.find((n) => n.id === 'byMajor')
     expect(chart?.params).toMatchObject({ kind: 'bar', groupBy: 'major' })
   })
+
+  it('strips a ".csv" suffix the model added to CSVExport.filename (observed live, planner-v1.0)', () => {
+    const raw = rawEvent()
+    const exp = raw.nodes.find((n) => n.id === 'exportAll')
+    if (exp) exp.params = { filename: '讲座报名名单.CSV' }
+    const r = validateDefinition(raw)
+    expect(r.definition?.nodes.find((n) => n.id === 'exportAll')?.params).toMatchObject({ filename: '讲座报名名单' })
+  })
 })
 
 describe('L1 schema', () => {
