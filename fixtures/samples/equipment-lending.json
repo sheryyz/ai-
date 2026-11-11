@@ -1,0 +1,109 @@
+{
+  "note": "虚构示例数据；借用日期以 {$daysAgo:N} 表示，导入时按当天换算",
+  "records": [
+    {
+      "name": "光学显微镜",
+      "code": "MIC-01",
+      "category": "显微镜",
+      "status": "可借用"
+    },
+    {
+      "name": "光学显微镜",
+      "code": "MIC-02",
+      "category": "显微镜",
+      "status": "已借出",
+      "borrower": "陈老师",
+      "borrowedAt": {
+        "$daysAgo": 3
+      }
+    },
+    {
+      "name": "荧光显微镜",
+      "code": "MIC-03",
+      "category": "显微镜",
+      "status": "可借用"
+    },
+    {
+      "name": "数字示波器",
+      "code": "OSC-01",
+      "category": "示波器",
+      "status": "已借出",
+      "borrower": "李子涵",
+      "borrowedAt": {
+        "$daysAgo": 10
+      }
+    },
+    {
+      "name": "数字示波器",
+      "code": "OSC-02",
+      "category": "示波器",
+      "status": "可借用"
+    },
+    {
+      "name": "混合信号示波器",
+      "code": "OSC-03",
+      "category": "示波器",
+      "status": "可借用"
+    },
+    {
+      "name": "直流稳压电源",
+      "code": "PSU-01",
+      "category": "电源",
+      "status": "可借用"
+    },
+    {
+      "name": "直流稳压电源",
+      "code": "PSU-02",
+      "category": "电源",
+      "status": "可借用"
+    },
+    {
+      "name": "可编程电源",
+      "code": "PSU-03",
+      "category": "电源",
+      "status": "已借出",
+      "borrower": "张雨桐",
+      "borrowedAt": {
+        "$daysAgo": 1
+      }
+    },
+    {
+      "name": "GPU 工作站",
+      "code": "GPU-01",
+      "category": "计算设备",
+      "status": "已借出",
+      "borrower": "王浩然",
+      "borrowedAt": {
+        "$daysAgo": 12
+      }
+    },
+    {
+      "name": "GPU 工作站",
+      "code": "GPU-02",
+      "category": "计算设备",
+      "status": "可借用"
+    },
+    {
+      "name": "树莓派套件",
+      "code": "RPI-01",
+      "category": "计算设备",
+      "status": "已借出",
+      "borrower": "刘思远",
+      "borrowedAt": {
+        "$daysAgo": 9
+      }
+    },
+    {
+      "name": "焊接台",
+      "code": "SLD-01",
+      "category": "其他",
+      "status": "可借用"
+    },
+    {
+      "name": "3D 打印机",
+      "code": "PRT-01",
+      "category": "其他",
+      "status": "维修中"
+    }
+  ]
+}

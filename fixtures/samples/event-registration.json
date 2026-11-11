@@ -1,0 +1,221 @@
+{
+  "note": "虚构示例数据（姓名随机组合，手机号为 1380000 号段占位）",
+  "records": [
+    {
+      "name": "陈博文",
+      "studentId": "20241001",
+      "major": "软件工程",
+      "phone": "13800001000"
+    },
+    {
+      "name": "林若曦",
+      "studentId": "20241008",
+      "major": "其他",
+      "phone": null
+    },
+    {
+      "name": "罗泽宇",
+      "studentId": "20241015",
+      "major": "软件工程",
+      "phone": null
+    },
+    {
+      "name": "杨明轩",
+      "studentId": "20241022",
+      "major": "软件工程",
+      "phone": "13800001111"
+    },
+    {
+      "name": "马一诺",
+      "studentId": "20241029",
+      "major": "计算机",
+      "phone": "13800001148"
+    },
+    {
+      "name": "林心怡",
+      "studentId": "20241036",
+      "major": "电子信息",
+      "phone": null
+    },
+    {
+      "name": "胡浩然",
+      "studentId": "20241043",
+      "major": "计算机",
+      "phone": "13800001222"
+    },
+    {
+      "name": "周宇航",
+      "studentId": "20241050",
+      "major": "其他",
+      "phone": null
+    },
+    {
+      "name": "马博文",
+      "studentId": "20241057",
+      "major": "数学",
+      "phone": "13800001296"
+    },
+    {
+      "name": "赵欣怡",
+      "studentId": "20241064",
+      "major": "其他",
+      "phone": "13800001333"
+    },
+    {
+      "name": "黄心怡",
+      "studentId": "20241071",
+      "major": "数学",
+      "phone": "13800001370"
+    },
+    {
+      "name": "吴俊杰",
+      "studentId": "20241078",
+      "major": "计算机",
+      "phone": "13800001407"
+    },
+    {
+      "name": "高思远",
+      "studentId": "20241085",
+      "major": "软件工程",
+      "phone": "13800001444"
+    },
+    {
+      "name": "朱明轩",
+      "studentId": "20241092",
+      "major": "软件工程",
+      "phone": "13800001481"
+    },
+    {
+      "name": "何一诺",
+      "studentId": "20241099",
+      "major": "计算机",
+      "phone": "13800001518"
+    },
+    {
+      "name": "李若曦",
+      "studentId": "20241106",
+      "major": "软件工程",
+      "phone": "13800001555"
+    },
+    {
+      "name": "刘一诺",
+      "studentId": "20241113",
+      "major": "计算机",
+      "phone": "13800001592"
+    },
+    {
+      "name": "李雨桐",
+      "studentId": "20241120",
+      "major": "数学",
+      "phone": "13800001629"
+    },
+    {
+      "name": "陈泽宇",
+      "studentId": "20241127",
+      "major": "软件工程",
+      "phone": null
+    },
+    {
+      "name": "吴可欣",
+      "studentId": "20241134",
+      "major": "电子信息",
+      "phone": "13800001703"
+    },
+    {
+      "name": "罗博文",
+      "studentId": "20241141",
+      "major": "电子信息",
+      "phone": "13800001740"
+    },
+    {
+      "name": "马俊杰",
+      "studentId": "20241148",
+      "major": "数学",
+      "phone": "13800001777"
+    },
+    {
+      "name": "何博文",
+      "studentId": "20241155",
+      "major": "计算机",
+      "phone": "13800001814"
+    },
+    {
+      "name": "杨雨桐",
+      "studentId": "20241162",
+      "major": "其他",
+      "phone": null
+    },
+    {
+      "name": "刘俊杰",
+      "studentId": "20241169",
+      "major": "计算机",
+      "phone": "13800001888"
+    },
+    {
+      "name": "刘诗涵",
+      "studentId": "20241176",
+      "major": "数学",
+      "phone": "13800001925"
+    },
+    {
+      "name": "胡子涵",
+      "studentId": "20241183",
+      "major": "计算机",
+      "phone": "13800001962"
+    },
+    {
+      "name": "罗可欣",
+      "studentId": "20241190",
+      "major": "软件工程",
+      "phone": null
+    },
+    {
+      "name": "林佳琪",
+      "studentId": "20241197",
+      "major": "软件工程",
+      "phone": null
+    },
+    {
+      "name": "王语嫣",
+      "studentId": "20241204",
+      "major": "电子信息",
+      "phone": "13800002073"
+    },
+    {
+      "name": "何俊杰",
+      "studentId": "20241211",
+      "major": "软件工程",
+      "phone": "13800002110"
+    },
+    {
+      "name": "胡诗涵",
+      "studentId": "20241218",
+      "major": "电子信息",
+      "phone": null
+    },
+    {
+      "name": "郭可欣",
+      "studentId": "20241225",
+      "major": "其他",
+      "phone": null
+    },
+    {
+      "name": "刘明轩",
+      "studentId": "20241232",
+      "major": "软件工程",
+      "phone": null
+    },
+    {
+      "name": "孙心怡",
+      "studentId": "20241239",
+      "major": "计算机",
+      "phone": "13800002258"
+    },
+    {
+      "name": "罗嘉怡",
+      "studentId": "20241246",
+      "major": "人工智能",
+      "phone": "13800002295"
+    }
+  ]
+}
