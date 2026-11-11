@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/*.md", "!docs", "!data", "!**/dist"]
+    "includes": ["**", "!**/*.md", "!docs", "!data", "!**/dist", "!fixtures/recorded"]
   },
   "formatter": {
     "enabled": true,

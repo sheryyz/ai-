@@ -29,7 +29,9 @@ describe('templates', () => {
     const exp = raw.nodes.find((n) => n.id === 'exportAll')
     if (exp) exp.params = { filename: '讲座报名名单.CSV' }
     const r = validateDefinition(raw)
-    expect(r.definition?.nodes.find((n) => n.id === 'exportAll')?.params).toMatchObject({ filename: '讲座报名名单' })
+    expect(r.definition?.nodes.find((n) => n.id === 'exportAll')?.params).toMatchObject({
+      filename: '讲座报名名单',
+    })
   })
 })
 
