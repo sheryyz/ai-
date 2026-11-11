@@ -6,12 +6,18 @@ import { type AppConfig, REPO_ROOT } from './config'
 import type { Ctx } from './context'
 import { type DB, openDatabase } from './db'
 import { HttpError } from './errors'
+import { createLiveClient, type LlmClient } from './llm/client'
+import { aiRouter } from './routes/ai'
 import { appsRouter } from './routes/apps'
 import { recordsRouter } from './routes/records'
 
 export interface AppDeps {
   db?: DB
   now?: () => Date
+  /** Injected model client (tests use a scripted fake); defaults to the live client when a key is set. */
+  llm?: LlmClient | null
+  /** Replay pacing for recorded demos: 1 = a few seconds, 0 = instant (tests). */
+  replaySpeed?: number
 }
 
 export function createApp(config: AppConfig, deps: AppDeps = {}) {
@@ -19,6 +25,12 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
     db: deps.db ?? openDatabase(config.databasePath),
     config,
     now: deps.now ?? (() => new Date()),
+    llm:
+      deps.llm !== undefined
+        ? deps.llm
+        : config.llm.apiKey
+          ? createLiveClient({ ...config.llm, apiKey: config.llm.apiKey })
+          : null,
   }
 
   const app = express()
@@ -41,6 +53,7 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
 
   app.use('/api', appsRouter(ctx))
   app.use('/api', recordsRouter(ctx))
+  app.use('/api', aiRouter(ctx, { replaySpeed: deps.replaySpeed }))
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: '接口不存在' } })
