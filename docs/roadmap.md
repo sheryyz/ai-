@@ -5,7 +5,7 @@
 
 | 阶段 | 日期 | 内容 | 验收标准 | 状态 |
 |---|---|---|---|---|
-| **0 架构与初始化** | 11-11 | 需求合并、协议、架构、设计规范、CLAUDE.md、monorepo 骨架、健康检查 | `npm install` / `check` / `test` / `build` 通过；`npm run dev` 后 `/api/health` 返回 AI 配置状态，前端显示该状态 | 🟨 |
+| **0 架构与初始化** | 11-11 | 需求合并、协议、架构、设计规范、CLAUDE.md、monorepo 骨架、健康检查 | `npm install` / `check` / `test` / `build` 通过；`npm run dev` 后 `/api/health` 返回 AI 配置状态，前端显示该状态 | ✅ 2026-11-11：check / 17 条测试 / build 通过；dev 代理、离线模式、生产单端口实测；亮暗主题截图确认 |
 | **1 协议实现** | 11-11 晚 – 11-12 上午 | `shared`：Zod Schema、组件注册表、L1–L6 Validator、applyPatch、computeDiff、evaluateFilter、绑定图求值 | ≥ 30 条单测，覆盖 AC-05/06/07/08 的纯逻辑部分；两份模板定义通过校验 | ⬜ |
 | **2 数据与运行时** | 11-12 | SQLite 迁移、App/Version/Record 服务与接口、9 个运行时组件、App Hub 与 Runtime 页 | 不接 AI：从模板创建两个应用，录入、编辑、签到 / 借出、筛选、统计、导出全部可用；重启后数据仍在（AC-02/04/10/11） | ⬜ |
 | **3 AI 规划器** | 11-13 | LLM 客户端、提示词、流式 NDJSON、Validator-in-the-loop、提案存储、批准 / 拒绝 | 真实模型：一句话创建活动应用（AC-01）；增量加签到 + 筛选 + 统计（AC-03）；非法意图被拒（AC-07） | ⬜ |
