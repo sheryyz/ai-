@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "name": "校园讲座报名",
+  "description": "收集讲座报名信息，管理参会名单并统计专业分布",
+  "icon": "calendar",
+  "entities": [
+    {
+      "id": "attendee",
+      "label": "报名者",
+      "displayField": "name",
+      "fields": [
+        { "id": "name", "label": "姓名", "type": "string", "required": true },
+        { "id": "studentId", "label": "学号", "type": "string", "required": true },
+        {
+          "id": "major",
+          "label": "专业",
+          "type": "enum",
+          "required": true,
+          "options": ["计算机", "软件工程", "人工智能", "电子信息", "数学", "其他"]
+        },
+        { "id": "phone", "label": "手机号", "type": "string", "required": false }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "source",
+      "type": "CollectionSource",
+      "params": { "entityId": "attendee", "sort": { "field": "createdAt", "dir": "desc" } }
+    },
+    {
+      "id": "total",
+      "type": "Metric",
+      "title": "报名人数",
+      "region": "main",
+      "order": 0,
+      "width": "half",
+      "params": { "label": "报名人数", "aggregate": "count", "format": "number", "goal": 120 }
+    },
+    {
+      "id": "byMajor",
+      "type": "Chart",
+      "title": "专业分布",
+      "region": "main",
+      "order": 1,
+      "width": "half",
+      "params": { "kind": "bar", "groupBy": "major" }
+    },
+    {
+      "id": "roster",
+      "type": "Table",
+      "title": "报名名单",
+      "region": "main",
+      "order": 2,
+      "params": {
+        "columns": ["name", "studentId", "major", "phone", "createdAt"],
+        "searchable": true,
+        "editable": true,
+        "allowDelete": true,
+        "pageSize": 10
+      }
+    },
+    {
+      "id": "signup",
+      "type": "Form",
+      "title": "报名表",
+      "region": "aside",
+      "order": 0,
+      "params": {
+        "entityId": "attendee",
+        "fields": ["name", "studentId", "major", "phone"],
+        "submitLabel": "提交报名",
+        "successMessage": "报名成功"
+      }
+    },
+    {
+      "id": "exportAll",
+      "type": "CSVExport",
+      "title": "导出名单",
+      "region": "aside",
+      "order": 1,
+      "params": { "filename": "讲座报名名单" }
+    }
+  ],
+  "bindings": [
+    {
+      "id": "b_total",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "total", "port": "rows" }
+    },
+    {
+      "id": "b_major",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "byMajor", "port": "rows" }
+    },
+    {
+      "id": "b_roster",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "roster", "port": "rows" }
+    },
+    {
+      "id": "b_export",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "exportAll", "port": "rows" }
+    }
+  ]
+}

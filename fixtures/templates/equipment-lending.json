@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "name": "实验室设备借用",
+  "description": "登记实验设备，记录借出与归还，掌握设备状态",
+  "icon": "flask",
+  "entities": [
+    {
+      "id": "equipment",
+      "label": "设备",
+      "displayField": "name",
+      "fields": [
+        { "id": "name", "label": "设备名称", "type": "string", "required": true },
+        { "id": "code", "label": "编号", "type": "string", "required": true },
+        {
+          "id": "category",
+          "label": "类别",
+          "type": "enum",
+          "required": true,
+          "options": ["显微镜", "示波器", "电源", "计算设备", "其他"]
+        },
+        {
+          "id": "status",
+          "label": "状态",
+          "type": "enum",
+          "required": true,
+          "options": ["可借用", "已借出", "维修中"],
+          "default": "可借用"
+        },
+        { "id": "borrower", "label": "借用人", "type": "string", "required": false },
+        { "id": "borrowedAt", "label": "借用日期", "type": "date", "required": false }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "source",
+      "type": "CollectionSource",
+      "params": { "entityId": "equipment", "sort": { "field": "code", "dir": "asc" } }
+    },
+    {
+      "id": "available",
+      "type": "Metric",
+      "title": "可借用",
+      "region": "main",
+      "order": 0,
+      "width": "half",
+      "params": {
+        "label": "可借用",
+        "aggregate": "count",
+        "where": { "field": "status", "operator": "eq", "value": "可借用" }
+      }
+    },
+    {
+      "id": "lent",
+      "type": "Metric",
+      "title": "已借出",
+      "region": "main",
+      "order": 1,
+      "width": "half",
+      "params": {
+        "label": "已借出",
+        "aggregate": "count",
+        "where": { "field": "status", "operator": "eq", "value": "已借出" }
+      }
+    },
+    {
+      "id": "inventory",
+      "type": "Table",
+      "title": "设备清单",
+      "region": "main",
+      "order": 2,
+      "params": {
+        "columns": ["code", "name", "category", "status", "borrower", "borrowedAt"],
+        "searchable": true,
+        "editable": true,
+        "allowDelete": false,
+        "pageSize": 10
+      }
+    },
+    {
+      "id": "lend",
+      "type": "QuickAction",
+      "title": "借出登记",
+      "region": "aside",
+      "order": 0,
+      "params": {
+        "label": "借出设备",
+        "searchFields": ["name", "code"],
+        "ask": ["borrower"],
+        "set": { "status": "已借出", "borrowedAt": "$today" },
+        "availableWhen": { "field": "status", "operator": "eq", "value": "可借用" },
+        "buttonLabel": "借出"
+      }
+    },
+    {
+      "id": "giveBack",
+      "type": "QuickAction",
+      "title": "归还登记",
+      "region": "aside",
+      "order": 1,
+      "params": {
+        "label": "归还设备",
+        "searchFields": ["name", "code", "borrower"],
+        "set": { "status": "可借用", "borrower": null, "borrowedAt": null },
+        "availableWhen": { "field": "status", "operator": "eq", "value": "已借出" },
+        "buttonLabel": "归还"
+      }
+    },
+    {
+      "id": "register",
+      "type": "Form",
+      "title": "登记新设备",
+      "region": "aside",
+      "order": 2,
+      "params": {
+        "entityId": "equipment",
+        "fields": ["name", "code", "category"],
+        "submitLabel": "登记",
+        "successMessage": "设备已登记"
+      }
+    },
+    {
+      "id": "byStatus",
+      "type": "Chart",
+      "title": "状态分布",
+      "region": "main",
+      "order": 3,
+      "width": "half",
+      "params": { "kind": "donut", "groupBy": "status" }
+    },
+    {
+      "id": "byCategory",
+      "type": "Chart",
+      "title": "类别分布",
+      "region": "main",
+      "order": 4,
+      "width": "half",
+      "params": { "kind": "bar", "groupBy": "category" }
+    }
+  ],
+  "bindings": [
+    {
+      "id": "b_available",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "available", "port": "rows" }
+    },
+    {
+      "id": "b_lent",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "lent", "port": "rows" }
+    },
+    {
+      "id": "b_inventory",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "inventory", "port": "rows" }
+    },
+    {
+      "id": "b_lend",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "lend", "port": "rows" }
+    },
+    {
+      "id": "b_giveBack",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "giveBack", "port": "rows" }
+    },
+    {
+      "id": "b_status",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "byStatus", "port": "rows" }
+    },
+    {
+      "id": "b_category",
+      "from": { "node": "source", "port": "records" },
+      "to": { "node": "byCategory", "port": "rows" }
+    }
+  ]
+}

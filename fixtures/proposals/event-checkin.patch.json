@@ -1,0 +1,117 @@
+{
+  "kind": "patch",
+  "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率",
+  "summary": "新增签到字段与签到操作，筛选计算机专业未签到人员并生成提醒草稿，显示实时签到率",
+  "baseVersion": 1,
+  "operations": [
+    {
+      "op": "addField",
+      "entityId": "attendee",
+      "field": {
+        "id": "checkedIn",
+        "label": "已签到",
+        "type": "boolean",
+        "required": false,
+        "default": false
+      }
+    },
+    {
+      "op": "addNode",
+      "node": {
+        "id": "checkin",
+        "type": "QuickAction",
+        "title": "现场签到",
+        "region": "aside",
+        "order": 0,
+        "params": {
+          "label": "现场签到",
+          "searchFields": ["name", "studentId"],
+          "set": { "checkedIn": true },
+          "availableWhen": { "field": "checkedIn", "operator": "eq", "value": false },
+          "buttonLabel": "签到"
+        }
+      }
+    },
+    {
+      "op": "bind",
+      "binding": {
+        "id": "b_checkin",
+        "from": { "node": "source", "port": "records" },
+        "to": { "node": "checkin", "port": "rows" }
+      }
+    },
+    {
+      "op": "addNode",
+      "node": {
+        "id": "csAbsent",
+        "type": "Filter",
+        "title": "计算机专业未签到",
+        "region": "main",
+        "order": 3,
+        "params": {
+          "filter": {
+            "op": "and",
+            "conditions": [
+              { "field": "major", "operator": "eq", "value": "计算机" },
+              { "field": "checkedIn", "operator": "eq", "value": false }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "op": "bind",
+      "binding": {
+        "id": "b_absent",
+        "from": { "node": "source", "port": "records" },
+        "to": { "node": "csAbsent", "port": "input" }
+      }
+    },
+    {
+      "op": "addNode",
+      "node": {
+        "id": "remind",
+        "type": "MessageDraft",
+        "title": "签到提醒",
+        "region": "main",
+        "order": 4,
+        "params": { "template": "{{name}} 同学你好，讲座即将开始，请尽快到场签到。" }
+      }
+    },
+    {
+      "op": "bind",
+      "binding": {
+        "id": "b_remind",
+        "from": { "node": "csAbsent", "port": "result" },
+        "to": { "node": "remind", "port": "recipients" }
+      }
+    },
+    {
+      "op": "addNode",
+      "node": {
+        "id": "rate",
+        "type": "Metric",
+        "title": "签到率",
+        "region": "main",
+        "order": 0,
+        "width": "half",
+        "params": {
+          "label": "签到率",
+          "aggregate": "ratio",
+          "where": { "field": "checkedIn", "operator": "eq", "value": true },
+          "format": "percent"
+        }
+      }
+    },
+    {
+      "op": "bind",
+      "binding": {
+        "id": "b_rate",
+        "from": { "node": "source", "port": "records" },
+        "to": { "node": "rate", "port": "rows" }
+      }
+    },
+    { "op": "moveNode", "nodeId": "total", "region": "main", "order": 1, "width": "half" },
+    { "op": "hideNode", "nodeId": "byMajor" }
+  ]
+}
