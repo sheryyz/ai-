@@ -1,0 +1,6 @@
+#!/bin/sh
+# Block commits that contain API-key-like strings (sk-...) in staged changes.
+if git diff --cached -U0 --no-color | grep -E '^\+' | grep -Eq 'sk-[A-Za-z0-9]{20,}'; then
+  echo "pre-commit: staged changes contain an API-key-like string (sk-...). Commit aborted." >&2
+  exit 1
+fi

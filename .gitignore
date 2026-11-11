@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+
+# local secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# runtime data
+data/*.db
+data/*.db-*
+!data/.gitkeep
+
+# test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
