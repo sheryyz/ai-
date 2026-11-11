@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* Design tokens — docs/design.md §2. Use these variables only; no stray hex colors. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --border: #e7e7ea;
+  --text: #18181b;
+  --text-muted: #71717a;
+  --morph: #6d5df6;
+  --morph-soft: color-mix(in oklab, var(--morph) 10%, transparent);
+  --add: #15803d;
+  --change: #b45309;
+  --danger: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b0b0d;
+    --surface: #141417;
+    --surface-2: #1b1b1f;
+    --border: #26262b;
+    --text: #ededef;
+    --text-muted: #8b8b93;
+    --morph: #8b7cff;
+    --add: #4ade80;
+    --change: #fbbf24;
+    --danger: #f87171;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0b0d;
+  --surface: #141417;
+  --surface-2: #1b1b1f;
+  --border: #26262b;
+  --text: #ededef;
+  --text-muted: #8b8b93;
+  --morph: #8b7cff;
+  --add: #4ade80;
+  --change: #fbbf24;
+  --danger: #f87171;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-morph: var(--morph);
+  --color-morph-soft: var(--morph-soft);
+  --color-add: var(--add);
+  --color-change: var(--change);
+  --color-danger: var(--danger);
+  --font-sans: "Inter Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius-card: 10px;
+  --radius-control: 8px;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion override must win over component styles */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion override must win over component styles */
+    transition-duration: 0.01ms !important;
+  }
+}
