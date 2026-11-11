@@ -113,23 +113,31 @@ export function getApp(ctx: Ctx, id: string): AppDetail {
   }
 }
 
+/** Inserts a new app at v1. Must run inside a transaction (see createApp). Returns the new app id. */
+export function createAppUnsafe(
+  ctx: Ctx,
+  definition: AppDefinition,
+  meta: CommitMeta & { hasSampleData?: boolean },
+): string {
+  const def = assertValid(definition)
+  const id = newId('app')
+  const at = ctx.now().toISOString()
+  ctx.db
+    .prepare(
+      'INSERT INTO apps (id, name, icon, current_version, has_sample_data, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, ?)',
+    )
+    .run(id, def.name, def.icon, meta.hasSampleData ? 1 : 0, at, at)
+  insertVersion(ctx, id, 1, def, meta, at)
+  audit(ctx.db, id, 'app.created', { source: meta.source, proposalId: meta.proposalId ?? null }, ctx.now())
+  return id
+}
+
 export function createApp(
   ctx: Ctx,
   definition: AppDefinition,
   meta: CommitMeta & { hasSampleData?: boolean },
 ): AppDetail {
-  const def = assertValid(definition)
-  const id = newId('app')
-  const at = ctx.now().toISOString()
-  tx(ctx.db, () => {
-    ctx.db
-      .prepare(
-        'INSERT INTO apps (id, name, icon, current_version, has_sample_data, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, ?)',
-      )
-      .run(id, def.name, def.icon, meta.hasSampleData ? 1 : 0, at, at)
-    insertVersion(ctx, id, 1, def, meta, at)
-    audit(ctx.db, id, 'app.created', { source: meta.source, proposalId: meta.proposalId ?? null }, ctx.now())
-  })
+  const id = tx(ctx.db, () => createAppUnsafe(ctx, definition, meta))
   return getApp(ctx, id)
 }
 

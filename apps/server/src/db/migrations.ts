@@ -86,4 +86,10 @@ CREATE TABLE audit_events (
 CREATE INDEX idx_audit_app ON audit_events (app_id, id);
 `,
   },
+  {
+    version: 2,
+    name: 'proposal_after_definition',
+    // The definition a proposal would produce, kept for the Studio ghost preview after a reload.
+    sql: 'ALTER TABLE proposals ADD COLUMN after_json TEXT;',
+  },
 ]
