@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
+import { DEFAULT_TIME_ZONE, isValidTimeZone } from '@morphos/shared'
 import { z } from 'zod'
 
 /** Repository root (apps/server/src → ../../..). */
@@ -11,6 +12,10 @@ const EnvSchema = z.object({
   LLM_BASE_URL: z.url().default('https://api.deepseek.com'),
   LLM_API_KEY: z.string().trim().optional(),
   LLM_MODEL: z.string().min(1).default('deepseek-flash'),
+  APP_TIMEZONE: z
+    .string()
+    .default(DEFAULT_TIME_ZONE)
+    .refine(isValidTimeZone, { error: '不是有效的 IANA 时区，例如 Asia/Shanghai' }),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 })
 
@@ -18,6 +23,8 @@ export interface AppConfig {
   port: number
   databasePath: string
   nodeEnv: 'development' | 'production' | 'test'
+  /** Business time zone for "today", $today and timestamps (ADR-0005). */
+  timeZone: string
   llm: {
     baseUrl: string
     model: string
@@ -40,8 +47,9 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
   const e = result.data
   return {
     port: e.PORT,
-    databasePath: path.resolve(REPO_ROOT, e.DATABASE_PATH),
+    databasePath: e.DATABASE_PATH === ':memory:' ? ':memory:' : path.resolve(REPO_ROOT, e.DATABASE_PATH),
     nodeEnv: e.NODE_ENV,
+    timeZone: e.APP_TIMEZONE,
     llm: {
       baseUrl: e.LLM_BASE_URL.replace(/\/+$/, ''),
       model: e.LLM_MODEL,

@@ -58,6 +58,7 @@ cp .env.example .env
 | `LLM_MODEL` | `deepseek-flash` | 也可用 `deepseek-v4-pro` |
 | `PORT` | `8787` | 服务端端口 |
 | `DATABASE_PATH` | `./data/morphos.db` | SQLite 文件位置 |
+| `APP_TIMEZONE` | `Asia/Shanghai` | 业务时区，决定“今天”与时间显示 |
 
 ### 4. 启动
 

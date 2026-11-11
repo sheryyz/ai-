@@ -134,3 +134,13 @@ describe('presentation helpers', () => {
     expect(l.aside.map((n) => n.id)).toEqual(['signup', 'exportAll'])
   })
 })
+
+describe('business time zone (ADR-0005)', () => {
+  it('computes the calendar date in the configured zone, not the host zone', async () => {
+    const { localDate, formatTimestamp } = await import('./runtime')
+    const instant = new Date('2026-11-10T18:30:00Z') // 02:30 on Nov 11 in Beijing, Nov 10 in UTC / PST
+    expect(localDate(instant, 'Asia/Shanghai')).toBe('2026-11-11')
+    expect(localDate(instant, 'UTC')).toBe('2026-11-10')
+    expect(formatTimestamp(instant.toISOString(), 'Asia/Shanghai')).toBe('2026-11-11 02:30')
+  })
+})

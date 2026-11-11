@@ -42,10 +42,36 @@ export function fieldLabel(entity: EntityDef, id: string): string {
   return entity.fields.find((f) => f.id === id)?.label ?? SYSTEM_FIELD_LABELS[id] ?? id
 }
 
-/** Local calendar date 'YYYY-MM-DD'. */
-export function localDate(d: Date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+export const DEFAULT_TIME_ZONE = 'Asia/Shanghai'
+
+/** Calendar parts of an instant in an IANA time zone (ADR-0005: business dates never depend on host TZ). */
+function zonedParts(d: Date, timeZone: string): Record<'year' | 'month' | 'day' | 'hour' | 'minute', string> {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d)
+  const get = (t: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === t)?.value ?? '00'
+  return { year: get('year'), month: get('month'), day: get('day'), hour: get('hour'), minute: get('minute') }
+}
+
+export function isValidTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Calendar date 'YYYY-MM-DD' of an instant in the business time zone. */
+export function localDate(d: Date = new Date(), timeZone: string = DEFAULT_TIME_ZONE): string {
+  const p = zonedParts(d, timeZone)
+  return `${p.year}-${p.month}-${p.day}`
 }
 
 /**
@@ -280,24 +306,34 @@ export function groupCounts(rows: Row[], field: FieldDef, maxGroups = 8): Group[
   return groups
 }
 
-export function formatTimestamp(iso: string): string {
+export function formatTimestamp(iso: string, timeZone: string = DEFAULT_TIME_ZONE): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${localDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const p = zonedParts(d, timeZone)
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`
 }
 
-export function formatValue(v: FieldValue | undefined, fieldId: string, entity: EntityDef): string {
+export function formatValue(
+  v: FieldValue | undefined,
+  fieldId: string,
+  entity: EntityDef,
+  timeZone: string = DEFAULT_TIME_ZONE,
+): string {
   if (v === null || v === undefined) return ''
-  if (fieldId === 'createdAt' || fieldId === 'updatedAt') return formatTimestamp(String(v))
+  if (fieldId === 'createdAt' || fieldId === 'updatedAt') return formatTimestamp(String(v), timeZone)
   const f = entity.fields.find((x) => x.id === fieldId)
   if (f?.type === 'boolean' || typeof v === 'boolean') return v === true ? '是' : '否'
   return String(v)
 }
 
-export function renderTemplate(template: string, row: Row, entity: EntityDef): string {
+export function renderTemplate(
+  template: string,
+  row: Row,
+  entity: EntityDef,
+  timeZone: string = DEFAULT_TIME_ZONE,
+): string {
   return template.replace(/\{\{\s*([^}\s]+)\s*\}\}/g, (_m, id: string) =>
-    formatValue(getRowValue(row, id), id, entity),
+    formatValue(getRowValue(row, id), id, entity, timeZone),
   )
 }
 
@@ -323,13 +359,18 @@ function csvCell(s: string): string {
 }
 
 /** CSV with UTF-8 BOM so Excel opens Chinese text correctly (AC-11). */
-export function toCSV(rows: Row[], columns: string[], entity: EntityDef): string {
+export function toCSV(
+  rows: Row[],
+  columns: string[],
+  entity: EntityDef,
+  timeZone: string = DEFAULT_TIME_ZONE,
+): string {
   const header = columns.map((c) => csvCell(fieldLabel(entity, c)))
   const lines = rows.map((r) =>
     columns
       .map((c) => {
         const v = getRowValue(r, c)
-        return typeof v === 'number' ? String(v) : csvCell(formatValue(v, c, entity))
+        return typeof v === 'number' ? String(v) : csvCell(formatValue(v, c, entity, timeZone))
       })
       .join(','),
   )
