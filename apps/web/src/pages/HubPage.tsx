@@ -1,6 +1,6 @@
 import type { AppSummary, TemplateInfo } from '@morphos/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Database, LayoutGrid, Pencil, Plus } from 'lucide-react'
+import { ArrowRight, ArrowUp, Database, LayoutGrid, Pencil, PlayCircle, Plus, Wand } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -14,7 +14,7 @@ import { Input, Label } from '../components/ui/input'
 import { api, errorMessage } from '../lib/api'
 import { relativeTime } from '../lib/format'
 import { SOURCE_LABELS } from '../lib/labels'
-import { keys, useApps, useTemplates, useTimeZone } from '../lib/queries'
+import { keys, useApps, useHealth, useRecordings, useTemplates, useTimeZone } from '../lib/queries'
 
 function TemplateCard({ t }: { t: TemplateInfo }) {
   const navigate = useNavigate()
@@ -128,15 +128,24 @@ function AppCard({ app, onRename }: { app: AppSummary; onRename: () => void }) {
           </h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-muted">{app.description ?? '—'}</p>
         </div>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="relative z-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-          aria-label={`重命名「${app.name}」`}
-          onClick={onRename}
-        >
-          <Pencil className="size-3.5" />
-        </Button>
+        <div className="relative z-10 flex gap-0.5">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+            aria-label={`重命名「${app.name}」`}
+            onClick={onRename}
+          >
+            <Pencil className="size-3.5" />
+          </Button>
+          <Link
+            to={`/apps/${app.id}/studio`}
+            className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-control)] px-2 text-xs font-medium text-morph hover:bg-morph-soft"
+            aria-label={`在 AI Studio 中演进「${app.name}」`}
+          >
+            <Wand className="size-3.5" /> 演进
+          </Link>
+        </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-1.5">
         <Badge>v{app.version}</Badge>
@@ -149,6 +158,71 @@ function AppCard({ app, onRename }: { app: AppSummary; onRename: () => void }) {
         {app.lastChange.intent ? ` · ${app.lastChange.intent}` : ''}
       </p>
     </Card>
+  )
+}
+
+function IntentBox() {
+  const navigate = useNavigate()
+  const health = useHealth()
+  const recordings = useRecordings()
+  const [text, setText] = useState('')
+  const live = health.data?.ai.configured ?? false
+  const demos = (recordings.data ?? []).filter((r) => r.kind === 'create')
+  const submit = () => {
+    if (text.trim().length >= 2) navigate(`/studio/new?intent=${encodeURIComponent(text.trim())}`)
+  }
+  return (
+    <div className="mt-8 max-w-3xl">
+      <div className="rounded-[var(--radius-card)] border border-border bg-surface p-2 shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-colors duration-150 focus-within:border-morph">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              submit()
+            }
+          }}
+          disabled={!live}
+          rows={3}
+          maxLength={500}
+          aria-label="描述你想要的应用"
+          placeholder={
+            live
+              ? '描述你想要的应用，例如：创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。'
+              : '离线模式：未配置模型（LLM_API_KEY）。可从下方模板创建，或回放演示样例。'
+          }
+          className="block w-full resize-none bg-transparent px-2 py-1.5 text-[15px] leading-relaxed placeholder:text-muted focus:outline-none disabled:cursor-not-allowed"
+        />
+        <div className="flex items-center justify-between px-1.5 pb-0.5">
+          <span className="text-[11px] text-muted">AI 只产出受约束的 JSON 提案，你批准后才会创建</span>
+          <Button
+            size="icon"
+            variant="morph"
+            aria-label="生成应用"
+            disabled={!live || text.trim().length < 2}
+            onClick={submit}
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+        </div>
+      </div>
+      {demos.length ? (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] text-muted">演示样例（录制的真实模型响应，非实时生成）：</span>
+          {demos.map((r) => (
+            <Link
+              key={r.id}
+              to={`/studio/new?recording=${encodeURIComponent(r.id)}&label=${encodeURIComponent(r.intent)}`}
+              className="inline-flex items-center gap-1 rounded-full border border-change/40 px-2.5 py-1 text-[11px] text-change hover:bg-change/10"
+              title={r.intent}
+            >
+              <PlayCircle className="size-3" /> {r.title}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -166,6 +240,7 @@ export function HubPage() {
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
         每一次变更都经过六层校验、以差异形式呈现，并在你批准后生效。界面可以回到任何历史版本，业务数据永远不会丢失。
       </p>
+      <IntentBox />
 
       <section className="mt-12" aria-labelledby="my-apps">
         <div className="mb-3 flex items-center justify-between">
@@ -184,7 +259,7 @@ export function HubPage() {
           <ErrorState message={errorMessage(apps.error)} onRetry={() => apps.refetch()} />
         ) : apps.data.length === 0 ? (
           <Card>
-            <EmptyState title="还没有应用" hint="从下方模板开始，或在下一步用自然语言描述你想要的应用。" />
+            <EmptyState title="还没有应用" hint="在上方用一句话描述你想要的应用，或从下方模板开始。" />
           </Card>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

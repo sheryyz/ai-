@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Wand } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { AppIcon } from '../components/AppIcon'
 import { Badge } from '../components/ui/badge'
@@ -59,6 +59,12 @@ export function RuntimePage() {
             <div className="flex items-center gap-2">
               <Badge>v{app.data.version}</Badge>
               <Badge>{records.data.length} 条记录</Badge>
+              <Link
+                to={`/apps/${id}/studio`}
+                className="ml-1 inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] bg-morph px-3 text-[13px] font-medium text-on-morph hover:opacity-90"
+              >
+                <Wand className="size-3.5" /> 在 AI Studio 中演进
+              </Link>
             </div>
           </div>
           <AppRuntime appId={id} definition={app.data.definition} records={records.data} />
