@@ -20,7 +20,7 @@ import {
 import type { ChatMessage } from './client'
 
 /** Bump whenever the wording changes; recorded in every proposal trace and evaluation result. */
-export const PROMPT_VERSION = 'planner-v1.0'
+export const PROMPT_VERSION = 'planner-v1.1'
 
 const PATCH_OPS_DOC = `
 - {"op":"addField","entityId","field":FieldDef}  新增字段；required 为 true 时必须带 default
@@ -92,9 +92,11 @@ in / notIn 的 value 是数组；isEmpty / notEmpty 不需要 value。日期可�
 # PatchOp（只能使用以下操作）
 ${PATCH_OPS_DOC}
 
-# 创建应用的推荐结构
+# 创建应用的原则
+- 只实现用户明确提出的字段与功能。不要自行添加用户没提到的字段（如备注、场次）或流程（如签到、审核），用户之后会用自然语言继续演进应用。只有需求本身包含状态流转（如“借用管理”含借出、归还）时，才加入对应的状态字段与 QuickAction。
+- 取值有限的分类（如专业、类别、部门、状态）用 enum，并给出 4–8 个常见选项（必要时含“其他”），这样才能做分布统计。
 - 1 个 CollectionSource（id 用 "source"，params.entityId 为实体 id），它是所有记录流的起点。
-- main 区：2 个左右 Metric（width "half"），按单选字段的 Chart（width "half"），1 个 Table（width "full"，列包含主要字段与 createdAt）。
+- main 区：1–2 个 Metric（width "half"），若有单选字段则加按它分组的 Chart（width "half"），1 个 Table（width "full"，列包含主要字段与 createdAt）。
 - aside 区：Form（录入新记录），CSVExport（导出）。需要“状态流转”（借出/归还、签到、审核通过等）时加 QuickAction。
 - 每个需要记录的组件都从 source.records（或某个 Filter.result）绑定过来。
 
