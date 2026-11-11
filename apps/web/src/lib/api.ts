@@ -5,6 +5,8 @@ import type {
   HealthInfo,
   MorphDiff,
   OutboxEntry,
+  ProposalRecord,
+  RecordingInfo,
   Row,
   StoredRecord,
   TemplateInfo,
@@ -93,6 +95,23 @@ export const api = {
     request<{ outbox: OutboxEntry[] }>('GET', `/api/apps/${id}/outbox`).then((r) => r.outbox),
   recordOutbox: (id: string, nodeId: string) =>
     request<{ entry: OutboxEntry }>('POST', `/api/apps/${id}/outbox`, { nodeId }).then((r) => r.entry),
+
+  proposals: (id: string) =>
+    request<{ proposals: ProposalRecord[] }>('GET', `/api/apps/${id}/proposals`).then((r) => r.proposals),
+  approve: (proposalId: string) =>
+    request<{ proposal: ProposalRecord; appId: string; version: number; app: AppDetail }>(
+      'POST',
+      `/api/proposals/${proposalId}/approve`,
+    ),
+  reject: (proposalId: string) =>
+    request<{ proposal: ProposalRecord }>('POST', `/api/proposals/${proposalId}/reject`).then(
+      (r) => r.proposal,
+    ),
+  recordings: (appId?: string) =>
+    request<{ recordings: RecordingInfo[] }>(
+      'GET',
+      appId ? `/api/recordings?appId=${encodeURIComponent(appId)}` : '/api/recordings',
+    ).then((r) => r.recordings),
 
   versions: (id: string) =>
     request<{ versions: VersionInfo[] }>('GET', `/api/apps/${id}/versions`).then((r) => r.versions),

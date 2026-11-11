@@ -12,6 +12,8 @@ export const keys = {
   records: (id: string) => ['app', id, 'records'] as const,
   versions: (id: string) => ['app', id, 'versions'] as const,
   outbox: (id: string) => ['app', id, 'outbox'] as const,
+  proposals: (id: string) => ['app', id, 'proposals'] as const,
+  recordings: (appId?: string) => ['recordings', appId ?? null] as const,
 }
 
 export function useHealth() {
@@ -43,3 +45,8 @@ export function useToday(): string {
   }, [tz])
   return today
 }
+
+export const useProposals = (id: string) =>
+  useQuery({ queryKey: keys.proposals(id), queryFn: () => api.proposals(id) })
+export const useRecordings = (appId?: string) =>
+  useQuery({ queryKey: keys.recordings(appId), queryFn: () => api.recordings(appId) })
