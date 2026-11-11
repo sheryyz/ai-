@@ -12,6 +12,9 @@ const EnvSchema = z.object({
   LLM_BASE_URL: z.url().default('https://api.deepseek.com'),
   LLM_API_KEY: z.string().trim().optional(),
   LLM_MODEL: z.string().min(1).default('deepseek-flash'),
+  LLM_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(600_000).default(180_000),
+  LLM_MAX_TOKENS: z.coerce.number().int().min(1_000).max(64_000).default(16_000),
+  LLM_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.2),
   APP_TIMEZONE: z
     .string()
     .default(DEFAULT_TIME_ZONE)
@@ -30,6 +33,9 @@ export interface AppConfig {
     model: string
     /** Never sent to the client or written to logs. */
     apiKey: string | undefined
+    timeoutMs: number
+    maxTokens: number
+    temperature: number
   }
 }
 
@@ -54,6 +60,9 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
       baseUrl: e.LLM_BASE_URL.replace(/\/+$/, ''),
       model: e.LLM_MODEL,
       apiKey: e.LLM_API_KEY ? e.LLM_API_KEY : undefined,
+      timeoutMs: e.LLM_TIMEOUT_MS,
+      maxTokens: e.LLM_MAX_TOKENS,
+      temperature: e.LLM_TEMPERATURE,
     },
   }
 }
