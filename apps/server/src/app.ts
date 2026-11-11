@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
-import { PROTOCOL_VERSION } from '@morphos/shared'
+import { type HealthInfo, PROTOCOL_VERSION } from '@morphos/shared'
 import express, { type ErrorRequestHandler } from 'express'
 import { type AppConfig, REPO_ROOT } from './config'
 import type { Ctx } from './context'
@@ -26,7 +26,7 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
   app.use(express.json({ limit: '1mb' }))
 
   app.get('/api/health', (_req, res) => {
-    res.json({
+    const health: HealthInfo = {
       ok: true,
       protocolVersion: PROTOCOL_VERSION,
       timeZone: config.timeZone,
@@ -35,7 +35,8 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
         model: config.llm.model,
         provider: new URL(config.llm.baseUrl).host,
       },
-    })
+    }
+    res.json(health)
   })
 
   app.use('/api', appsRouter(ctx))

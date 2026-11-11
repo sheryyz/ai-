@@ -11,6 +11,7 @@ import {
   fieldTypesOf,
   materialize,
   type NodeDef,
+  type OutboxEntry,
   type ParamsOf,
   primaryEntity,
   type Row,
@@ -256,15 +257,6 @@ export function exportCsv(
 }
 
 // ── simulated outbox ─────────────────────────────────────────────────────────
-
-export interface OutboxEntry {
-  id: string
-  nodeId: string
-  channel: string
-  recipientCount: number
-  messages: { recordId: string; to: string; body: string }[]
-  createdAt: string
-}
 
 /** Records drafts in the simulated outbox. Nothing is sent to any real SMS/IM channel. */
 export function recordOutbox(ctx: Ctx, appId: string, nodeId: string): OutboxEntry {

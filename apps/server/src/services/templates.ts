@@ -1,20 +1,9 @@
 /** Built-in templates and their sample data (fixtures/). Templates are pure AppDefinition data. */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { type AppDefinition, addDays, REGISTRY, validateDefinition } from '@morphos/shared'
+import { addDays, REGISTRY, type TemplateInfo, validateDefinition } from '@morphos/shared'
 import { REPO_ROOT } from '../config'
 import { notFound } from '../errors'
-
-export interface TemplateInfo {
-  id: string
-  name: string
-  description: string
-  icon: string
-  fieldCount: number
-  componentCount: number
-  sampleCount: number
-  definition: AppDefinition
-}
 
 const TEMPLATE_IDS = ['event-registration', 'equipment-lending'] as const
 const FIXTURES = path.join(REPO_ROOT, 'fixtures')

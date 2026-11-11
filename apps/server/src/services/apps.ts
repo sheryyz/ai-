@@ -3,54 +3,19 @@
  */
 import {
   type AppDefinition,
+  type AppDetail,
+  type AppSummary,
   applyPatch,
   computeDiff,
   type MorphDiff,
   type PatchOp,
+  type VersionInfo,
+  type VersionSource,
   validateDefinition,
 } from '@morphos/shared'
 import { type Ctx, newId } from '../context'
 import { audit, tx } from '../db'
 import { HttpError, notFound } from '../errors'
-
-export type VersionSource = 'ai' | 'template' | 'restore' | 'manual' | 'recorded'
-
-export interface AppSummary {
-  id: string
-  name: string
-  description: string | null
-  icon: string
-  version: number
-  recordCount: number
-  fieldCount: number
-  componentCount: number
-  hasSampleData: boolean
-  lastChange: { source: VersionSource; intent: string | null; summary: string | null; at: string }
-  createdAt: string
-  updatedAt: string
-}
-
-export interface AppDetail {
-  id: string
-  name: string
-  icon: string
-  version: number
-  definition: AppDefinition
-  hasSampleData: boolean
-  recordCount: number
-  createdAt: string
-  updatedAt: string
-}
-
-export interface VersionInfo {
-  version: number
-  source: VersionSource
-  intent: string | null
-  summary: string | null
-  proposalId: string | null
-  restoredFrom: number | null
-  createdAt: string
-}
 
 interface AppRow {
   id: string
