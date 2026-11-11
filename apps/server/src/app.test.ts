@@ -5,7 +5,9 @@ import { assertNodeVersion, parseConfig } from './config'
 
 describe('GET /api/health', () => {
   it('reports AI as configured without leaking the key', async () => {
-    const app = createApp(parseConfig({ LLM_API_KEY: 'test-secret-key', NODE_ENV: 'test' }))
+    const { app } = createApp(
+      parseConfig({ LLM_API_KEY: 'test-secret-key', NODE_ENV: 'test', DATABASE_PATH: ':memory:' }),
+    )
     const res = await request(app).get('/api/health').expect(200)
     expect(res.body).toMatchObject({
       ok: true,
@@ -16,13 +18,13 @@ describe('GET /api/health', () => {
   })
 
   it('reports offline mode when no key is set (AC-10)', async () => {
-    const app = createApp(parseConfig({ NODE_ENV: 'test' }))
+    const { app } = createApp(parseConfig({ NODE_ENV: 'test', DATABASE_PATH: ':memory:' }))
     const res = await request(app).get('/api/health').expect(200)
     expect(res.body.ai.configured).toBe(false)
   })
 
   it('returns a structured 404 for unknown API routes', async () => {
-    const app = createApp(parseConfig({ NODE_ENV: 'test' }))
+    const { app } = createApp(parseConfig({ NODE_ENV: 'test', DATABASE_PATH: ':memory:' }))
     const res = await request(app).get('/api/nope').expect(404)
     expect(res.body.error.code).toBe('NOT_FOUND')
   })
@@ -41,5 +43,12 @@ describe('config', () => {
     expect(() => assertNodeVersion('22.12.0')).toThrow(/22\.13/)
     expect(() => assertNodeVersion('22.13.0')).not.toThrow()
     expect(() => assertNodeVersion('24.21.0')).not.toThrow()
+  })
+})
+
+describe('time zone config (ADR-0005)', () => {
+  it('defaults to Asia/Shanghai and rejects invalid zones', () => {
+    expect(parseConfig({}).timeZone).toBe('Asia/Shanghai')
+    expect(() => parseConfig({ APP_TIMEZONE: 'Mars/Base' })).toThrow(/IANA/)
   })
 })
