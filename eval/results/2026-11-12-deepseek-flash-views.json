@@ -1,0 +1,1396 @@
+{
+  "meta": {
+    "模型": "deepseek-flash（api.deepseek.com）",
+    "提示词版本": "planner-v1.2",
+    "温度": "0.2",
+    "自修复上限": "2 轮",
+    "日期": "2026-11-12（Asia/Shanghai）",
+    "代码版本": "e1abb2e",
+    "运行次数": "8（并发 4，总耗时 20.4 s）"
+  },
+  "runs": [
+    {
+      "caseId": "v01",
+      "base": "event-registration",
+      "intent": "给报名的同学一个报名页，填完表就行。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "warnings": [],
+      "totalMs": 4604,
+      "tokens": 4396,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "studentSignup",
+          "label": "同学报名页",
+          "audience": "报名参加讲座的同学",
+          "read": [],
+          "aggregate": [],
+          "write": [
+            "name",
+            "studentId",
+            "major"
+          ],
+          "canCreate": true,
+          "sensitiveRead": [],
+          "restricted": [],
+          "nodes": [
+            {
+              "nodeId": "signupForm",
+              "type": "Form",
+              "title": "讲座报名",
+              "read": [],
+              "aggregate": [],
+              "write": [
+                "name",
+                "studentId",
+                "major"
+              ],
+              "creates": true,
+              "filters": []
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustNotRead",
+            "ok": true
+          },
+          {
+            "name": "mustWrite",
+            "ok": true
+          },
+          {
+            "name": "confirm",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": null,
+        "restrictionRecorded": null
+      },
+      "summary": "新增“同学报名页”分享页，并在该页放入一个报名表单组件",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给报名的同学一个报名页，填完表就行",
+        "summary": "新增“同学报名页”分享页，并在该页放入一个报名表单组件",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addView",
+            "view": {
+              "id": "studentSignup",
+              "label": "同学报名页",
+              "audience": "报名参加讲座的同学",
+              "description": "填写报名信息即可完成讲座报名"
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "signupForm",
+              "type": "Form",
+              "title": "讲座报名",
+              "region": "main",
+              "order": 0,
+              "view": "studentSignup",
+              "params": {
+                "entityId": "attendee",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v02",
+      "base": "event-registration",
+      "intent": "活动现场要给门口志愿者一个签到台：只能按姓名搜索并标记签到，别让他们看到手机号。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "warnings": [],
+      "totalMs": 6478,
+      "tokens": 4815,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "checkinDesk",
+          "label": "签到台",
+          "audience": "门口志愿者",
+          "read": [
+            "name",
+            "major",
+            "checkedIn"
+          ],
+          "aggregate": [],
+          "write": [
+            "checkedIn"
+          ],
+          "canCreate": false,
+          "sensitiveRead": [],
+          "restricted": [
+            "phone"
+          ],
+          "nodes": [
+            {
+              "nodeId": "deskTable",
+              "type": "Table",
+              "title": "报名者",
+              "read": [
+                "name",
+                "major",
+                "checkedIn"
+              ],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "deskCheckin",
+              "type": "QuickAction",
+              "title": "签到",
+              "read": [
+                "name"
+              ],
+              "aggregate": [],
+              "write": [
+                "checkedIn"
+              ],
+              "creates": false,
+              "filters": []
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustRead",
+            "ok": true
+          },
+          {
+            "name": "mustNotRead",
+            "ok": true
+          },
+          {
+            "name": "writeSomething",
+            "ok": true
+          },
+          {
+            "name": "restricted",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": true,
+        "restrictionRecorded": true
+      },
+      "summary": "新增“已签到”字段，创建面向志愿者的签到台分享页（隐藏手机号、仅按姓名搜索标记签到），并在管理名单中显示签到状态",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给门口志愿者一个签到台分享页：只能按姓名搜索并标记签到，不显示手机号",
+        "summary": "新增“已签到”字段，创建面向志愿者的签到台分享页（隐藏手机号、仅按姓名搜索标记签到），并在管理名单中显示签到状态",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addField",
+            "entityId": "attendee",
+            "field": {
+              "id": "checkedIn",
+              "label": "已签到",
+              "type": "boolean",
+              "required": false,
+              "default": false,
+              "description": "志愿者在签到台标记"
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "roster",
+            "params": {
+              "columns": [
+                "name",
+                "studentId",
+                "major",
+                "phone",
+                "checkedIn",
+                "createdAt"
+              ]
+            }
+          },
+          {
+            "op": "addView",
+            "view": {
+              "id": "checkinDesk",
+              "label": "签到台",
+              "audience": "门口志愿者",
+              "description": "按姓名搜索报名者并标记签到",
+              "restrictedFields": [
+                "phone"
+              ]
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "deskTable",
+              "type": "Table",
+              "title": "报名者",
+              "order": 0,
+              "view": "checkinDesk",
+              "params": {
+                "columns": [
+                  "name",
+                  "major",
+                  "checkedIn"
+                ],
+                "searchable": true,
+                "pageSize": 10
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "deskCheckin",
+              "type": "QuickAction",
+              "title": "签到",
+              "order": 1,
+              "view": "checkinDesk",
+              "params": {
+                "label": "标记签到",
+                "searchFields": [
+                  "name"
+                ],
+                "set": {
+                  "checkedIn": true
+                },
+                "availableWhen": {
+                  "field": "checkedIn",
+                  "operator": "eq",
+                  "value": false
+                },
+                "buttonLabel": "签到"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_deskTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "deskTable",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_deskCheckin",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "deskCheckin",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v03",
+      "base": "event-registration",
+      "intent": "让志愿者也能导出完整名单。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "warnings": [],
+      "totalMs": 5390,
+      "tokens": 5152,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "desk",
+          "label": "签到台",
+          "audience": "门口志愿者",
+          "read": [
+            "name",
+            "major",
+            "checkedIn",
+            "createdAt"
+          ],
+          "aggregate": [],
+          "write": [
+            "checkedIn"
+          ],
+          "canCreate": false,
+          "sensitiveRead": [],
+          "restricted": [
+            "phone"
+          ],
+          "nodes": [
+            {
+              "nodeId": "deskRate",
+              "type": "Metric",
+              "read": [],
+              "aggregate": [
+                "checkedIn"
+              ],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "deskAction",
+              "type": "QuickAction",
+              "read": [
+                "name"
+              ],
+              "aggregate": [],
+              "write": [
+                "checkedIn"
+              ],
+              "creates": false,
+              "filters": [
+                "未签到"
+              ]
+            },
+            {
+              "nodeId": "deskExport",
+              "type": "CSVExport",
+              "title": "导出名单",
+              "read": [
+                "name",
+                "major",
+                "checkedIn",
+                "createdAt"
+              ],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "deskPending",
+              "type": "Filter",
+              "title": "未签到",
+              "read": [],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustNotRead",
+            "ok": true
+          },
+          {
+            "name": "restricted",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": true,
+        "restrictionRecorded": true
+      },
+      "summary": "在「签到台」分享页新增一个导出组件，把全部报名记录导出为 CSV，列只含姓名、专业、签到状态与报名时间（不含被限制的手机号和需额外确认的学号）",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "让志愿者在签到台分享页也能导出完整名单",
+        "summary": "在「签到台」分享页新增一个导出组件，把全部报名记录导出为 CSV，列只含姓名、专业、签到状态与报名时间（不含被限制的手机号和需额外确认的学号）",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addNode",
+            "node": {
+              "id": "deskExport",
+              "type": "CSVExport",
+              "title": "导出名单",
+              "order": 2,
+              "view": "desk",
+              "params": {
+                "columns": [
+                  "name",
+                  "major",
+                  "checkedIn",
+                  "createdAt"
+                ],
+                "filename": "讲座报名名单"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_deskExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "deskExport",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v04",
+      "base": "club-supplies",
+      "intent": "给社团成员一个申领页，只能提交申领，看不到别人的申领。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "warnings": [],
+      "totalMs": 4341,
+      "tokens": 4451,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "applyView",
+          "label": "申领页",
+          "audience": "社团成员",
+          "read": [],
+          "aggregate": [],
+          "write": [
+            "item",
+            "quantity",
+            "applicant",
+            "phone",
+            "purpose"
+          ],
+          "canCreate": true,
+          "sensitiveRead": [],
+          "restricted": [],
+          "nodes": [
+            {
+              "nodeId": "applyForm",
+              "type": "Form",
+              "title": "提交申领",
+              "read": [],
+              "aggregate": [],
+              "write": [
+                "item",
+                "quantity",
+                "applicant",
+                "phone",
+                "purpose"
+              ],
+              "creates": true,
+              "filters": []
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustWrite",
+            "ok": true
+          },
+          {
+            "name": "readNone",
+            "ok": true
+          },
+          {
+            "name": "confirm",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": null,
+        "restrictionRecorded": null
+      },
+      "summary": "新增一个面向社团成员的分享页“申领页”，仅包含申领提交表单，不含任何记录列表",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给社团成员一个申领页，只能提交申领，看不到别人的申领",
+        "summary": "新增一个面向社团成员的分享页“申领页”，仅包含申领提交表单，不含任何记录列表",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addView",
+            "view": {
+              "id": "applyView",
+              "label": "申领页",
+              "audience": "社团成员",
+              "description": "填写并提交物资申领，提交后由管理员审核发放"
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "applyForm",
+              "type": "Form",
+              "title": "提交申领",
+              "order": 0,
+              "view": "applyView",
+              "params": {
+                "entityId": "request",
+                "fields": [
+                  "item",
+                  "quantity",
+                  "applicant",
+                  "phone",
+                  "purpose"
+                ],
+                "submitLabel": "提交申领",
+                "successMessage": "申领已提交，请等待管理员审核"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v05",
+      "base": "club-supplies",
+      "intent": "给物资管理员一个发放台：按物品名称搜索已通过的申领并标记为已发放，别让他们看到申领人的手机号。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "warnings": [],
+      "totalMs": 4830,
+      "tokens": 4630,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "dispatchDesk",
+          "label": "发放台",
+          "audience": "物资管理员",
+          "read": [
+            "item",
+            "quantity",
+            "applicant",
+            "status",
+            "purpose",
+            "createdAt"
+          ],
+          "aggregate": [],
+          "write": [
+            "status"
+          ],
+          "canCreate": false,
+          "sensitiveRead": [],
+          "restricted": [
+            "phone"
+          ],
+          "nodes": [
+            {
+              "nodeId": "dispatchFilter",
+              "type": "Filter",
+              "title": "已通过的申领",
+              "read": [],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "dispatchAction",
+              "type": "QuickAction",
+              "title": "标记发放",
+              "read": [
+                "item"
+              ],
+              "aggregate": [],
+              "write": [
+                "status"
+              ],
+              "creates": false,
+              "filters": [
+                "已通过的申领"
+              ]
+            },
+            {
+              "nodeId": "dispatchList",
+              "type": "Table",
+              "title": "待发放列表",
+              "read": [
+                "item",
+                "quantity",
+                "applicant",
+                "status",
+                "purpose",
+                "createdAt"
+              ],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": [
+                "已通过的申领"
+              ]
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustNotRead",
+            "ok": true
+          },
+          {
+            "name": "mustWrite",
+            "ok": true
+          },
+          {
+            "name": "restricted",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": true,
+        "restrictionRecorded": true
+      },
+      "summary": "新增“发放台”分享页：筛选已通过的申领，提供按物品名称搜索并标记已发放的快捷操作和只读列表，并隐藏手机号字段",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给物资管理员一个发放台：按物品名称搜索已通过的申领并标记为已发放，且不让他们看到申领人手机号",
+        "summary": "新增“发放台”分享页：筛选已通过的申领，提供按物品名称搜索并标记已发放的快捷操作和只读列表，并隐藏手机号字段",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addView",
+            "view": {
+              "id": "dispatchDesk",
+              "label": "发放台",
+              "audience": "物资管理员",
+              "description": "搜索已通过的申领，核对物品后标记为已发放",
+              "restrictedFields": [
+                "phone"
+              ]
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "dispatchFilter",
+              "type": "Filter",
+              "title": "已通过的申领",
+              "order": 0,
+              "view": "dispatchDesk",
+              "params": {
+                "filter": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已通过"
+                },
+                "showChips": false
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "dispatchAction",
+              "type": "QuickAction",
+              "title": "标记发放",
+              "order": 1,
+              "view": "dispatchDesk",
+              "params": {
+                "label": "标记为已发放",
+                "searchFields": [
+                  "item"
+                ],
+                "set": {
+                  "status": "已发放"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已通过"
+                },
+                "buttonLabel": "标记已发放"
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "dispatchList",
+              "type": "Table",
+              "title": "待发放列表",
+              "order": 2,
+              "view": "dispatchDesk",
+              "params": {
+                "columns": [
+                  "item",
+                  "quantity",
+                  "applicant",
+                  "status",
+                  "purpose",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "pageSize": 10
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_dispatchFilter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "dispatchFilter",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_dispatchAction",
+              "from": {
+                "node": "dispatchFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "dispatchAction",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_dispatchList",
+              "from": {
+                "node": "dispatchFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "dispatchList",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v06",
+      "base": "club-supplies",
+      "intent": "给负责电话通知的同学一个页面，列出已通过申领的申领人和手机号。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "warnings": [
+        "EXPOSURE_SENSITIVE_FIELD"
+      ],
+      "totalMs": 3442,
+      "tokens": 4429,
+      "confirmExposure": true,
+      "check": {
+        "exposure": {
+          "viewId": "notifyView",
+          "label": "电话通知",
+          "audience": "负责电话通知的同学",
+          "read": [
+            "applicant",
+            "phone"
+          ],
+          "aggregate": [],
+          "write": [],
+          "canCreate": false,
+          "sensitiveRead": [
+            "phone"
+          ],
+          "restricted": [],
+          "nodes": [
+            {
+              "nodeId": "notifyFilter",
+              "type": "Filter",
+              "title": "仅已通过",
+              "read": [],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "notifyList",
+              "type": "Table",
+              "title": "待通知名单",
+              "read": [
+                "applicant",
+                "phone"
+              ],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": [
+                "仅已通过"
+              ]
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustRead",
+            "ok": true
+          },
+          {
+            "name": "confirm",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": null,
+        "restrictionRecorded": null
+      },
+      "summary": "新增「电话通知」分享页，含一个筛选“状态=已通过”的筛选节点和一张只显示申领人、手机号的只读表格",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给负责电话通知的同学一个页面，列出已通过申领的申领人和手机号",
+        "summary": "新增「电话通知」分享页，含一个筛选“状态=已通过”的筛选节点和一张只显示申领人、手机号的只读表格",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addView",
+            "view": {
+              "id": "notifyView",
+              "label": "电话通知",
+              "audience": "负责电话通知的同学",
+              "description": "已通过的申领，请按手机号逐一通知申领人"
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "notifyFilter",
+              "type": "Filter",
+              "title": "仅已通过",
+              "order": 0,
+              "view": "notifyView",
+              "params": {
+                "filter": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已通过"
+                },
+                "showChips": false
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "notifyList",
+              "type": "Table",
+              "title": "待通知名单",
+              "order": 1,
+              "view": "notifyView",
+              "params": {
+                "columns": [
+                  "applicant",
+                  "phone"
+                ],
+                "searchable": true,
+                "pageSize": 20
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_notifyFilter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "notifyFilter",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_notifyList",
+              "from": {
+                "node": "notifyFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "notifyList",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v07",
+      "base": "contest-scoring",
+      "intent": "给评委一个打分页：只能看到作品名称和赛道，可以填写分数和评语，看不到队伍名称和队长手机号。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 2,
+      "roundIssues": [
+        [
+          "schema:SCHEMA_INVALID"
+        ],
+        []
+      ],
+      "warnings": [],
+      "totalMs": 14937,
+      "tokens": 10397,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "judge",
+          "label": "评委打分",
+          "audience": "评委",
+          "read": [
+            "title",
+            "track",
+            "score",
+            "comment"
+          ],
+          "aggregate": [],
+          "write": [
+            "score",
+            "comment"
+          ],
+          "canCreate": false,
+          "sensitiveRead": [],
+          "restricted": [
+            "team",
+            "leaderPhone"
+          ],
+          "nodes": [
+            {
+              "nodeId": "judgeList",
+              "type": "Table",
+              "title": "待评作品",
+              "read": [
+                "title",
+                "track",
+                "score",
+                "comment"
+              ],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "judgeScore",
+              "type": "QuickAction",
+              "title": "打分",
+              "read": [
+                "title"
+              ],
+              "aggregate": [],
+              "write": [
+                "score",
+                "comment"
+              ],
+              "creates": false,
+              "filters": []
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustNotRead",
+            "ok": true
+          },
+          {
+            "name": "mustWrite",
+            "ok": true
+          },
+          {
+            "name": "restricted",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": true,
+        "restrictionRecorded": true
+      },
+      "summary": "新增“评委打分”分享页，内含只读作品列表（仅作品名称、赛道、分数、评语）和可填写分数与评语的打分快捷操作，并限制评委看到队伍名称与队长手机号",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给评委一个打分页：只能看到作品名称和赛道，可以填写分数和评语，看不到队伍名称和队长手机号",
+        "summary": "新增“评委打分”分享页，内含只读作品列表（仅作品名称、赛道、分数、评语）和可填写分数与评语的打分快捷操作，并限制评委看到队伍名称与队长手机号",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addView",
+            "view": {
+              "id": "judge",
+              "label": "评委打分",
+              "audience": "评委",
+              "description": "查看作品名称与赛道，为作品填写分数和评语",
+              "restrictedFields": [
+                "team",
+                "leaderPhone"
+              ]
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "judgeList",
+              "type": "Table",
+              "title": "待评作品",
+              "order": 0,
+              "view": "judge",
+              "params": {
+                "columns": [
+                  "title",
+                  "track",
+                  "score",
+                  "comment"
+                ],
+                "searchable": true,
+                "pageSize": 10
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "judgeScore",
+              "type": "QuickAction",
+              "title": "打分",
+              "order": 1,
+              "view": "judge",
+              "params": {
+                "label": "给作品打分",
+                "searchFields": [
+                  "title"
+                ],
+                "ask": [
+                  "score",
+                  "comment"
+                ],
+                "set": {
+                  "score": 0
+                },
+                "buttonLabel": "提交打分"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_judgeList",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "judgeList",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_judgeScore",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "judgeScore",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "v08",
+      "base": "book-drift",
+      "intent": "给图书角志愿者一个页面，展示在架的书名和作者，并显示目前在架的数量，不要显示书主人的联系方式。",
+      "outcome": "pending",
+      "allowedOutcome": true,
+      "rounds": 2,
+      "roundIssues": [
+        [
+          "graph:GRAPH_INPUT_UNBOUND"
+        ],
+        []
+      ],
+      "warnings": [],
+      "totalMs": 5549,
+      "tokens": 9075,
+      "confirmExposure": false,
+      "check": {
+        "exposure": {
+          "viewId": "volunteerView",
+          "label": "志愿者书架",
+          "audience": "图书角志愿者",
+          "read": [
+            "title",
+            "author"
+          ],
+          "aggregate": [],
+          "write": [],
+          "canCreate": false,
+          "sensitiveRead": [],
+          "restricted": [
+            "ownerContact"
+          ],
+          "nodes": [
+            {
+              "nodeId": "volFilter",
+              "type": "Filter",
+              "title": "在架图书",
+              "read": [],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": []
+            },
+            {
+              "nodeId": "volCount",
+              "type": "Metric",
+              "title": "在架数量",
+              "read": [],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": [
+                "在架图书"
+              ]
+            },
+            {
+              "nodeId": "volTable",
+              "type": "Table",
+              "title": "在架图书列表",
+              "read": [
+                "title",
+                "author"
+              ],
+              "aggregate": [],
+              "write": [],
+              "creates": false,
+              "filters": [
+                "在架图书"
+              ]
+            }
+          ]
+        },
+        "checks": [
+          {
+            "name": "view",
+            "ok": true
+          },
+          {
+            "name": "mustRead",
+            "ok": true
+          },
+          {
+            "name": "mustNotRead",
+            "ok": true
+          },
+          {
+            "name": "restricted",
+            "ok": true
+          }
+        ],
+        "correct": true,
+        "forbidHeld": true,
+        "restrictionRecorded": true
+      },
+      "summary": "新增“志愿者书架”分享页：筛选在架图书，显示在架数量与书名/作者只读列表，并限制书主人联系方式",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给图书角志愿者一个页面，展示在架的书名和作者，并显示目前在架的数量，不要显示书主人的联系方式",
+        "summary": "新增“志愿者书架”分享页：筛选在架图书，显示在架数量与书名/作者只读列表，并限制书主人联系方式",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addView",
+            "view": {
+              "id": "volunteerView",
+              "label": "志愿者书架",
+              "audience": "图书角志愿者",
+              "description": "查看当前在架的图书，以及可借阅的书名与作者。",
+              "restrictedFields": [
+                "ownerContact"
+              ]
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "volFilter",
+              "type": "Filter",
+              "title": "在架图书",
+              "order": 0,
+              "view": "volunteerView",
+              "params": {
+                "filter": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "在架"
+                },
+                "showChips": false
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "volCount",
+              "type": "Metric",
+              "title": "在架数量",
+              "order": 1,
+              "view": "volunteerView",
+              "params": {
+                "label": "在架数量",
+                "aggregate": "count",
+                "format": "number"
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "volTable",
+              "type": "Table",
+              "title": "在架图书列表",
+              "order": 2,
+              "view": "volunteerView",
+              "params": {
+                "columns": [
+                  "title",
+                  "author"
+                ],
+                "searchable": true,
+                "pageSize": 10
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_volFilter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "volFilter",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_volCount",
+              "from": {
+                "node": "volFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "volCount",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_volTable",
+              "from": {
+                "node": "volFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "volTable",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
