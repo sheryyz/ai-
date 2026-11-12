@@ -1,7 +1,8 @@
-import { Monitor, Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, Smartphone, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router'
-import { useHealth } from '../lib/queries'
+import { ApiError } from '../lib/api'
+import { useApps, useHealth } from '../lib/queries'
 import { Button } from './ui/button'
 
 export function Logo() {
@@ -89,7 +90,23 @@ function ThemeToggle() {
   )
 }
 
+/** ADR-0008: the admin API answers only this machine. Another device gets a plain explanation, not broken pages. */
+function RemoteNotice() {
+  return (
+    <main className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
+      <Smartphone className="mb-4 size-8 text-muted" />
+      <h1 className="text-lg font-semibold">这是组织者的管理端</h1>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        管理端只能在运行 MorphOS
+        的那台电脑上使用。如果你是来报名、签到或借用的，请打开组织者发给你的页面链接或扫描二维码。
+      </p>
+    </main>
+  )
+}
+
 export function Shell() {
+  const apps = useApps()
+  const remote = apps.error instanceof ApiError && apps.error.code === 'ADMIN_LOCAL_ONLY'
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur">
@@ -102,12 +119,12 @@ export function Shell() {
             <span className="text-[15px] font-semibold tracking-tight">MorphOS</span>
           </Link>
           <div className="flex items-center gap-2">
-            <StatusPill />
+            {remote ? null : <StatusPill />}
             <ThemeToggle />
           </div>
         </div>
       </header>
-      <Outlet />
+      {remote ? <RemoteNotice /> : <Outlet />}
     </div>
   )
 }
