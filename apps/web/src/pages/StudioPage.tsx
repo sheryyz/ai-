@@ -14,7 +14,7 @@ import { EmptyState, ErrorState, Skeleton } from '../components/ui/feedback'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ApiError, api, errorMessage } from '../lib/api'
 import { cn } from '../lib/cn'
-import { keys, useHealth } from '../lib/queries'
+import { keys, useAiBlocker } from '../lib/queries'
 import { AppRuntime } from '../runtime/AppRuntime'
 import type { Mark } from '../runtime/NodeFrame'
 import { Composer } from '../studio/Composer'
@@ -34,8 +34,8 @@ export function StudioPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [params, setParams] = useSearchParams()
-  const health = useHealth()
-  const aiConfigured = health.data?.ai.configured ?? false
+  const aiBlocker = useAiBlocker()
+  const aiConfigured = aiBlocker === null
 
   const app = useQuery({
     queryKey: keys.app(appId ?? ''),
@@ -296,7 +296,7 @@ export function StudioPage() {
             onSubmit={() => plan(draft)}
             onReplay={replay}
             lockedReason={lockedReason}
-            aiConfigured={aiConfigured}
+            aiBlocker={aiBlocker}
             recordings={applicable}
             placeholder={appId ? '描述新的需求，例如：加一个签到功能…' : '描述你想要的应用…'}
           />

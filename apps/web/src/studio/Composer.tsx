@@ -11,16 +11,17 @@ export interface ComposerProps {
   onReplay: (r: RecordingInfo) => void
   /** Why input is disabled, or null when the user can type. */
   lockedReason: string | null
-  aiConfigured: boolean
+  /** Why AI input is unavailable (offline, server unreachable), or null when live. */
+  aiBlocker: string | null
   recordings: RecordingInfo[]
   placeholder: string
 }
 
 export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Composer(
-  { value, onChange, onSubmit, onReplay, lockedReason, aiConfigured, recordings, placeholder },
+  { value, onChange, onSubmit, onReplay, lockedReason, aiBlocker, recordings, placeholder },
   ref,
 ) {
-  const disabled = lockedReason !== null || !aiConfigured
+  const disabled = lockedReason !== null || aiBlocker !== null
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -43,9 +44,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
           disabled={disabled}
           rows={3}
           maxLength={500}
-          placeholder={
-            !aiConfigured ? '离线模式：未配置模型，可回放下方演示样例' : (lockedReason ?? placeholder)
-          }
+          placeholder={aiBlocker ?? lockedReason ?? placeholder}
           aria-label="描述你的需求"
           className="block w-full resize-none bg-transparent px-1.5 py-1 text-sm leading-relaxed placeholder:text-muted focus:outline-none disabled:cursor-not-allowed"
         />

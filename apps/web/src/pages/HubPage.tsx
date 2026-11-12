@@ -14,7 +14,7 @@ import { Input, Label } from '../components/ui/input'
 import { api, errorMessage } from '../lib/api'
 import { relativeTime } from '../lib/format'
 import { SOURCE_LABELS } from '../lib/labels'
-import { keys, useApps, useHealth, useRecordings, useTemplates, useTimeZone } from '../lib/queries'
+import { keys, useAiBlocker, useApps, useRecordings, useTemplates, useTimeZone } from '../lib/queries'
 
 function TemplateCard({ t }: { t: TemplateInfo }) {
   const navigate = useNavigate()
@@ -163,10 +163,10 @@ function AppCard({ app, onRename }: { app: AppSummary; onRename: () => void }) {
 
 function IntentBox() {
   const navigate = useNavigate()
-  const health = useHealth()
+  const blocker = useAiBlocker()
   const recordings = useRecordings()
   const [text, setText] = useState('')
-  const live = health.data?.ai.configured ?? false
+  const live = blocker === null
   const demos = (recordings.data ?? []).filter((r) => r.kind === 'create')
   const submit = () => {
     if (text.trim().length >= 2) navigate(`/studio/new?intent=${encodeURIComponent(text.trim())}`)
@@ -188,9 +188,7 @@ function IntentBox() {
           maxLength={500}
           aria-label="描述你想要的应用"
           placeholder={
-            live
-              ? '描述你想要的应用，例如：创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。'
-              : '离线模式：未配置模型（LLM_API_KEY）。可从下方模板创建，或回放演示样例。'
+            blocker ?? '描述你想要的应用，例如：创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。'
           }
           className="block w-full resize-none bg-transparent px-2 py-1.5 text-[15px] leading-relaxed placeholder:text-muted focus:outline-none disabled:cursor-not-allowed"
         />

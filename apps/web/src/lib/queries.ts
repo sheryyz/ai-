@@ -20,6 +20,17 @@ export function useHealth() {
   return useQuery({ queryKey: keys.health, queryFn: api.health, staleTime: 30_000, retry: 1 })
 }
 
+/**
+ * Why the AI input is unavailable, or null when a live model is configured.
+ * "Server unreachable" must not read as "offline mode": the fix differs (start the server vs. set a key).
+ */
+export function useAiBlocker(): string | null {
+  const health = useHealth()
+  if (health.isPending) return '正在连接服务…'
+  if (health.isError) return '无法连接服务器，AI 生成暂不可用。请确认服务已启动后刷新页面。'
+  return health.data.ai.configured ? null : '离线模式：未配置模型（LLM_API_KEY），可回放演示样例。'
+}
+
 export const useTemplates = () => useQuery({ queryKey: keys.templates, queryFn: api.templates })
 export const useApps = () => useQuery({ queryKey: keys.apps, queryFn: api.apps })
 export const useApp = (id: string) => useQuery({ queryKey: keys.app(id), queryFn: () => api.app(id) })
