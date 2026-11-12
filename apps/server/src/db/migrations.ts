@@ -92,4 +92,19 @@ CREATE INDEX idx_audit_app ON audit_events (app_id, id);
     // The definition a proposal would produce, kept for the Studio ghost preview after a reload.
     sql: 'ALTER TABLE proposals ADD COLUMN after_json TEXT;',
   },
+  {
+    version: 3,
+    name: 'view_links',
+    // ADR-0007: share tokens live outside AppDefinition and versions; reset = revoke + new token.
+    sql: `
+CREATE TABLE view_links (
+  token       TEXT PRIMARY KEY,
+  app_id      TEXT NOT NULL REFERENCES apps(id),
+  view_id     TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  revoked_at  TEXT
+);
+CREATE UNIQUE INDEX idx_view_links_active ON view_links (app_id, view_id) WHERE revoked_at IS NULL;
+`,
+  },
 ]
