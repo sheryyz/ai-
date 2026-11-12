@@ -152,6 +152,25 @@ ${fieldStats(def, records)}
 输出 kind="patch"，baseVersion 必须为 ${version}，只包含增量操作（确实无法安全实现时输出 kind="refusal"）。`
 }
 
+/** Appended to PROMPT_VERSION in traces of the whole-regeneration baseline (evaluation only). */
+export const REGENERATE_PROMPT_SUFFIX = '+regenerate-v1'
+
+/**
+ * Evaluation baseline (eval/README.md, strategy A): the same system prompt and context as a patch task,
+ * but the model returns the complete new definition instead of incremental operations.
+ */
+export function regenerateTaskMessage(intent: string, def: AppDefinition, records: StoredRecord[]): string {
+  return `# 任务：根据新需求输出修改后的完整应用定义
+当前应用定义：
+${JSON.stringify(def)}
+
+当前业务数据：共 ${records.length} 条记录（以下只是统计，不含个人数据）
+${fieldStats(def, records)}
+
+用户需求：「${intent}」
+在当前应用的基础上实现需求，输出 kind="create"，definition 为修改后的完整 AppDefinition（不是增量操作）（确实无法安全实现时输出 kind="refusal"）。`
+}
+
 export function repairMessage(issues: ValidationIssue[], round: number, maxRounds: number): string {
   const lines = issues
     .filter((i) => i.level === 'error')

@@ -225,6 +225,36 @@ describe('evolution and safety', () => {
     expect((await api().get(`/api/apps/${app.id}`).expect(200)).body.app.recordCount).toBe(36)
   })
 
+  it('evaluation baseline: "regenerate" asks for a full definition and validates it as a create', async () => {
+    const regenerated = eventTemplate()
+    regenerated.entities[0].fields = regenerated.entities[0].fields.filter(
+      (f: { id: string }) => f.id !== 'phone',
+    )
+    for (const n of regenerated.nodes) {
+      if (n.type === 'Table') n.params.columns = ['name', 'studentId', 'major', 'createdAt']
+      if (n.type === 'Form') n.params.fields = ['name', 'studentId', 'major']
+    }
+    const model = scripted([
+      { kind: 'create', intent: '去掉手机号', summary: '重生成', definition: regenerated },
+    ])
+    const { api, ctx } = testServer({ llm: model })
+    const app = await createFromTemplate(api, 'event-registration', true)
+    const saved = await runPlan(
+      ctx,
+      model,
+      { intent: '不再收集手机号', appId: app.id, strategy: 'regenerate' },
+      () => {},
+    )
+    const task = model.calls[0]?.[1]?.content ?? ''
+    expect(task).toContain('完整 AppDefinition')
+    expect(task).toContain('"id":"phone"')
+    // Structurally valid as a whole definition — the field removal is only visible against the old one,
+    // which is exactly what the evaluation measures for strategy A.
+    expect(saved).toMatchObject({ status: 'pending', kind: 'create' })
+    expect(saved?.trace.promptVersion).toMatch(/\+regenerate-v1$/)
+    expect(saved?.diff?.fromVersion).toBe(1)
+  })
+
   it('stores a model refusal with its reason and suggestion', async () => {
     const model = scripted([
       {

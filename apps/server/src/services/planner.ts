@@ -28,6 +28,8 @@ import {
   createTaskMessage,
   PROMPT_VERSION,
   patchTaskMessage,
+  REGENERATE_PROMPT_SUFFIX,
+  regenerateTaskMessage,
   repairMessage,
 } from '../llm/prompt'
 import { getApp } from './apps'
@@ -43,6 +45,11 @@ export interface PlanInput {
   /** Replay only: the version the recording was made against, rebased onto the current version. */
   rebaseFrom?: number
   recording?: ProposalTrace['recording']
+  /**
+   * Evaluation only (eval/README.md), never reachable over HTTP: "regenerate" asks the model for a complete
+   * new definition of an existing app — the whole-regeneration baseline compared against incremental patches.
+   */
+  strategy?: 'patch' | 'regenerate'
 }
 
 /** Safety-layer findings are never auto-repaired: "fixing" them would silently change what the user asked for. */
@@ -96,7 +103,8 @@ export async function runPlan(
   const trace: ProposalTrace = {
     origin: client.origin,
     model: client.model,
-    promptVersion: PROMPT_VERSION,
+    promptVersion:
+      input.strategy === 'regenerate' ? PROMPT_VERSION + REGENERATE_PROMPT_SUFFIX : PROMPT_VERSION,
     temperature: client.temperature,
     context: '',
     rounds: [],
@@ -109,14 +117,17 @@ export async function runPlan(
   emit({ type: 'stage', stage: 'understand', status: 'running' })
   const initial = input.appId ? getApp(ctx, input.appId) : null
   const records = input.appId ? listStored(ctx, input.appId) : []
-  const mode = initial ? 'patch' : 'create'
+  const regenerate = initial !== null && input.strategy === 'regenerate'
+  const mode = initial && !regenerate ? 'patch' : 'create'
   trace.context = contextSummary(initial, records)
   emit({ type: 'context', summary: trace.context, origin: client.origin, model: client.model })
   emit({ type: 'stage', stage: 'understand', status: 'done' })
 
-  const task = initial
-    ? patchTaskMessage(input.intent, initial.definition, initial.version, records)
-    : createTaskMessage(input.intent)
+  const task = !initial
+    ? createTaskMessage(input.intent)
+    : regenerate
+      ? regenerateTaskMessage(input.intent, initial.definition, records)
+      : patchTaskMessage(input.intent, initial.definition, initial.version, records)
   const history: { output: string; repair: string }[] = []
 
   const evaluate = (content: string): Evaluation => {
@@ -161,7 +172,9 @@ export async function runPlan(
             'PROPOSAL_KIND_MISMATCH',
             'kind',
             mode === 'create'
-              ? '当前任务是创建新应用，应输出 kind="create"'
+              ? regenerate
+                ? '当前任务是输出完整的新应用定义，应输出 kind="create"'
+                : '当前任务是创建新应用，应输出 kind="create"'
               : '当前任务是修改现有应用，应输出 kind="patch"',
           ),
         ],
