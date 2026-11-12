@@ -1,4 +1,5 @@
-import { ArrowLeft, Wand } from 'lucide-react'
+import { viewsOf } from '@morphos/shared'
+import { ArrowLeft, Share2, Wand } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { AppIcon } from '../components/AppIcon'
 import { Badge } from '../components/ui/badge'
@@ -10,7 +11,8 @@ import { AppRuntime } from '../runtime/AppRuntime'
 export function RuntimePage() {
   const { id = '' } = useParams()
   const app = useApp(id)
-  const records = useRecords(id)
+  // Polled: share pages (other devices) write to the same records.
+  const records = useRecords(id, { poll: true })
 
   if (app.isError || records.isError) {
     const err = app.error ?? records.error
@@ -67,6 +69,16 @@ export function RuntimePage() {
               </Link>
             </div>
           </div>
+          {viewsOf(app.data.definition).length ? (
+            <p className="-mt-3 mb-5 flex items-center gap-1.5 text-xs text-muted">
+              <Share2 className="size-3.5" />
+              分享页：
+              {viewsOf(app.data.definition)
+                .map((v) => `${v.label}（${v.audience}）`)
+                .join('、')}
+              · 链接在 AI Studio 的「分享」中获取
+            </p>
+          ) : null}
           <AppRuntime appId={id} definition={app.data.definition} records={records.data} />
         </>
       )}
