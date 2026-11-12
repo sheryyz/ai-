@@ -14,7 +14,13 @@ export const keys = {
   outbox: (id: string) => ['app', id, 'outbox'] as const,
   proposals: (id: string) => ['app', id, 'proposals'] as const,
   recordings: (appId?: string) => ['recordings', appId ?? null] as const,
+  views: (id: string) => ['app', id, 'views'] as const,
+  shareInfo: ['share-info'] as const,
+  snapshot: (token: string) => ['share', token] as const,
 }
+
+/** Share pages and the admin page see each other's writes within a few seconds (requirements §7 P0). */
+export const POLL_MS = 3_000
 
 export function useHealth() {
   return useQuery({ queryKey: keys.health, queryFn: api.health, staleTime: 30_000, retry: 1 })
@@ -34,8 +40,12 @@ export function useAiBlocker(): string | null {
 export const useTemplates = () => useQuery({ queryKey: keys.templates, queryFn: api.templates })
 export const useApps = () => useQuery({ queryKey: keys.apps, queryFn: api.apps })
 export const useApp = (id: string) => useQuery({ queryKey: keys.app(id), queryFn: () => api.app(id) })
-export const useRecords = (id: string) =>
-  useQuery({ queryKey: keys.records(id), queryFn: () => api.records(id) })
+export const useRecords = (id: string, opts: { poll?: boolean } = {}) =>
+  useQuery({
+    queryKey: keys.records(id),
+    queryFn: () => api.records(id),
+    refetchInterval: opts.poll ? POLL_MS : false,
+  })
 export const useVersions = (id: string) =>
   useQuery({ queryKey: keys.versions(id), queryFn: () => api.versions(id) })
 export const useOutbox = (id: string, enabled = true) =>

@@ -8,6 +8,7 @@ import { ApiError } from './lib/api'
 import { HubPage } from './pages/HubPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RuntimePage } from './pages/RuntimePage'
+import { SharePage } from './pages/SharePage'
 import { StudioPage } from './pages/StudioPage'
 
 // Sonner ships its own light palette; point it at the design tokens so toasts follow the theme.
@@ -39,6 +40,8 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
+  // Share pages stand alone: no platform header, AI status or links back into the admin side.
+  { path: '/v/:token', element: <SharePage /> },
 ])
 
 export function App() {

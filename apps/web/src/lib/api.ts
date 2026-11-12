@@ -8,9 +8,12 @@ import type {
   ProposalRecord,
   RecordingInfo,
   Row,
+  ShareInfo,
   StoredRecord,
   TemplateInfo,
   VersionInfo,
+  ViewLinkInfo,
+  ViewSnapshot,
 } from '@morphos/shared'
 
 export class ApiError extends Error {
@@ -98,10 +101,12 @@ export const api = {
 
   proposals: (id: string) =>
     request<{ proposals: ProposalRecord[] }>('GET', `/api/apps/${id}/proposals`).then((r) => r.proposals),
-  approve: (proposalId: string) =>
+  /** confirmExposure is required by the server when the Diff asks for it (protocol §11.5). */
+  approve: (proposalId: string, confirmExposure = false) =>
     request<{ proposal: ProposalRecord; appId: string; version: number; app: AppDetail }>(
       'POST',
       `/api/proposals/${proposalId}/approve`,
+      { confirmExposure },
     ),
   reject: (proposalId: string) =>
     request<{ proposal: ProposalRecord }>('POST', `/api/proposals/${proposalId}/reject`).then(
@@ -117,10 +122,34 @@ export const api = {
     request<{ versions: VersionInfo[] }>('GET', `/api/apps/${id}/versions`).then((r) => r.versions),
   restoreDiff: (id: string, version: number) =>
     request<{ diff: MorphDiff }>('GET', `/api/apps/${id}/versions/${version}/diff`).then((r) => r.diff),
-  restore: (id: string, version: number, baseVersion: number) =>
+  restore: (id: string, version: number, baseVersion: number, confirmExposure = false) =>
     request<{ version: number; diff: MorphDiff; app: AppDetail }>(
       'POST',
       `/api/apps/${id}/versions/${version}/restore`,
-      { baseVersion },
+      { baseVersion, confirmExposure },
     ),
+
+  views: (id: string) =>
+    request<{ views: ViewLinkInfo[] }>('GET', `/api/apps/${id}/views`).then((r) => r.views),
+  ensureLink: (id: string, viewId: string) =>
+    request<{ token: string }>('POST', `/api/apps/${id}/views/${viewId}/link`).then((r) => r.token),
+  resetLink: (id: string, viewId: string) =>
+    request<{ token: string }>('POST', `/api/apps/${id}/views/${viewId}/link/reset`).then((r) => r.token),
+  shareInfo: () => request<ShareInfo>('GET', '/api/share-info'),
+}
+
+/** Share-link API (protocol §11.4): everything is scoped by the token, nothing by app id. */
+export const shareApi = {
+  snapshot: (token: string) =>
+    request<{ snapshot: ViewSnapshot }>('GET', `/api/v/${token}`).then((r) => r.snapshot),
+  submit: (token: string, nodeId: string, values: Record<string, unknown>) =>
+    request<{ record: { id: string } }>('POST', `/api/v/${token}/records`, { nodeId, values }),
+  act: (token: string, nodeId: string, recordId: string, answers: Record<string, unknown>) =>
+    request<{ record: Row }>('POST', `/api/v/${token}/actions/${nodeId}`, { recordId, answers }).then(
+      (r) => r.record,
+    ),
+  outbox: (token: string, nodeId: string) =>
+    request<{ entry: OutboxEntry }>('POST', `/api/v/${token}/outbox`, { nodeId }).then((r) => r.entry),
+  exportUrl: (token: string, nodeId: string) =>
+    `/api/v/${token}/export.csv?node=${encodeURIComponent(nodeId)}`,
 }
