@@ -1,7 +1,9 @@
 /**
- * protocol.md §7 — definition validation, layers L1–L4.
+ * protocol.md §7 — definition validation, layers L1–L4 and L7 (exposure, see exposure.ts).
  * Proposal-level layers (L5 safety, L6 version) live in proposal.ts.
  */
+
+import { exposureIssues } from './exposure'
 import {
   type FieldType,
   type FilterExpr,
@@ -22,6 +24,7 @@ import {
   FIELD_TYPE_LABELS,
   type FieldDef,
   type NodeDef,
+  viewsOf,
 } from './schema'
 
 export interface DefinitionValidation {
@@ -53,6 +56,11 @@ export function validateDefinition(raw: unknown): DefinitionValidation {
   def.nodes.forEach((n, i) => {
     const r = PARAM_SCHEMAS[n.type].safeParse(n.params)
     if (r.success) {
+      if (n.type === 'Table' && n.view !== undefined) {
+        // protocol §4: tables on a share page are read-only unless explicitly (and wrongly) opened; L7 flags that.
+        const raw = n.params as Record<string, unknown>
+        Object.assign(r.data, { editable: raw.editable === true, allowDelete: raw.allowDelete === true })
+      }
       n.params = r.data as Record<string, unknown>
       validParams.add(i)
     } else {
@@ -152,6 +160,40 @@ export function validateDefinition(raw: unknown): DefinitionValidation {
   def.nodes.forEach((n, i) => {
     if (nodes.has(n.id)) add('reference', 'REF_DUPLICATE_ID', ['nodes', i, 'id'], `节点标识符「${n.id}」重复`)
     else nodes.set(n.id, { node: n, index: i })
+  })
+
+  // ── L2: role views (protocol §2.2, §3.1) ─────────────────────────────────
+  const views = viewsOf(def)
+  const viewIds = new Set<string>()
+  views.forEach((v, vi) => {
+    if (viewIds.has(v.id))
+      add('reference', 'REF_DUPLICATE_ID', ['views', vi, 'id'], `分享页标识符「${v.id}」重复`)
+    viewIds.add(v.id)
+    v.restrictedFields?.forEach((id, j) => {
+      ref(['views', vi, 'restrictedFields', j], id, false)
+    })
+  })
+  def.nodes.forEach((n, i) => {
+    if (n.view === undefined) return
+    if (!REGISTRY[n.type].visual) {
+      add(
+        'reference',
+        'REF_VIEW_NOT_ALLOWED',
+        ['nodes', i, 'view'],
+        `${REGISTRY[n.type].label}「${n.id}」没有界面，不属于任何页面`,
+        '去掉 view；视图中的组件可以直接绑定无界面组件的输出',
+      )
+    } else if (!viewIds.has(n.view)) {
+      add(
+        'reference',
+        'REF_MISSING_VIEW',
+        ['nodes', i, 'view'],
+        `分享页「${n.view}」不存在`,
+        views.length
+          ? `现有分享页：${views.map((v) => `${v.id}(${v.label})`).join('、')}`
+          : '先用 addView 新增分享页，再把组件的 view 设为它的 id',
+      )
+    }
   })
 
   // ── L2/L3: node params ────────────────────────────────────────────────────
@@ -366,6 +408,9 @@ export function validateDefinition(raw: unknown): DefinitionValidation {
   if (cycle) {
     add('graph', 'GRAPH_CYCLE', ['bindings'], `数据流存在环：${cycle.join(' → ')}`, '删除环上的任意一条绑定')
   }
+
+  // ── L7: exposure of role views ────────────────────────────────────────────
+  issues.push(...exposureIssues(def, (i) => validParams.has(i)))
 
   const sorted = sortIssues(issues)
   return { ok: !hasErrors(sorted), issues: sorted, definition: def }

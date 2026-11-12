@@ -11,7 +11,7 @@ import {
   isDateString,
   type Row,
 } from './filter'
-import { isReservedFieldId } from './ids'
+import { isReservedFieldId, SYSTEM_FIELD_LABELS } from './ids'
 import { DATE_TOKENS, type ParamsOf, REGISTRY } from './registry'
 import type { AppDefinition, EntityDef, FieldDef, NodeDef } from './schema'
 import { topoOrder } from './validate'
@@ -21,12 +21,6 @@ export interface StoredRecord {
   data: Record<string, unknown>
   createdAt: string
   updatedAt: string
-}
-
-export const SYSTEM_FIELD_LABELS: Record<string, string> = {
-  id: '记录编号',
-  createdAt: '创建时间',
-  updatedAt: '更新时间',
 }
 
 export function primaryEntity(def: AppDefinition): EntityDef {

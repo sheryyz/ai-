@@ -7,6 +7,12 @@ export const SLUG_PATTERN = /^[a-z][a-zA-Z0-9_]{0,39}$/
 export const RESERVED_FIELD_IDS = ['id', 'createdAt', 'updatedAt'] as const
 export type ReservedFieldId = (typeof RESERVED_FIELD_IDS)[number]
 
+export const SYSTEM_FIELD_LABELS: Record<string, string> = {
+  id: '记录编号',
+  createdAt: '创建时间',
+  updatedAt: '更新时间',
+}
+
 export function isSlug(value: string): boolean {
   return SLUG_PATTERN.test(value)
 }

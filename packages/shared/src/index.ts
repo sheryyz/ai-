@@ -4,6 +4,7 @@
  */
 export type * from './api'
 export * from './diff'
+export * from './exposure'
 export * from './filter'
 export * from './ids'
 export * from './issues'
