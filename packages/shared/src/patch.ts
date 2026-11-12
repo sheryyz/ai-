@@ -8,7 +8,7 @@ import type { AppDefinition, PatchOp } from './schema'
 
 export interface ApplyNote {
   opIndex: number
-  kind: 'cascadeUnbind' | 'optionAlreadyExists'
+  kind: 'cascadeUnbind' | 'cascadeRemoveViewNodes' | 'optionAlreadyExists'
   message: string
 }
 
@@ -45,6 +45,18 @@ export function applyPatch(base: AppDefinition, ops: readonly PatchOp[]): ApplyR
           `现有节点：${def.nodes.map((x) => x.id).join('、')}`,
         )
       return n
+    }
+    const findView = (id: string) => {
+      const v = def.views?.find((x) => x.id === id)
+      if (!v)
+        fail(
+          'reference',
+          'REF_MISSING_VIEW',
+          p('viewId'),
+          `分享页「${id}」不存在`,
+          def.views?.length ? `现有分享页：${def.views.map((x) => x.id).join('、')}` : '当前应用还没有分享页',
+        )
+      return v
     }
 
     switch (op.op) {
@@ -86,6 +98,8 @@ export function applyPatch(base: AppDefinition, ops: readonly PatchOp[]): ApplyR
         if (c.label !== undefined) f.label = c.label
         if (c.description !== undefined) f.description = c.description
         if (c.default !== undefined) f.default = c.default
+        if (c.sensitive === true) f.sensitive = true
+        else if (c.sensitive === false) delete f.sensitive
         if (c.addOptions) {
           if (f.type !== 'enum') {
             return fail(
@@ -190,6 +204,50 @@ export function applyPatch(base: AppDefinition, ops: readonly PatchOp[]): ApplyR
         if (op.name !== undefined) def.name = op.name
         if (op.description !== undefined) def.description = op.description
         if (op.icon !== undefined) def.icon = op.icon
+        return true
+      }
+      case 'addView': {
+        const views = def.views ?? []
+        if (views.some((v) => v.id === op.view.id)) {
+          return fail(
+            'reference',
+            'REF_DUPLICATE_ID',
+            p('view', 'id'),
+            `分享页「${op.view.id}」已存在`,
+            '换一个新的视图 id，或用 updateView 修改已有分享页',
+          )
+        }
+        def.views = [...views, structuredClone(op.view)]
+        return true
+      }
+      case 'updateView': {
+        const v = findView(op.viewId)
+        if (!v) return false
+        const c = op.changes
+        if (c.label !== undefined) v.label = c.label
+        if (c.audience !== undefined) v.audience = c.audience
+        if (c.description !== undefined) v.description = c.description
+        if (c.restrictedFields !== undefined) {
+          if (c.restrictedFields.length) v.restrictedFields = [...c.restrictedFields]
+          else delete v.restrictedFields
+        }
+        return true
+      }
+      case 'removeView': {
+        if (!findView(op.viewId)) return false
+        def.views = (def.views ?? []).filter((v) => v.id !== op.viewId)
+        if (!def.views.length) delete def.views
+        const gone = new Set(def.nodes.filter((n) => n.view === op.viewId).map((n) => n.id))
+        if (gone.size) {
+          def.nodes = def.nodes.filter((n) => !gone.has(n.id))
+          const cut = def.bindings.filter((b) => gone.has(b.from.node) || gone.has(b.to.node))
+          def.bindings = def.bindings.filter((b) => !cut.includes(b))
+          notes.push({
+            opIndex: i,
+            kind: 'cascadeRemoveViewNodes',
+            message: `移除分享页「${op.viewId}」同时移除了它的 ${gone.size} 个组件${cut.length ? `与 ${cut.length} 条绑定` : ''}：${[...gone].join('、')}`,
+          })
+        }
         return true
       }
     }

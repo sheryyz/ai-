@@ -1,7 +1,7 @@
 /** protocol.md §7 — validation issue shape shared by server, web and the planner's repair loop. */
 import { z } from './zod'
 
-export const LAYERS = ['schema', 'reference', 'type', 'graph', 'safety', 'version'] as const
+export const LAYERS = ['schema', 'reference', 'type', 'graph', 'safety', 'version', 'exposure'] as const
 export type Layer = (typeof LAYERS)[number]
 
 export const LAYER_LABELS: Record<Layer, string> = {
@@ -11,6 +11,7 @@ export const LAYER_LABELS: Record<Layer, string> = {
   graph: 'L4 数据流图',
   safety: 'L5 安全',
   version: 'L6 版本',
+  exposure: 'L7 暴露',
 }
 
 export const ValidationIssueSchema = z.object({
@@ -78,6 +79,7 @@ const LAYER_ORDER: Record<Layer, number> = {
   graph: 3,
   safety: 4,
   version: 5,
+  exposure: 6,
 }
 
 export function sortIssues(issues: ValidationIssue[]): ValidationIssue[] {

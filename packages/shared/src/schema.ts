@@ -1,5 +1,5 @@
 /**
- * protocol.md §2–§4, §6 — AppDefinition, Patch and Proposal schemas.
+ * protocol.md §2–§4, §6 — AppDefinition, Patch and Proposal schemas (v1.1: role views, sensitive fields).
  * Domain types are inferred from these schemas (CLAUDE.md: no duplicated hand-written interfaces).
  */
 import { FilterExprSchema } from './filter'
@@ -30,6 +30,8 @@ export const FieldDefSchema = z.object({
   default: FieldValueSchema.optional(),
   options: z.array(z.string().trim().min(1).max(30)).min(1).max(20).optional(),
   description: z.string().max(200).optional(),
+  // protocol §11.3: identifies a person (phone, ID number…). Only affects role views.
+  sensitive: z.boolean().optional(),
 })
 export type FieldDef = z.infer<typeof FieldDefSchema>
 
@@ -67,6 +69,8 @@ export const NodeDefSchema = z.object({
   order: z.number().int().min(0).max(999).optional(),
   width: z.enum(['full', 'half']).optional(),
   hidden: z.boolean().optional(),
+  /** protocol §3.1: the role view this node belongs to; absent = the admin page. */
+  view: SlugSchema.optional(),
   params: z.record(z.string(), z.unknown()).default({}),
 })
 export type NodeDef = z.infer<typeof NodeDefSchema>
@@ -99,8 +103,20 @@ export const ICON_NAMES = [
 export const IconNameSchema = z.enum(ICON_NAMES)
 export type IconName = z.infer<typeof IconNameSchema>
 
-export const MAX_NODES = 24
+export const MAX_NODES = 32
 export const MAX_BINDINGS = 48
+export const MAX_VIEWS = 6
+
+/** protocol §2.2 — a page for one kind of person, reached through a share link. */
+export const ViewDefSchema = z.object({
+  id: SlugSchema,
+  label: z.string().trim().min(1).max(20),
+  audience: z.string().trim().min(1).max(20),
+  description: z.string().trim().max(100).optional(),
+  /** Fields the user explicitly forbade this view to touch (neither read row by row nor write). */
+  restrictedFields: z.array(SlugSchema).max(30).optional(),
+})
+export type ViewDef = z.infer<typeof ViewDefSchema>
 
 export const AppDefinitionSchema = z.object({
   schemaVersion: z.literal(PROTOCOL_VERSION),
@@ -111,8 +127,17 @@ export const AppDefinitionSchema = z.object({
   entities: z.array(EntityDefSchema).min(1).max(1, { error: '当前版本每个应用只支持 1 个数据实体' }),
   nodes: z.array(NodeDefSchema).max(MAX_NODES),
   bindings: z.array(BindingSchema).max(MAX_BINDINGS),
+  // Optional rather than defaulted so v1 definitions parse back unchanged; read through viewsOf().
+  views: z
+    .array(ViewDefSchema)
+    .max(MAX_VIEWS, { error: `每个应用最多 ${MAX_VIEWS} 个分享页` })
+    .optional(),
 })
 export type AppDefinition = z.infer<typeof AppDefinitionSchema>
+
+export function viewsOf(def: AppDefinition): ViewDef[] {
+  return def.views ?? []
+}
 
 // ── Patch operations (protocol §6.1) ────────────────────────────────────────
 
@@ -131,6 +156,7 @@ export const UpdateFieldOpSchema = z.object({
     description: z.string().max(200).optional(),
     addOptions: z.array(z.string().trim().min(1).max(30)).min(1).max(20).optional(),
     default: FieldValueSchema.optional(),
+    sensitive: z.boolean().optional(),
   }),
 })
 export const AddNodeOpSchema = z.object({ op: z.literal('addNode'), node: NodeDefSchema })
@@ -163,6 +189,19 @@ export const UpdateAppOpSchema = z.object({
   description: z.string().max(200).optional(),
   icon: IconNameSchema.optional(),
 })
+export const AddViewOpSchema = z.object({ op: z.literal('addView'), view: ViewDefSchema })
+export const UpdateViewOpSchema = z.object({
+  op: z.literal('updateView'),
+  viewId: SlugSchema,
+  changes: z.strictObject({
+    label: z.string().trim().min(1).max(20).optional(),
+    audience: z.string().trim().min(1).max(20).optional(),
+    description: z.string().trim().max(100).optional(),
+    /** Replaces the whole list; removing a field is a loosening the Diff flags as high risk. */
+    restrictedFields: z.array(SlugSchema).max(30).optional(),
+  }),
+})
+export const RemoveViewOpSchema = z.object({ op: z.literal('removeView'), viewId: SlugSchema })
 
 export const PatchOpSchema = z.discriminatedUnion('op', [
   AddFieldOpSchema,
@@ -177,6 +216,9 @@ export const PatchOpSchema = z.discriminatedUnion('op', [
   UnbindOpSchema,
   SetFilterOpSchema,
   UpdateAppOpSchema,
+  AddViewOpSchema,
+  UpdateViewOpSchema,
+  RemoveViewOpSchema,
 ])
 export type PatchOp = z.infer<typeof PatchOpSchema>
 export type PatchOpName = PatchOp['op']
@@ -194,6 +236,9 @@ export const PATCH_OP_NAMES: readonly PatchOpName[] = [
   'unbind',
   'setFilter',
   'updateApp',
+  'addView',
+  'updateView',
+  'removeView',
 ]
 
 /**
