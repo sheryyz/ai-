@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { type HealthInfo, PROTOCOL_VERSION } from '@morphos/shared'
 import express, { type ErrorRequestHandler } from 'express'
+import { adminLocalOnly, type RemoteAddressOf, socketAddress } from './access'
 import { type AppConfig, WEB_DIST } from './config'
 import type { Ctx } from './context'
 import { type DB, openDatabase } from './db'
@@ -19,6 +20,8 @@ export interface AppDeps {
   llm?: LlmClient | null
   /** Replay pacing for recorded demos: 1 = a few seconds, 0 = instant (tests). */
   replaySpeed?: number
+  /** Peer address used by the admin guard (ADR-0008); tests inject one to act as another device. */
+  remoteAddress?: RemoteAddressOf
 }
 
 export function createApp(config: AppConfig, deps: AppDeps = {}) {
@@ -52,6 +55,7 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
     res.json(health)
   })
 
+  app.use('/api', adminLocalOnly(config, deps.remoteAddress ?? socketAddress))
   app.use('/api', viewsRouter(ctx))
   app.use('/api', appsRouter(ctx))
   app.use('/api', recordsRouter(ctx))

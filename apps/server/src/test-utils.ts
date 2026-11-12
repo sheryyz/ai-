@@ -7,18 +7,29 @@ import type { ChatMessage, LlmClient } from './llm/client'
 
 export const FIXED_NOW = new Date('2026-11-11T10:00:00+08:00')
 
+/** Requests carrying this header act as if they came from that address (another device on the LAN). */
+export const PEER_HEADER = 'x-test-peer'
+
 export function testServer(
-  opts: { key?: string; databasePath?: string; now?: () => Date; llm?: LlmClient | null } = {},
+  opts: {
+    key?: string
+    databasePath?: string
+    now?: () => Date
+    llm?: LlmClient | null
+    env?: Record<string, string>
+  } = {},
 ) {
   const config = parseConfig({
     NODE_ENV: 'test',
     DATABASE_PATH: opts.databasePath ?? ':memory:',
     ...(opts.key ? { LLM_API_KEY: opts.key } : {}),
+    ...opts.env,
   })
   const { app, ctx } = createApp(config, {
     now: opts.now ?? (() => FIXED_NOW),
     llm: opts.llm ?? null,
     replaySpeed: 0,
+    remoteAddress: (req) => req.header(PEER_HEADER) ?? req.socket.remoteAddress,
   })
   return { app, ctx, api: () => request(app) }
 }
