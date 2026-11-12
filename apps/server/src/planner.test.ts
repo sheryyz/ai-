@@ -3,6 +3,7 @@ import path from 'node:path'
 import type { PlanEvent, ProposalRecord } from '@morphos/shared'
 import { describe, expect, it } from 'vitest'
 import { REPO_ROOT } from './config'
+import { LlmError } from './llm/client'
 import { createReplayClient, type Recording } from './llm/replay'
 import { parseModelJson, runPlan } from './services/planner'
 import { createFromTemplate, parseStream, resultOf, scripted, testServer } from './test-utils'
@@ -116,6 +117,41 @@ describe('validator-in-the-loop (AC-13)', () => {
     const after = await api().get(`/api/apps/${app.id}`).expect(200)
     expect(after.body.app.version).toBe(1)
     await api().post(`/api/proposals/${saved?.id}/approve`).expect(409)
+  })
+
+  it('marks the stage the model failed in as failed, so no step is left running', async () => {
+    const lastStatus = (events: PlanEvent[]) => {
+      const m = new Map<string, string>()
+      for (const e of events) if (e.type === 'stage') m.set(e.stage, e.status)
+      return m
+    }
+    const failing = (afterContent: boolean) => ({
+      ...scripted([]),
+      async chat(_m: unknown, opts: { onContent?: (d: string) => void }) {
+        if (afterContent) opts.onContent?.('{"kind":')
+        throw new LlmError('LLM_NETWORK', '无法连接模型服务，请检查网络或 LLM_BASE_URL')
+      },
+    })
+    for (const [afterContent, stage] of [
+      [false, 'plan'],
+      [true, 'generate'],
+    ] as const) {
+      const model = failing(afterContent)
+      const { api, ctx } = testServer({ llm: model })
+      const app = await createFromTemplate(api, 'event-registration', true)
+      const events: PlanEvent[] = []
+      const saved = await runPlan(ctx, model, { intent: '加一个签到功能', appId: app.id }, (e) =>
+        events.push(e),
+      )
+      expect(saved).toBeNull()
+      const status = lastStatus(events)
+      expect([...status.values()]).not.toContain('running')
+      expect(status.get(stage)).toBe('failed')
+      expect(status.get('ready')).toBe('failed')
+      expect(events.at(-1)).toMatchObject({ type: 'error', code: 'LLM_NETWORK' })
+      const after = await api().get(`/api/apps/${app.id}`).expect(200)
+      expect(after.body.app.version).toBe(1)
+    }
   })
 
   it('asks for a create when the model answers a create task with a patch', async () => {

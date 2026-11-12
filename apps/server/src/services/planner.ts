@@ -12,6 +12,7 @@ import {
   issue,
   type PlanEvent,
   type PlanOutcome,
+  type PlanStage,
   type ProposalRecord,
   type ProposalTrace,
   primaryEntity,
@@ -96,10 +97,19 @@ export async function runPlan(
   ctx: Ctx,
   client: LlmClient,
   input: PlanInput,
-  emit: (ev: PlanEvent) => void,
+  onEvent: (ev: PlanEvent) => void,
   signal?: AbortSignal,
 ): Promise<ProposalRecord | null> {
   const started = Date.now()
+  // Stages still running when the model call throws are closed as failed, so no step is left spinning.
+  const running = new Map<PlanStage, number | undefined>()
+  const emit = (ev: PlanEvent) => {
+    if (ev.type === 'stage') {
+      if (ev.status === 'running') running.set(ev.stage, ev.round)
+      else running.delete(ev.stage)
+    }
+    onEvent(ev)
+  }
   const trace: ProposalTrace = {
     origin: client.origin,
     model: client.model,
@@ -301,6 +311,7 @@ export async function runPlan(
   } catch (e) {
     const err =
       e instanceof LlmError ? e : new LlmError('LLM_UPSTREAM', e instanceof Error ? e.message : '未知错误')
+    for (const [stage, round] of running) emit({ type: 'stage', stage, status: 'failed', round })
     emit({ type: 'stage', stage: 'ready', status: 'failed' })
     emit({ type: 'error', code: err.code, message: err.message })
     return null
