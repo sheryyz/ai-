@@ -208,10 +208,10 @@ GET definition + GET records
 │     ├─ main.tsx · App.tsx  路由
 │     ├─ pages/              Hub / Studio / Runtime
 │     ├─ runtime/            组件渲染器（注册表 → React 组件）
-│     ├─ studio/             对话、流水线、Diff、版本
+│     ├─ studio/             对话、流水线、Diff、版本、分享、数据流图、主动建议
 │     ├─ components/ui/      基础 UI 原语
 │     └─ lib/                API 客户端、流式读取
-├─ packages/shared/src/      schema / registry / validate / patch / diff / runtime
+├─ packages/shared/src/      schema / registry / validate / patch / diff / runtime / exposure / suggest
 ├─ fixtures/                 模板定义、演示样例提案、非法提案用例
 ├─ eval/                     评测用例与脚本
 ├─ tests/e2e/                Playwright
