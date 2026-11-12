@@ -4,7 +4,9 @@
  */
 import { type APIRequestContext, expect, type Page, test } from '@playwright/test'
 
-type AppBody = { app: { version: number; definition: { nodes: { id: string; type: string }[] } } }
+type AppBody = {
+  app: { version: number; definition: { nodes: { id: string; type: string; view?: string }[] } }
+}
 
 function watchErrors(page: Page): string[] {
   const errors: string[] = []
@@ -37,7 +39,7 @@ async function approveCreate(page: Page): Promise<string> {
   return page.url().split('/apps/')[1]?.split('/')[0] ?? ''
 }
 
-test('场景 A：回放创建 → 录入 → 签到演进 → 拒绝删除 → 恢复旧版本后数据不变（AC-01/03/07/09）', async ({
+test('场景 A：回放创建 → 报名页 → 签到演进 → 签到台 → 导出需确认 → 拒绝删除 → 恢复后数据不变（AC-01/03/07/09/15/17）', async ({
   page,
   request,
 }) => {
@@ -51,9 +53,22 @@ test('场景 A：回放创建 → 录入 → 签到演进 → 拒绝删除 → �
   const appId = await approveCreate(page)
   expect(appId).not.toBe('')
 
-  // Six registrations through the records API (the form itself is exercised in scenario B).
+  const approve = page.getByRole('button', { name: '批准并生效' })
+  const diff = page.getByRole('region', { name: '变更与版本' })
+  const preview = page.getByRole('region', { name: '预览' })
+
+  // A share page for participants: the preview opens on it, the Diff states what it exposes.
+  await page.getByRole('button', { name: /场景 A · 给报名的同学一个报名页/ }).click()
+  await expect(approve).toBeVisible({ timeout: 30_000 })
+  await expect(preview.getByRole('tab', { name: '报名页' })).toHaveAttribute('aria-selected', 'true')
+  await expect(diff).toContainText('数据暴露')
+  await expect(diff).toContainText('新增分享页')
+  await approve.click()
+  await expect(page.getByText('已生效：v2')).toBeVisible()
+
+  // Six registrations through the records API via the admin form.
   const { app } = await getJson<AppBody>(request, `/api/apps/${appId}`)
-  const form = app.definition.nodes.find((n) => n.type === 'Form')
+  const form = app.definition.nodes.find((n) => n.type === 'Form' && !n.view)
   expect(form).toBeDefined()
   const people = [
     ['张三', '2024001', '计算机科学与技术', '13800000001'],
@@ -72,27 +87,42 @@ test('场景 A：回放创建 → 录入 → 签到演进 → 拒绝删除 → �
   await page.reload()
   await expect(page.getByText('6 条记录').first()).toBeVisible()
 
-  // Evolve: check-in patch → ghost preview + Morph Diff naming the 6 existing records and their default.
-  const approve = page.getByRole('button', { name: '批准并生效' })
+  // Evolve: check-in patch → Morph Diff naming the 6 existing records and their default.
   await page.getByRole('button', { name: /场景 A · 加签到、未签到提醒与签到率/ }).click()
   await expect(approve).toBeVisible({ timeout: 30_000 })
-  const diff = page.getByRole('region', { name: '变更与版本' })
   await expect(diff).toContainText('默认')
   await expect(diff).toContainText('6')
   await approve.click()
-  await expect(page.getByText('已生效：v2')).toBeVisible()
+  await expect(page.getByText('已生效：v3')).toBeVisible()
 
-  // Use the new feature at once: check 张三 in; rate and reminder draft react.
-  const preview = page.getByRole('region', { name: '预览' })
+  // Use the new feature at once on the admin page: check 张三 in; rate and reminder draft react.
+  await preview.getByRole('tab', { name: '管理页' }).click()
   const checkin = preview.locator('[data-node="quickCheckin"]')
   const rate = preview.locator('[data-node="metricCheckinRate"]')
-  const draft = preview.locator('[data-node="draftReminder"]')
+  const draft = preview.locator('[data-node="messageReminder"]')
   await expect(checkin).toBeVisible()
   await expect(draft).toContainText('张三')
   await checkin.getByRole('textbox').fill('张三')
   await checkin.locator('li', { hasText: '张三' }).getByRole('button', { name: '标记已签到' }).click()
   await expect(rate).toContainText('16.7%')
   await expect(draft).not.toContainText('张三')
+
+  // A desk for volunteers; the user's “no phone numbers” became a restriction the Diff shows.
+  await page.getByRole('button', { name: /场景 A · 门口志愿者的签到台/ }).click()
+  await expect(approve).toBeVisible({ timeout: 30_000 })
+  await expect(diff).toContainText('禁止接触')
+  await expect(diff).toContainText('手机号')
+  await approve.click()
+  await expect(page.getByText('已生效：v4')).toBeVisible()
+
+  // Over the line: exporting the full list shows student ids → approval needs an explicit yes.
+  await page.getByRole('button', { name: /场景 A · 越界请求：让志愿者导出完整名单/ }).click()
+  await expect(approve).toBeVisible({ timeout: 30_000 })
+  await expect(diff).toContainText('高风险')
+  await expect(page.getByText('确认向「签到台」的门口签到志愿者公开：学号')).toBeVisible()
+  await expect(approve).toBeDisabled()
+  await page.getByRole('button', { name: '拒绝' }).click()
+  await expect(page.getByText('已拒绝，应用没有改动')).toBeVisible()
 
   // Forbidden intent: delete + reset is refused with a suggestion; nothing is touched.
   await page.getByRole('button', { name: /场景 A · 非法意图：删除未签到人员/ }).click()
@@ -103,18 +133,20 @@ test('场景 A：回放创建 → 录入 → 签到演进 → 拒绝删除 → �
   const snapshot = JSON.stringify(await records(request, appId))
   expect(JSON.parse(snapshot)).toHaveLength(6)
 
-  // AC-09: restore v1 → check-in UI gone, records identical; restore v2 → it comes back with 张三 checked in.
+  // AC-09: restore v1 → check-in UI gone, records identical; restore v4 → it comes back with 张三 checked in.
   await page.getByRole('tab', { name: /版本/ }).click()
   const restore = async (v: number) => {
     const row = page.locator('li', { hasText: new RegExp(`^v${v}`) }).filter({ hasText: '恢复此版本界面' })
     await row.first().getByRole('button', { name: '恢复此版本界面' }).click()
     await page.getByRole('dialog').getByRole('button', { name: '恢复' }).click()
-    await expect(page.getByText(`已恢复 v${v} 的界面`)).toBeVisible()
+    await expect(page.getByText(`已恢复 v${v} 的界面`).first()).toBeVisible()
   }
   await restore(1)
   await expect(checkin).toHaveCount(0)
   expect(JSON.stringify(await records(request, appId))).toBe(snapshot)
-  await restore(2)
+  await restore(4)
+  // The preview keeps the page last shown (the desk, opened when it was proposed).
+  await preview.getByRole('tab', { name: '管理页' }).click()
   await expect(checkin).toBeVisible()
   await expect(rate).toContainText('16.7%')
   expect(JSON.stringify(await records(request, appId))).toBe(snapshot)
@@ -137,12 +169,12 @@ test('场景 B：同一引擎从零生成设备借用，表单登记、借出、
   for (const [name, code, category] of [
     ['单反相机', 'CAM-01', '相机'],
     ['投影仪 A', 'PRJ-01', '投影仪'],
-    ['平板 1 号', 'PAD-01', '平板'],
+    ['笔记本 1 号', 'PC-01', '电脑'],
   ] as const) {
     await page.getByLabel('设备名称').fill(name)
     await page.getByLabel('编号').fill(code)
     await page.getByLabel('类别').selectOption(category)
-    await page.getByRole('button', { name: '保存设备' }).click()
+    await page.getByRole('button', { name: '保存', exact: true }).click()
     await expect(page.getByText(name).first()).toBeVisible()
     await expect(page.getByLabel('设备名称')).toHaveValue('')
   }
@@ -180,7 +212,7 @@ test('场景 B：同一引擎从零生成设备借用，表单登记、借出、
   const overdue = page.locator('[data-node]', { hasText: '超期未还设备' }).last()
   await expect(overdue).toContainText('单反相机')
   await expect(overdue).not.toContainText('投影仪 A')
-  await expect(overdue).not.toContainText('平板 1 号')
+  await expect(overdue).not.toContainText('笔记本 1 号')
   expect(await records(request, appId)).toHaveLength(3)
 
   expect(errors).toEqual([])
