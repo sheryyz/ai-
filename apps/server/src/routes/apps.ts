@@ -29,7 +29,7 @@ const UpdateApp = z.object({
   icon: IconNameSchema.optional(),
 })
 
-const Restore = z.object({ baseVersion: z.number().int().min(1) })
+const Restore = z.object({ baseVersion: z.number().int().min(1), confirmExposure: z.boolean().optional() })
 
 export function appsRouter(ctx: Ctx): Router {
   const r = Router()
@@ -84,7 +84,9 @@ export function appsRouter(ctx: Ctx): Router {
 
   r.post('/apps/:id/versions/:v/restore', (req, res) => {
     const body = parseBody(Restore, req)
-    const result = restoreVersion(ctx, req.params.id, intParam(req.params.v, 'version'), body.baseVersion)
+    const result = restoreVersion(ctx, req.params.id, intParam(req.params.v, 'version'), body.baseVersion, {
+      confirmExposure: body.confirmExposure,
+    })
     res.json({ ...result, app: getApp(ctx, req.params.id) })
   })
 

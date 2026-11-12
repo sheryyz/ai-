@@ -16,6 +16,7 @@ import {
 import { type Ctx, newId } from '../context'
 import { audit, tx } from '../db'
 import { HttpError, notFound } from '../errors'
+import { requireExposureConfirmation } from './exposure-confirm'
 
 interface AppRow {
   id: string
@@ -263,8 +264,17 @@ export function previewRestore(ctx: Ctx, appId: string, version: number): MorphD
   })
 }
 
-/** Restores the UI configuration of `version` as a new version. Business records are not touched. */
-export function restoreVersion(ctx: Ctx, appId: string, version: number, baseVersion: number) {
+/**
+ * Restores the UI configuration of `version` as a new version. Business records are not touched.
+ * Bringing back a view that shows sensitive fields needs the same confirmation as approving it (§11.5).
+ */
+export function restoreVersion(
+  ctx: Ctx,
+  appId: string,
+  version: number,
+  baseVersion: number,
+  opts: { confirmExposure?: boolean } = {},
+) {
   const target = getVersion(ctx, appId, version)
   const app = getApp(ctx, appId)
   if (version === app.version) throw new HttpError(400, 'ALREADY_CURRENT', `v${version} 已是当前版本`)
@@ -272,12 +282,22 @@ export function restoreVersion(ctx: Ctx, appId: string, version: number, baseVer
     fromVersion: app.version,
     recordCount: app.recordCount,
   })
+  const confirmed = requireExposureConfirmation(diff, target.definition, opts.confirmExposure)
   const newVersion = commitVersion(ctx, appId, baseVersion, target.definition, {
     source: 'restore',
     intent: `恢复到 v${version}`,
     summary: diff.summary,
     restoredFrom: version,
   })
+  if (confirmed) {
+    audit(
+      ctx.db,
+      appId,
+      'exposure.confirmed',
+      { restoredFrom: version, version: newVersion, views: confirmed },
+      ctx.now(),
+    )
+  }
   return { version: newVersion, diff }
 }
 

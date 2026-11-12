@@ -5,6 +5,7 @@
  */
 import {
   type AppDefinition,
+  computeDiff,
   type MorphDiff,
   type ProposalOrigin,
   type ProposalRecord,
@@ -17,6 +18,7 @@ import { type Ctx, newId } from '../context'
 import { audit, tx } from '../db'
 import { HttpError, notFound } from '../errors'
 import { commitVersionUnsafe, createAppUnsafe, getApp } from './apps'
+import { requireExposureConfirmation } from './exposure-confirm'
 
 interface ProposalRow {
   id: string
@@ -123,6 +125,7 @@ function assertPending(p: ProposalRecord) {
 export function approveProposal(
   ctx: Ctx,
   id: string,
+  opts: { confirmExposure?: boolean } = {},
 ): { proposal: ProposalRecord; appId: string; version: number } {
   return tx(ctx.db, () => {
     const p = getProposal(ctx, id)
@@ -133,8 +136,19 @@ export function approveProposal(
     if (p.kind === 'create') {
       const r = validateProposal(p.proposal)
       if (!r.ok || !r.after) throw new HttpError(422, 'PROPOSAL_INVALID', '提案未通过校验', r.issues)
+      // protocol §11.5: recomputed from the definitions, never trusted from the stored diff.
+      const diff = computeDiff(null, r.after, { fromVersion: 0, recordCount: 0 })
+      const confirmed = requireExposureConfirmation(diff, r.after, opts.confirmExposure)
       const summary = p.diff?.summary ?? null
       const appId = createAppUnsafe(ctx, r.after, { source, intent: p.intent, summary, proposalId: p.id })
+      if (confirmed)
+        audit(
+          ctx.db,
+          appId,
+          'exposure.confirmed',
+          { proposalId: id, version: 1, views: confirmed },
+          ctx.now(),
+        )
       ctx.db
         .prepare(
           `UPDATE proposals SET status = 'approved', app_id = ?, result_app_id = ?, result_version = 1, decided_at = ? WHERE id = ?`,
@@ -158,6 +172,11 @@ export function approveProposal(
         )
       }
       if (!r.ok || !r.after) throw new HttpError(422, 'PROPOSAL_INVALID', '提案未通过校验', r.issues)
+      const diff = computeDiff(app.definition, r.after, {
+        fromVersion: app.version,
+        recordCount: app.recordCount,
+      })
+      const confirmed = requireExposureConfirmation(diff, r.after, opts.confirmExposure)
       const version = commitVersionUnsafe(ctx, p.appId, app.version, r.after, {
         source,
         intent: p.intent,
@@ -170,6 +189,8 @@ export function approveProposal(
         )
         .run(p.appId, version, decidedAt, id)
       audit(ctx.db, p.appId, 'proposal.approved', { proposalId: id, version }, ctx.now())
+      if (confirmed)
+        audit(ctx.db, p.appId, 'exposure.confirmed', { proposalId: id, version, views: confirmed }, ctx.now())
       return { proposal: getProposal(ctx, id), appId: p.appId, version }
     }
 

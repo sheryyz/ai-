@@ -14,6 +14,8 @@ const PlanBody = z.union([
   z.object({ recordingId: z.string(), appId: z.string().optional() }),
 ])
 
+const Approve = z.object({ confirmExposure: z.boolean().optional() })
+
 export function aiRouter(ctx: Ctx, deps: { replaySpeed?: number } = {}): Router {
   const r = Router()
 
@@ -90,7 +92,8 @@ export function aiRouter(ctx: Ctx, deps: { replaySpeed?: number } = {}): Router 
   })
 
   r.post('/proposals/:id/approve', (req, res) => {
-    const result = approveProposal(ctx, req.params.id)
+    const body = parseBody(Approve, req)
+    const result = approveProposal(ctx, req.params.id, body)
     res.json({ ...result, app: getApp(ctx, result.appId) })
   })
 
