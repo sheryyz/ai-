@@ -25,3 +25,7 @@ test-results/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Playwright
+test-results/
+playwright-report/

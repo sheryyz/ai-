@@ -14,8 +14,9 @@
   "scripts": {
     "dev": "concurrently -k -n server,web -c magenta,cyan \"npm run dev -w @morphos/server\" \"npm run dev -w @morphos/web\"",
     "check": "biome check . && npm run typecheck",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tests/e2e",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
     "build": "npm run build -w @morphos/web",
     "start": "npm run build && npm run start -w @morphos/server",
     "format": "biome check --write .",
