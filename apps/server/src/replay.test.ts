@@ -26,6 +26,7 @@ describe('recorded demos (offline mode, AC-10)', () => {
         '02-event-checkin',
         '03-event-delete',
         '04-equipment-create',
+        '05-equipment-overdue',
       ]),
     )
     for (const r of recs)
@@ -78,13 +79,74 @@ describe('recorded demos (offline mode, AC-10)', () => {
     expect((await api().get(`/api/apps/${app.id}/records`).expect(200)).body.records).toEqual(before)
   })
 
-  it('replays scenario B creation through the same engine', async () => {
+  it('AC-04: scenario B is generated from scratch, used for lending, then evolved to flag overdue devices', async () => {
     const { api } = testServer()
     const r = result(
       (await api().post('/api/ai/plan').send({ recordingId: '04-equipment-create' }).expect(200)).text,
     )
     expect(r.outcome).toBe('pending')
-    await api().post(`/api/proposals/${r.proposal.id}/approve`).expect(200)
+    const app = (await api().post(`/api/proposals/${r.proposal.id}/approve`).expect(200)).body.app
+    const nodeOf = (type: string, label?: string) =>
+      app.definition.nodes.find(
+        (n: { type: string; params: { label?: string } }) =>
+          n.type === type && (!label || n.params.label?.includes(label)),
+      ).id
+    const form = nodeOf('Form')
+    const lend = nodeOf('QuickAction', '借出')
+    const giveBack = nodeOf('QuickAction', '归还')
+
+    // Register devices through the generated form (FIXED_NOW is 2026-11-11).
+    const add = async (name: string, code: string) =>
+      (
+        await api()
+          .post(`/api/apps/${app.id}/records`)
+          .send({ nodeId: form, values: { name, code, category: '相机', status: '可借用' } })
+          .expect(201)
+      ).body.record.id as string
+    const camera = await add('单反相机', 'CAM-01')
+    const tripod = await add('三脚架', 'CAM-02')
+    const spare = await add('备用镜头', 'CAM-03')
+
+    const lent = await api()
+      .post(`/api/apps/${app.id}/actions/${lend}`)
+      .send({ recordId: camera, answers: { borrower: '王同学', borrowDate: '2026-11-01' } })
+      .expect(200)
+    expect(lent.body.record.values).toMatchObject({ status: '已借出', borrower: '王同学' })
+    await api()
+      .post(`/api/apps/${app.id}/actions/${lend}`)
+      .send({ recordId: tripod, answers: { borrower: '李老师', borrowDate: '2026-11-09' } })
+      .expect(200)
+    await api()
+      .post(`/api/apps/${app.id}/actions/${lend}`)
+      .send({ recordId: spare, answers: { borrower: '赵同学', borrowDate: '2026-10-20' } })
+      .expect(200)
+    const back = await api()
+      .post(`/api/apps/${app.id}/actions/${giveBack}`)
+      .send({ recordId: spare })
+      .expect(200)
+    expect(back.body.record.values.status).not.toBe('已借出')
+
+    // Evolve: only devices still lent out for more than 7 days are flagged.
+    const before = (await api().get(`/api/apps/${app.id}/records`)).body.records
+    const patch = result(
+      (
+        await api()
+          .post('/api/ai/plan')
+          .send({ recordingId: '05-equipment-overdue', appId: app.id })
+          .expect(200)
+      ).text,
+    )
+    expect(patch.outcome).toBe('pending')
+    expect(patch.proposal.diff?.fields.added).toEqual([])
+    const evolved = (await api().post(`/api/proposals/${patch.proposal.id}/approve`).expect(200)).body.app
+    const overdue = evolved.definition.nodes.find(
+      (n: { id: string; type: string }) =>
+        n.type === 'Table' && !app.definition.nodes.some((o: { id: string }) => o.id === n.id),
+    )
+    const csv = await api().get(`/api/apps/${app.id}/export.csv?node=${overdue.id}`).expect(200)
+    expect(csv.headers['x-record-count']).toBe('1')
+    expect(csv.text).toContain('CAM-01')
+    expect((await api().get(`/api/apps/${app.id}/records`)).body.records).toEqual(before)
   })
 
   it('refuses to replay a patch onto an app whose structure differs from the recording', async () => {
