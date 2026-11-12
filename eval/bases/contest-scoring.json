@@ -1,0 +1,176 @@
+{
+  "$comment": "Evaluation starting point (eval/README.md). Hand-written, fictional domain; not model output.",
+  "definition": {
+    "schemaVersion": 1,
+    "name": "创新大赛评审",
+    "description": "收集参赛作品并由评委打分",
+    "icon": "trophy",
+    "entities": [
+      {
+        "id": "entry",
+        "label": "作品",
+        "displayField": "title",
+        "fields": [
+          {
+            "id": "title",
+            "label": "作品名称",
+            "type": "string",
+            "required": true
+          },
+          {
+            "id": "team",
+            "label": "队伍名称",
+            "type": "string",
+            "required": true
+          },
+          {
+            "id": "track",
+            "label": "赛道",
+            "type": "enum",
+            "required": true,
+            "options": ["人工智能", "软件开发", "硬件创新", "其他"]
+          },
+          {
+            "id": "leaderPhone",
+            "label": "队长手机号",
+            "type": "string",
+            "required": true,
+            "sensitive": true
+          },
+          {
+            "id": "score",
+            "label": "分数",
+            "type": "number",
+            "required": false
+          },
+          {
+            "id": "comment",
+            "label": "评语",
+            "type": "text",
+            "required": false
+          }
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "source",
+        "type": "CollectionSource",
+        "params": {
+          "entityId": "entry",
+          "sort": {
+            "field": "createdAt",
+            "dir": "desc"
+          }
+        }
+      },
+      {
+        "id": "total",
+        "type": "Metric",
+        "title": "作品总数",
+        "region": "main",
+        "order": 0,
+        "width": "half",
+        "params": {
+          "label": "作品总数",
+          "aggregate": "count",
+          "format": "number"
+        }
+      },
+      {
+        "id": "byGroup",
+        "type": "Chart",
+        "title": "分布",
+        "region": "main",
+        "order": 1,
+        "width": "half",
+        "params": {
+          "kind": "bar",
+          "groupBy": "track"
+        }
+      },
+      {
+        "id": "list",
+        "type": "Table",
+        "title": "作品列表",
+        "region": "main",
+        "order": 2,
+        "params": {
+          "columns": ["title", "team", "track", "leaderPhone", "score", "comment", "createdAt"],
+          "searchable": true,
+          "editable": true,
+          "allowDelete": false,
+          "pageSize": 10
+        }
+      },
+      {
+        "id": "entry",
+        "type": "Form",
+        "title": "登记作品",
+        "region": "aside",
+        "order": 0,
+        "params": {
+          "entityId": "entry",
+          "fields": ["title", "team", "track", "leaderPhone"],
+          "submitLabel": "提交"
+        }
+      },
+      {
+        "id": "exportAll",
+        "type": "CSVExport",
+        "title": "导出",
+        "region": "aside",
+        "order": 1,
+        "params": {
+          "filename": "创新大赛评审导出"
+        }
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b_total",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "total",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_byGroup",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "byGroup",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_list",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "list",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_exportAll",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "exportAll",
+          "port": "rows"
+        }
+      }
+    ]
+  }
+}

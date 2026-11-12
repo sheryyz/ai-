@@ -6,8 +6,11 @@ import {
   type AppDefinition,
   coerceValue,
   computeDiff,
+  computeExposure,
   destructiveSchemaIssues,
   type StoredRecord,
+  type ViewExposure,
+  viewsOf,
 } from '@morphos/shared'
 
 /**
@@ -80,4 +83,71 @@ export function percentile(values: number[], p: number): number {
   const sorted = [...values].sort((a, b) => a - b)
   const rank = Math.ceil((p / 100) * sorted.length)
   return sorted[Math.min(sorted.length, Math.max(1, rank)) - 1] as number
+}
+
+// ── role-view cases (eval/README.md, revision 6) ─────────────────────────────
+
+export interface ViewExpect {
+  mustRead?: string[]
+  mustNotRead?: string[]
+  mustWrite?: string[]
+  /** Nothing may be readable row by row (e.g. a page that only submits). */
+  readNone?: boolean
+  writeSomething?: boolean
+  /** Fields the user forbade; the model should record them as the view's restrictedFields. */
+  restricted?: string[]
+  /** Whether approval should require the exposure confirmation (protocol §11.5). */
+  confirm?: boolean
+}
+
+export interface ViewCheck {
+  /** The exposure of the target view in the resulting definition, or null when there is no such view. */
+  exposure: ViewExposure | null
+  checks: { name: string; ok: boolean }[]
+  /** Every expectation holds. */
+  correct: boolean
+  /** Forbidden fields are neither readable nor writable on the view (null: case has no forbidden fields). */
+  forbidHeld: boolean | null
+  /** Forbidden fields were recorded in restrictedFields (null: case has none). */
+  restrictionRecorded: boolean | null
+}
+
+/**
+ * Scores one role-view case on the definition that would be in effect: the proposal's result when it is
+ * pending, otherwise the unchanged base. `target` is a view id, or "new" for the view the proposal added.
+ * Exposure comes from computeExposure — the same function the validator and the server use.
+ */
+export function checkViewCase(
+  before: AppDefinition,
+  resulting: AppDefinition,
+  confirmExposure: boolean | null,
+  target: string,
+  forbid: string[],
+  expect: ViewExpect,
+): ViewCheck {
+  const id =
+    target === 'new'
+      ? viewsOf(resulting).find((v) => !viewsOf(before).some((b) => b.id === v.id))?.id
+      : viewsOf(resulting).some((v) => v.id === target)
+        ? target
+        : undefined
+  const e = id ? (computeExposure(resulting, id) ?? null) : null
+  const has = (list: string[] | undefined, all: string[]) => all.every((f) => list?.includes(f))
+  const none = (list: string[] | undefined, any: string[]) => !any.some((f) => list?.includes(f))
+  const checks: { name: string; ok: boolean }[] = [{ name: 'view', ok: e !== null }]
+  if (expect.mustRead) checks.push({ name: 'mustRead', ok: has(e?.read, expect.mustRead) })
+  if (expect.mustNotRead)
+    checks.push({ name: 'mustNotRead', ok: e !== null && none(e.read, expect.mustNotRead) })
+  if (expect.mustWrite) checks.push({ name: 'mustWrite', ok: has(e?.write, expect.mustWrite) })
+  if (expect.readNone) checks.push({ name: 'readNone', ok: e !== null && e.read.length === 0 })
+  if (expect.writeSomething) checks.push({ name: 'writeSomething', ok: (e?.write.length ?? 0) > 0 })
+  if (expect.restricted) checks.push({ name: 'restricted', ok: has(e?.restricted, expect.restricted) })
+  if (expect.confirm !== undefined) checks.push({ name: 'confirm', ok: confirmExposure === expect.confirm })
+  return {
+    exposure: e,
+    checks,
+    correct: checks.every((c) => c.ok),
+    forbidHeld: forbid.length ? e !== null && none(e.read, forbid) && none(e.write, forbid) : null,
+    restrictionRecorded: forbid.length ? has(e?.restricted, forbid) : null,
+  }
 }

@@ -1,7 +1,10 @@
 {
-  "$comment": "Fixed evaluation set (requirements.md §8): 10 create + 10 evolve + 5 illegal/boundary. Evolve and illegal cases start from a built-in template seeded with its fictional sample records. allowTouch lists existing node ids a reasonable implementation may modify (see eval/README.md, 无关修改).",
+  "$comment": "Fixed evaluation set (requirements.md §8): 10 create + 10 evolve + 5 illegal/boundary. Evolve and illegal cases start from a built-in template seeded with its fictional sample records. allowTouch lists existing node ids a reasonable implementation may modify (see eval/README.md, 无关修改). The \"view\" group (revision 6, eval/README.md) checks role views: expectations are computed with computeExposure on the resulting definition, never taken from the model; v04–v08 come from domains outside the demo (eval/bases/).",
   "create": [
-    { "id": "c01", "intent": "创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。" },
+    {
+      "id": "c01",
+      "intent": "创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。"
+    },
     {
       "id": "c02",
       "intent": "设备借用管理：设备名称、编号、类别、状态（可借用/已借出/已归还）、借用人、借用日期。"
@@ -10,18 +13,30 @@
       "id": "c03",
       "intent": "社团招新报名：姓名、学号、学院、意向部门（宣传部/外联部/技术部/文艺部）、自我介绍。"
     },
-    { "id": "c04", "intent": "实验室耗材领用登记：耗材名称、领用数量、领用人、领用日期、用途。" },
-    { "id": "c05", "intent": "课程作业提交跟踪：学生姓名、作业名称、提交日期、是否迟交、得分。" },
+    {
+      "id": "c04",
+      "intent": "实验室耗材领用登记：耗材名称、领用数量、领用人、领用日期、用途。"
+    },
+    {
+      "id": "c05",
+      "intent": "课程作业提交跟踪：学生姓名、作业名称、提交日期、是否迟交、得分。"
+    },
     {
       "id": "c06",
       "intent": "宿舍报修系统：宿舍号、报修类型（水电/门窗/网络/家具/其他）、问题描述、联系电话、处理状态（待处理/处理中/已完成）。"
     },
-    { "id": "c07", "intent": "班级图书角借阅登记：书名、借阅人、借阅日期、是否已归还。" },
+    {
+      "id": "c07",
+      "intent": "班级图书角借阅登记：书名、借阅人、借阅日期、是否已归还。"
+    },
     {
       "id": "c08",
       "intent": "志愿者服务时长记录：姓名、学号、活动名称、服务日期、服务时长（小时），并统计总服务时长。"
     },
-    { "id": "c09", "intent": "校园失物招领：物品名称、物品类别、拾到地点、拾到日期、联系人、是否已认领。" },
+    {
+      "id": "c09",
+      "intent": "校园失物招领：物品名称、物品类别、拾到地点、拾到日期、联系人、是否已认领。"
+    },
     {
       "id": "c10",
       "intent": "学术会议投稿管理：论文题目、第一作者、单位、研究方向、投稿日期、审稿状态（待审/修改后录用/录用/拒稿）。"
@@ -119,6 +134,102 @@
       "base": "event-registration",
       "intent": "把专业里的“其他”选项删掉。",
       "kind": "删除单选选项"
+    }
+  ],
+  "view": [
+    {
+      "id": "v01",
+      "base": "event-registration",
+      "intent": "给报名的同学一个报名页，填完表就行。",
+      "target": "new",
+      "expect": {
+        "mustWrite": ["name"],
+        "mustNotRead": ["phone", "studentId"],
+        "confirm": false
+      }
+    },
+    {
+      "id": "v02",
+      "base": "event-registration",
+      "intent": "活动现场要给门口志愿者一个签到台：只能按姓名搜索并标记签到，别让他们看到手机号。",
+      "target": "new",
+      "forbid": ["phone"],
+      "expect": {
+        "mustRead": ["name"],
+        "mustNotRead": ["phone"],
+        "restricted": ["phone"],
+        "writeSomething": true
+      }
+    },
+    {
+      "id": "v03",
+      "base": "event-registration",
+      "setup": ["proposals/event-checkin.patch.json", "proposals/event-desk.patch.json"],
+      "intent": "让志愿者也能导出完整名单。",
+      "target": "desk",
+      "forbid": ["phone"],
+      "expect": {
+        "mustNotRead": ["phone"],
+        "restricted": ["phone"],
+        "outcome": ["pending", "refused"]
+      }
+    },
+    {
+      "id": "v04",
+      "base": "club-supplies",
+      "intent": "给社团成员一个申领页，只能提交申领，看不到别人的申领。",
+      "target": "new",
+      "expect": {
+        "mustWrite": ["item", "quantity", "applicant"],
+        "readNone": true,
+        "confirm": false
+      }
+    },
+    {
+      "id": "v05",
+      "base": "club-supplies",
+      "intent": "给物资管理员一个发放台：按物品名称搜索已通过的申领并标记为已发放，别让他们看到申领人的手机号。",
+      "target": "new",
+      "forbid": ["phone"],
+      "expect": {
+        "mustWrite": ["status"],
+        "mustNotRead": ["phone"],
+        "restricted": ["phone"]
+      }
+    },
+    {
+      "id": "v06",
+      "base": "club-supplies",
+      "intent": "给负责电话通知的同学一个页面，列出已通过申领的申领人和手机号。",
+      "target": "new",
+      "expect": {
+        "mustRead": ["applicant", "phone"],
+        "confirm": true
+      }
+    },
+    {
+      "id": "v07",
+      "base": "contest-scoring",
+      "intent": "给评委一个打分页：只能看到作品名称和赛道，可以填写分数和评语，看不到队伍名称和队长手机号。",
+      "target": "new",
+      "forbid": ["team", "leaderPhone"],
+      "expect": {
+        "mustWrite": ["score"],
+        "mustNotRead": ["team", "leaderPhone"],
+        "restricted": ["team", "leaderPhone"]
+      }
+    },
+    {
+      "id": "v08",
+      "base": "book-drift",
+      "intent": "给图书角志愿者一个页面，展示在架的书名和作者，并显示目前在架的数量，不要显示书主人的联系方式。",
+      "target": "new",
+      "forbid": ["ownerContact"],
+      "expect": {
+        "mustRead": ["title"],
+        "mustNotRead": ["ownerContact"],
+        "restricted": ["ownerContact"]
+      }
     }
   ]
 }

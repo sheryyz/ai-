@@ -1,0 +1,177 @@
+{
+  "$comment": "Evaluation starting point (eval/README.md). Hand-written, fictional domain; not model output.",
+  "definition": {
+    "schemaVersion": 1,
+    "name": "社团物资申领",
+    "description": "社团成员申领活动物资，管理员审核与发放",
+    "icon": "package",
+    "entities": [
+      {
+        "id": "request",
+        "label": "申领",
+        "displayField": "item",
+        "fields": [
+          {
+            "id": "item",
+            "label": "物品名称",
+            "type": "string",
+            "required": true
+          },
+          {
+            "id": "quantity",
+            "label": "数量",
+            "type": "number",
+            "required": true
+          },
+          {
+            "id": "applicant",
+            "label": "申领人",
+            "type": "string",
+            "required": true
+          },
+          {
+            "id": "phone",
+            "label": "手机号",
+            "type": "string",
+            "required": true,
+            "sensitive": true
+          },
+          {
+            "id": "status",
+            "label": "状态",
+            "type": "enum",
+            "required": true,
+            "default": "待审核",
+            "options": ["待审核", "已通过", "已发放"]
+          },
+          {
+            "id": "purpose",
+            "label": "用途说明",
+            "type": "text",
+            "required": false
+          }
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "source",
+        "type": "CollectionSource",
+        "params": {
+          "entityId": "request",
+          "sort": {
+            "field": "createdAt",
+            "dir": "desc"
+          }
+        }
+      },
+      {
+        "id": "total",
+        "type": "Metric",
+        "title": "申领总数",
+        "region": "main",
+        "order": 0,
+        "width": "half",
+        "params": {
+          "label": "申领总数",
+          "aggregate": "count",
+          "format": "number"
+        }
+      },
+      {
+        "id": "byGroup",
+        "type": "Chart",
+        "title": "分布",
+        "region": "main",
+        "order": 1,
+        "width": "half",
+        "params": {
+          "kind": "bar",
+          "groupBy": "status"
+        }
+      },
+      {
+        "id": "list",
+        "type": "Table",
+        "title": "申领列表",
+        "region": "main",
+        "order": 2,
+        "params": {
+          "columns": ["item", "quantity", "applicant", "phone", "status", "purpose", "createdAt"],
+          "searchable": true,
+          "editable": true,
+          "allowDelete": false,
+          "pageSize": 10
+        }
+      },
+      {
+        "id": "entry",
+        "type": "Form",
+        "title": "登记申领",
+        "region": "aside",
+        "order": 0,
+        "params": {
+          "entityId": "request",
+          "fields": ["item", "quantity", "applicant", "phone", "status", "purpose"],
+          "submitLabel": "提交"
+        }
+      },
+      {
+        "id": "exportAll",
+        "type": "CSVExport",
+        "title": "导出",
+        "region": "aside",
+        "order": 1,
+        "params": {
+          "filename": "社团物资申领导出"
+        }
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b_total",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "total",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_byGroup",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "byGroup",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_list",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "list",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_exportAll",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "exportAll",
+          "port": "rows"
+        }
+      }
+    ]
+  }
+}

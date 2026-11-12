@@ -1,9 +1,15 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import type { AppDefinition, StoredRecord } from '@morphos/shared'
+import { type AppDefinition, type StoredRecord, validateDefinition, validateProposal } from '@morphos/shared'
 import { describe, expect, it } from 'vitest'
 import { REPO_ROOT } from '../config'
-import { destructiveChanges, percentile, recordPreserved, unrelatedChanges } from './eval-metrics'
+import {
+  checkViewCase,
+  destructiveChanges,
+  percentile,
+  recordPreserved,
+  unrelatedChanges,
+} from './eval-metrics'
 
 const template = (): AppDefinition =>
   JSON.parse(readFileSync(path.join(REPO_ROOT, 'fixtures/templates/event-registration.json'), 'utf8'))
@@ -85,5 +91,67 @@ describe('percentile', () => {
     expect(percentile([5, 1, 3, 2, 4], 50)).toBe(3)
     expect(percentile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 95)).toBe(10)
     expect(percentile([], 50)).toBeNaN()
+  })
+})
+
+const fixture = (p: string) => JSON.parse(readFileSync(path.join(REPO_ROOT, p), 'utf8'))
+/** Template → check-in → volunteer desk (phone restricted), through the real validator. */
+function withDesk(): { before: AppDefinition; after: AppDefinition } {
+  let def = validateDefinition(template()).definition as AppDefinition
+  let before = def
+  for (const f of [
+    'fixtures/proposals/event-checkin.patch.json',
+    'fixtures/proposals/event-desk.patch.json',
+  ]) {
+    const r = validateProposal(
+      { ...fixture(f), baseVersion: 1 },
+      { current: { definition: def, version: 1 } },
+    )
+    if (!r.after) throw new Error(JSON.stringify(r.issues))
+    before = def
+    def = r.after
+  }
+  return { before, after: def }
+}
+
+describe('checkViewCase (role-view evaluation)', () => {
+  it('scores a new view from computed exposure: reads, writes, restriction and confirmation', () => {
+    const { before, after } = withDesk()
+    const r = checkViewCase(before, after, false, 'new', ['phone'], {
+      mustRead: ['name'],
+      mustNotRead: ['phone'],
+      restricted: ['phone'],
+      writeSomething: true,
+      confirm: false,
+    })
+    expect(r.exposure?.viewId).toBe('desk')
+    expect(r.checks.every((c) => c.ok)).toBe(true)
+    expect(r).toMatchObject({ correct: true, forbidHeld: true, restrictionRecorded: true })
+  })
+
+  it('fails when a forbidden field shows up, and when no view was added', () => {
+    const { before, after } = withDesk()
+    const leaky = structuredClone(after)
+    const action = leaky.nodes.find((n) => n.id === 'deskAction')
+    if (action) action.params = { ...action.params, searchFields: ['name', 'phone'] }
+    const r = checkViewCase(before, leaky, true, 'desk', ['phone'], { mustNotRead: ['phone'] })
+    expect(r).toMatchObject({ correct: false, forbidHeld: false, restrictionRecorded: true })
+    const missing = checkViewCase(after, after, null, 'new', ['phone'], { mustRead: ['name'] })
+    expect(missing).toMatchObject({
+      exposure: null,
+      correct: false,
+      forbidHeld: false,
+      restrictionRecorded: false,
+    })
+  })
+
+  it('eval bases from other domains are valid definitions', () => {
+    for (const b of ['club-supplies', 'contest-scoring', 'book-drift']) {
+      const r = validateDefinition(fixture(`eval/bases/${b}.json`).definition)
+      expect(
+        r.issues.filter((i) => i.level === 'error'),
+        b,
+      ).toEqual([])
+    }
   })
 })

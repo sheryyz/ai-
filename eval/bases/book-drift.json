@@ -1,0 +1,177 @@
+{
+  "$comment": "Evaluation starting point (eval/README.md). Hand-written, fictional domain; not model output.",
+  "definition": {
+    "schemaVersion": 1,
+    "name": "图书漂流角",
+    "description": "登记大家放到图书角的书，记录借阅状态",
+    "icon": "book",
+    "entities": [
+      {
+        "id": "book",
+        "label": "图书",
+        "displayField": "title",
+        "fields": [
+          {
+            "id": "title",
+            "label": "书名",
+            "type": "string",
+            "required": true
+          },
+          {
+            "id": "author",
+            "label": "作者",
+            "type": "string",
+            "required": false
+          },
+          {
+            "id": "owner",
+            "label": "书主人",
+            "type": "string",
+            "required": true
+          },
+          {
+            "id": "ownerContact",
+            "label": "书主人联系方式",
+            "type": "string",
+            "required": true,
+            "sensitive": true
+          },
+          {
+            "id": "status",
+            "label": "状态",
+            "type": "enum",
+            "required": true,
+            "default": "在架",
+            "options": ["在架", "已借出"]
+          },
+          {
+            "id": "borrower",
+            "label": "借阅人",
+            "type": "string",
+            "required": false
+          }
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "source",
+        "type": "CollectionSource",
+        "params": {
+          "entityId": "book",
+          "sort": {
+            "field": "createdAt",
+            "dir": "desc"
+          }
+        }
+      },
+      {
+        "id": "total",
+        "type": "Metric",
+        "title": "图书总数",
+        "region": "main",
+        "order": 0,
+        "width": "half",
+        "params": {
+          "label": "图书总数",
+          "aggregate": "count",
+          "format": "number"
+        }
+      },
+      {
+        "id": "byGroup",
+        "type": "Chart",
+        "title": "分布",
+        "region": "main",
+        "order": 1,
+        "width": "half",
+        "params": {
+          "kind": "bar",
+          "groupBy": "status"
+        }
+      },
+      {
+        "id": "list",
+        "type": "Table",
+        "title": "图书列表",
+        "region": "main",
+        "order": 2,
+        "params": {
+          "columns": ["title", "author", "owner", "ownerContact", "status", "borrower", "createdAt"],
+          "searchable": true,
+          "editable": true,
+          "allowDelete": false,
+          "pageSize": 10
+        }
+      },
+      {
+        "id": "entry",
+        "type": "Form",
+        "title": "登记图书",
+        "region": "aside",
+        "order": 0,
+        "params": {
+          "entityId": "book",
+          "fields": ["title", "author", "owner", "ownerContact", "status"],
+          "submitLabel": "提交"
+        }
+      },
+      {
+        "id": "exportAll",
+        "type": "CSVExport",
+        "title": "导出",
+        "region": "aside",
+        "order": 1,
+        "params": {
+          "filename": "图书漂流角导出"
+        }
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b_total",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "total",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_byGroup",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "byGroup",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_list",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "list",
+          "port": "rows"
+        }
+      },
+      {
+        "id": "b_exportAll",
+        "from": {
+          "node": "source",
+          "port": "records"
+        },
+        "to": {
+          "node": "exportAll",
+          "port": "rows"
+        }
+      }
+    ]
+  }
+}

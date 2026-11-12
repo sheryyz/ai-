@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "record-demos": "tsx src/scripts/record-demos.ts",
-    "eval": "tsx src/scripts/eval.ts"
+    "eval": "tsx src/scripts/eval.ts",
+    "eval:views": "tsx src/scripts/eval-views.ts"
   },
   "dependencies": {
     "@morphos/shared": "0.1.0",
