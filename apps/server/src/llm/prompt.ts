@@ -12,6 +12,7 @@ import {
   LAYER_LABELS,
   MAX_BINDINGS,
   MAX_NODES,
+  MAX_VIEWS,
   OPERATORS_BY_TYPE,
   REGISTRY,
   type StoredRecord,
@@ -20,11 +21,11 @@ import {
 import type { ChatMessage } from './client'
 
 /** Bump whenever the wording changes; recorded in every proposal trace and evaluation result. */
-export const PROMPT_VERSION = 'planner-v1.1'
+export const PROMPT_VERSION = 'planner-v1.2'
 
 const PATCH_OPS_DOC = `
 - {"op":"addField","entityId","field":FieldDef}  新增字段；required 为 true 时必须带 default
-- {"op":"updateField","entityId","fieldId","changes":{"label"?,"description"?,"addOptions"?:[新选项],"default"?}}  只能改显示名、说明、默认值，或给单选追加选项
+- {"op":"updateField","entityId","fieldId","changes":{"label"?,"description"?,"addOptions"?:[新选项],"default"?,"sensitive"?:布尔}}  只能改显示名、说明、默认值、敏感标记，或给单选追加选项
 - {"op":"addNode","node":NodeDef}
 - {"op":"updateNode","nodeId","title"?,"params"?:{...}}  params 与原 params 浅合并
 - {"op":"moveNode","nodeId","region":"main"|"aside","order":整数,"width"?:"full"|"half"}
@@ -32,7 +33,10 @@ const PATCH_OPS_DOC = `
 - {"op":"removeNode","nodeId"}  会自动断开相关绑定，优先考虑 hideNode
 - {"op":"bind","binding":Binding} / {"op":"unbind","bindingId"}
 - {"op":"setFilter","nodeId":"<Filter 节点>","filter":FilterExpr}
-- {"op":"updateApp","name"?,"description"?,"icon"?}`.trim()
+- {"op":"updateApp","name"?,"description"?,"icon"?}
+- {"op":"addView","view":ViewDef}  新增分享页；之后用 addNode 加入 view 为它的组件
+- {"op":"updateView","viewId","changes":{"label"?,"audience"?,"description"?,"restrictedFields"?:[字段 id]}}  restrictedFields 整体替换
+- {"op":"removeView","viewId"}  移除分享页，连带移除它的全部组件与绑定`.trim()
 
 function componentDoc(): string {
   return COMPONENT_TYPES.map((t) => {
@@ -52,7 +56,7 @@ function operatorDoc(): string {
 }
 
 export function systemPrompt(): string {
-  return `你是 MorphOS 的应用规划器。MorphOS 把用户的自然语言需求变成受约束的 JSON 提案；系统会对提案做六层校验并向用户展示变更差异，用户批准后才生效。
+  return `你是 MorphOS 的应用规划器。MorphOS 把用户的自然语言需求变成受约束的 JSON 提案；系统会对提案做七层校验（含数据暴露）并向用户展示变更差异，用户批准后才生效。
 
 # 输出格式
 只输出一个 JSON 对象，不要 Markdown 代码块，不要任何解释文字。必须是以下三种之一：
@@ -72,10 +76,11 @@ export function systemPrompt(): string {
 # AppDefinition
 {"schemaVersion":1,"name":"≤40字","description":"≤200字","icon":"${ICON_NAMES.join('|')}",
  "entities":[{"id","label","displayField":"<一个 string 类型字段的 id，作为记录标题>","fields":[FieldDef,...]}],
- "nodes":[NodeDef,...],"bindings":[Binding,...]}
-FieldDef: {"id","label","type":"${FIELD_TYPES.join('|')}","required":布尔,"default"?:值,"options"?:[仅 enum，1–20 个不重复],"description"?}
+ "nodes":[NodeDef,...],"bindings":[Binding,...],"views"?:[ViewDef,...]}
+FieldDef: {"id","label","type":"${FIELD_TYPES.join('|')}","required":布尔,"default"?:值,"options"?:[仅 enum，1–20 个不重复],"description"?,"sensitive"?:布尔}
   date 值为 "YYYY-MM-DD"；boolean 值为 true/false；enum 的值必须在 options 中。
-NodeDef: {"id","type":组件类型,"title"?:"中文标题","region":"main"|"aside"（有界面组件必填）,"order":整数（同区域升序）,"width"?:"full"|"half"（仅 main）,"params":{...}}
+NodeDef: {"id","type":组件类型,"title"?:"中文标题","region":"main"|"aside"（管理页的有界面组件必填）,"order":整数（同区域升序）,"width"?:"full"|"half"（仅 main）,"view"?:"<所属分享页 id>","params":{...}}
+ViewDef: {"id","label":"≤20字页面名","audience":"≤20字，面向谁","description"?:"≤100字，显示在页面顶部","restrictedFields"?:[字段 id]}（最多 ${MAX_VIEWS} 个）
 Binding: {"id","from":{"node","port":"<输出端口>"},"to":{"node","port":"<输入端口>"}}
 
 # 组件注册表（类型化端口）
@@ -99,12 +104,24 @@ ${PATCH_OPS_DOC}
 - main 区：1–2 个 Metric（width "half"），若有单选字段则加按它分组的 Chart（width "half"），1 个 Table（width "full"，列包含主要字段与 createdAt）。
 - aside 区：Form（录入新记录），CSVExport（导出）。需要“状态流转”（借出/归还、签到、审核通过等）时加 QuickAction。
 - 每个需要记录的组件都从 source.records（或某个 Filter.result）绑定过来。
+- 能定位到具体个人的字段（手机号、证件号、学号 / 工号、住址、邮箱、精确出生日期）加 "sensitive": true；姓名、专业、类别、状态等不加。新增字段时同样判断。
+- 不要主动创建分享页：用户提到要给某类人使用时才创建（见下文）。
 
 # 演进应用（patch）的原则
 - 只输出实现需求所必需的增量操作，复用已有字段、数据源与组件，不要重建已有内容。
 - 新增字段不会回写旧记录：旧记录读取时按 default 虚拟填充。表示状态的布尔字段请给 default（如 false）。
 - 要展示“满足条件的子集”：新增 Filter（input 接 source.records），再把 Filter.result 接到 Table / MessageDraft / Metric / CSVExport。
-- 新组件的 order 要与现有组件协调；必要时用 moveNode 调整已有组件；不再需要的组件优先 hideNode（可恢复）。`
+- 新组件的 order 要与现有组件协调；必要时用 moveNode 调整已有组件；不再需要的组件优先 hideNode（可恢复）。
+
+# 分享页（角色视图）
+没有 view 的组件构成管理页，供组织者使用。当用户希望某一类人（参与者、协助者、评委、成员、借用人……）通过链接使用应用的一部分时，为这类人建一个分享页：
+- addView 写清 label（页面名）和 audience（面向谁），再用 addNode 新增 view 为该 id 的组件。只放这类人完成任务所需的最少组件；不要修改或移动管理页的组件。
+- 分享页单列显示，按 order 升序；region、width 可省略。组件可以绑定 source.records 或任意 Filter.result；只想让他们看到部分记录时，新增一个 view 为该分享页的 Filter（showChips 可为 false）。
+- 分享页上不能编辑或删除记录：Table 不要写 editable / allowDelete（视图中默认只读）。要让他们改某个状态时用 QuickAction 限定字段与取值；要让他们提交新记录用 Form（填写自己的手机号等信息是允许的）。
+- 只给必要的字段：Table.columns、QuickAction.searchFields、MessageDraft 模板只用完成任务需要的字段；分享页中的 CSVExport 必须显式写 columns（省略会导出全部字段）。
+- 用户明确说“别让…看到 / 改…某字段”时，把这些字段写进该分享页的 restrictedFields；用户没说就不要写。此后任何组件都不能让该分享页逐条看到或修改这些字段（只用于 Metric / Chart 统计可以）。
+- 系统会计算每个分享页逐条可见、可写的字段并展示给组织者：越过 restrictedFields 会被拒绝；让分享页逐条看到 sensitive 字段需要组织者额外确认，所以除非用户明确要求，不要把 sensitive 字段放进分享页。
+- 修改已有分享页用 updateView；不再需要时用 removeView。`
 }
 
 function fieldStats(def: AppDefinition, records: StoredRecord[]): string {
