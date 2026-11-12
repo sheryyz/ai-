@@ -236,7 +236,7 @@ export function HubPage() {
         用一句话生成应用，再用一句话让它<span className="text-morph">持续进化</span>。
       </h1>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-        每一次变更都经过六层校验、以差异形式呈现，并在你批准后生效。界面可以回到任何历史版本，业务数据永远不会丢失。
+        每一次变更都经过七层校验、以差异形式呈现，并在你批准后生效；还能为报名者、志愿者等不同的人生成专属页面，谁能看到什么由系统算清楚。界面可以回到任何历史版本，业务数据永远不会丢失。
       </p>
       <IntentBox />
 
