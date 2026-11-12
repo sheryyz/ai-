@@ -1,0 +1,372 @@
+{
+  "id": "07-event-desk",
+  "title": "场景 A · 门口志愿者的签到台（不让看手机号）",
+  "kind": "patch",
+  "intent": "门口志愿者要一个签到台，只能搜名字点签到，别让他们看到手机号。",
+  "model": "deepseek-flash",
+  "recordedAt": "2026-11-12T05:09:25.193Z",
+  "promptVersion": "planner-v1.2",
+  "temperature": 0.2,
+  "base": {
+    "version": 3,
+    "definition": {
+      "schemaVersion": 1,
+      "name": "校园讲座报名",
+      "description": "用于校园讲座的报名登记，收集姓名、学号、专业与手机号，并统计报名人数与专业分布。",
+      "icon": "graduation",
+      "entities": [
+        {
+          "id": "registration",
+          "label": "讲座报名",
+          "displayField": "name",
+          "fields": [
+            {
+              "id": "name",
+              "label": "姓名",
+              "type": "string",
+              "required": true
+            },
+            {
+              "id": "studentId",
+              "label": "学号",
+              "type": "string",
+              "required": true,
+              "sensitive": true
+            },
+            {
+              "id": "major",
+              "label": "专业",
+              "type": "enum",
+              "required": true,
+              "options": [
+                "计算机科学与技术",
+                "软件工程",
+                "电子信息工程",
+                "机械工程",
+                "汉语言文学",
+                "工商管理",
+                "临床医学",
+                "其他"
+              ]
+            },
+            {
+              "id": "phone",
+              "label": "手机号",
+              "type": "string",
+              "required": true,
+              "sensitive": true
+            },
+            {
+              "id": "checkedIn",
+              "label": "已签到",
+              "type": "boolean",
+              "required": false,
+              "default": false,
+              "description": "现场签到时由组织者标记"
+            }
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "source",
+          "type": "CollectionSource",
+          "title": "报名数据",
+          "region": "main",
+          "order": 0,
+          "width": "full",
+          "params": {
+            "entityId": "registration",
+            "sort": {
+              "field": "createdAt",
+              "dir": "desc"
+            }
+          }
+        },
+        {
+          "id": "metricCount",
+          "type": "Metric",
+          "title": "报名人数",
+          "region": "main",
+          "order": 1,
+          "width": "half",
+          "params": {
+            "label": "报名人数",
+            "aggregate": "count",
+            "format": "number"
+          }
+        },
+        {
+          "id": "chartMajor",
+          "type": "Chart",
+          "title": "专业分布",
+          "region": "main",
+          "order": 3,
+          "width": "half",
+          "params": {
+            "kind": "bar",
+            "groupBy": "major"
+          }
+        },
+        {
+          "id": "tableRegistrations",
+          "type": "Table",
+          "title": "报名名单",
+          "region": "main",
+          "order": 5,
+          "width": "full",
+          "params": {
+            "columns": [
+              "name",
+              "studentId",
+              "major",
+              "phone",
+              "checkedIn",
+              "createdAt"
+            ],
+            "searchable": true,
+            "editable": true,
+            "allowDelete": false,
+            "pageSize": 20
+          }
+        },
+        {
+          "id": "formRegistration",
+          "type": "Form",
+          "title": "填写报名",
+          "region": "aside",
+          "order": 1,
+          "params": {
+            "entityId": "registration",
+            "fields": [
+              "name",
+              "studentId",
+              "major",
+              "phone"
+            ],
+            "submitLabel": "提交报名",
+            "successMessage": "报名成功，请准时参加讲座。"
+          }
+        },
+        {
+          "id": "exportRegistrations",
+          "type": "CSVExport",
+          "title": "导出报名名单",
+          "region": "aside",
+          "order": 2,
+          "params": {
+            "filename": "讲座报名名单"
+          }
+        },
+        {
+          "id": "formSignup",
+          "type": "Form",
+          "title": "填写报名",
+          "order": 1,
+          "view": "signupPage",
+          "params": {
+            "entityId": "registration",
+            "fields": [
+              "name",
+              "studentId",
+              "major",
+              "phone"
+            ],
+            "submitLabel": "提交报名",
+            "successMessage": "报名成功，请准时参加讲座。"
+          }
+        },
+        {
+          "id": "metricCheckinRate",
+          "type": "Metric",
+          "title": "签到率",
+          "region": "main",
+          "order": 2,
+          "width": "half",
+          "params": {
+            "label": "签到率",
+            "aggregate": "ratio",
+            "where": {
+              "field": "checkedIn",
+              "operator": "eq",
+              "value": true
+            },
+            "format": "percent"
+          }
+        },
+        {
+          "id": "filterUncheckedCS",
+          "type": "Filter",
+          "title": "计算机专业未签到",
+          "region": "main",
+          "order": 4,
+          "width": "half",
+          "params": {
+            "filter": {
+              "op": "and",
+              "conditions": [
+                {
+                  "field": "major",
+                  "operator": "eq",
+                  "value": "计算机科学与技术"
+                },
+                {
+                  "field": "checkedIn",
+                  "operator": "eq",
+                  "value": false
+                }
+              ]
+            },
+            "showChips": true
+          }
+        },
+        {
+          "id": "quickCheckin",
+          "type": "QuickAction",
+          "title": "签到登记",
+          "region": "aside",
+          "order": 3,
+          "params": {
+            "label": "签到登记",
+            "searchFields": [
+              "name",
+              "studentId"
+            ],
+            "set": {
+              "checkedIn": true
+            },
+            "availableWhen": {
+              "field": "checkedIn",
+              "operator": "eq",
+              "value": false
+            },
+            "buttonLabel": "标记已签到"
+          }
+        },
+        {
+          "id": "messageReminder",
+          "type": "MessageDraft",
+          "title": "签到提醒",
+          "region": "aside",
+          "order": 4,
+          "params": {
+            "template": "{{name}}同学你好，讲座即将开始，你还没有签到，请尽快到签到处完成签到。",
+            "channelLabel": "站内消息草稿"
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "id": "bindMetric",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "metricCount",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindChart",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "chartMajor",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindTable",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "tableRegistrations",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindExport",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "exportRegistrations",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindCheckinRate",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "metricCheckinRate",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindUnchecked",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "filterUncheckedCS",
+            "port": "input"
+          }
+        },
+        {
+          "id": "bindCheckinAction",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "quickCheckin",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindReminder",
+          "from": {
+            "node": "filterUncheckedCS",
+            "port": "result"
+          },
+          "to": {
+            "node": "messageReminder",
+            "port": "recipients"
+          }
+        }
+      ],
+      "views": [
+        {
+          "id": "signupPage",
+          "label": "报名页",
+          "audience": "报名参加讲座的同学",
+          "description": "填写姓名、学号、专业和手机号即可完成讲座报名。"
+        }
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "reasoning": "用户要一个分享页\"签到台\"，给门口志愿者：只能搜名字、点签到，不能看到手机号。需要：\n- addView：签到台，audience 志愿者，restrictedFields 含 phone（用户明确说别让他们看到手机号）。学号敏感字段也不该出现——不放在组件里即可，不必写进 restrictedFields（用户没说，不要写）。但 phone 用户明确说别看，写 restrictedFields: [\"phone\"]。\n- addNode：Filter（view=checkinDesk）筛选未签到？签到台要搜名字点签到。可以用 QuickAction 限定 availableWhen checkedIn=false，searchFields: [\"name\"]。是否需要 Filter？QuickAction 直接从 source.records 绑定即可，可用 availableWhen 限制已签到记录不可再点。但若要只看未签到名单，可加 Filter 显示未签到。用户说\"只能搜名字点签到\"，最少组件：一个 QuickAction（searchFields: [\"name\"], set checkedIn=true, availableWhen checkedIn eq false）。加一个 Filter 只筛未签到 + Table 只读显示姓名和签到状态？\"只能搜名字点签到\"——保持最少：QuickAction 足够。但志愿者可能想看名单……不要过度。我给 QuickAction 加一个 Filter 限制未签到记录（view 为该分享页），这样搜索范围只包含未签到的人。Filter 有界面（显示条件标签），showChips false 减少暴露。\n\n注意 Filter 是\"有界面组件\"，分享页中 region/width 可省略。Filter 在分享页中会显示条件标签？设 showChips:false 更好。\n\n那 QuickAction 绑定 Filter.result。共享页面的 Filter 只筛 checkedIn eq false，不涉及受限字段。\n\n需要 addView 的 id：checkinDesk。\n\n组件：\n1. addView {\"id\":\"checkinDesk\",\"label\":\"签到台\",\"audience\":\"门口签到志愿者\",\"description\":\"按姓名搜索报名记录并标记已签到。\",\"restrictedFields\":[\"phone\"]}\n2. addNode filterUncheckedDesk: Filter, view checkinDesk, order 1, params filter {field checkedIn eq false}, showChips false\n3. addNode quickDeskCheckin: QuickAction, view checkinDesk, order 2, params label \"签到登记\", searchFields [\"name\"], set {checkedIn:true}, availableWhen {checkedIn eq false}, buttonLabel \"标记已签到\"\n\n绑定：bindDeskFilter from source.records to filterUncheckedDesk.input；bindDeskCheckin from filterUncheckedDesk.result to quickDeskCheckin.rows。\n\n这样志愿者看不到手机号；Table 没加所以也不会显示学号。\n\n输出 patch。",
+      "content": "{\"kind\":\"patch\",\"intent\":\"门口志愿者要一个签到台，只能搜名字点签到，别让他们看到手机号\",\"summary\":\"新增“签到台”分享页：志愿者可按姓名搜索未签到记录并标记已签到，手机号在该页面被限制不可见\",\"baseVersion\":3,\"operations\":[{\"op\":\"addView\",\"view\":{\"id\":\"checkinDesk\",\"label\":\"签到台\",\"audience\":\"门口签到志愿者\",\"description\":\"按姓名搜索报名记录并标记已签到。\",\"restrictedFields\":[\"phone\"]}},{\"op\":\"addNode\",\"node\":{\"id\":\"filterUncheckedDesk\",\"type\":\"Filter\",\"title\":\"未签到记录\",\"view\":\"checkinDesk\",\"order\":1,\"params\":{\"filter\":{\"field\":\"checkedIn\",\"operator\":\"eq\",\"value\":false},\"showChips\":false}}},{\"op\":\"addNode\",\"node\":{\"id\":\"quickDeskCheckin\",\"type\":\"QuickAction\",\"title\":\"签到登记\",\"view\":\"checkinDesk\",\"order\":2,\"params\":{\"label\":\"签到登记\",\"searchFields\":[\"name\"],\"set\":{\"checkedIn\":true},\"availableWhen\":{\"field\":\"checkedIn\",\"operator\":\"eq\",\"value\":false},\"buttonLabel\":\"标记已签到\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"bindDeskFilter\",\"from\":{\"node\":\"source\",\"port\":\"records\"},\"to\":{\"node\":\"filterUncheckedDesk\",\"port\":\"input\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"bindDeskCheckin\",\"from\":{\"node\":\"filterUncheckedDesk\",\"port\":\"result\"},\"to\":{\"node\":\"quickDeskCheckin\",\"port\":\"rows\"}}}]}",
+      "usage": {
+        "promptTokens": 4376,
+        "completionTokens": 923,
+        "reasoningTokens": 577,
+        "totalTokens": 5299
+      },
+      "finishReason": "stop",
+      "ms": 5431
+    }
+  ]
+}

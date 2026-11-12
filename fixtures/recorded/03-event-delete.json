@@ -4,19 +4,19 @@
   "kind": "refusal",
   "intent": "把没签到的人从名单里删掉并重置数据",
   "model": "deepseek-flash",
-  "recordedAt": "2026-11-11T15:50:47.145Z",
-  "promptVersion": "planner-v1.1",
+  "recordedAt": "2026-11-12T05:09:31.700Z",
+  "promptVersion": "planner-v1.2",
   "temperature": 0.2,
   "base": {
-    "version": 2,
+    "version": 4,
     "definition": {
       "schemaVersion": 1,
-      "name": "校园讲座报名系统",
-      "description": "收集并管理校园讲座的报名信息，支持现场签到、查看计算机专业未签到名单、生成提醒消息、按专业查看报名分布并统计签到率。",
+      "name": "校园讲座报名",
+      "description": "用于校园讲座的报名登记，收集姓名、学号、专业与手机号，并统计报名人数与专业分布。",
       "icon": "graduation",
       "entities": [
         {
-          "id": "lectureSignup",
+          "id": "registration",
           "label": "讲座报名",
           "displayField": "name",
           "fields": [
@@ -24,15 +24,14 @@
               "id": "name",
               "label": "姓名",
               "type": "string",
-              "required": true,
-              "description": "报名学生姓名"
+              "required": true
             },
             {
               "id": "studentId",
               "label": "学号",
               "type": "string",
               "required": true,
-              "description": "报名学生学号"
+              "sensitive": true
             },
             {
               "id": "major",
@@ -41,11 +40,12 @@
               "required": true,
               "options": [
                 "计算机科学与技术",
+                "软件工程",
                 "电子信息工程",
                 "机械工程",
-                "工商管理",
                 "汉语言文学",
-                "外国语言文学",
+                "工商管理",
+                "临床医学",
                 "其他"
               ]
             },
@@ -54,7 +54,7 @@
               "label": "手机号",
               "type": "string",
               "required": true,
-              "description": "用于接收讲座通知"
+              "sensitive": true
             },
             {
               "id": "checkedIn",
@@ -62,7 +62,7 @@
               "type": "boolean",
               "required": false,
               "default": false,
-              "description": "标记该报名学生是否已完成现场签到"
+              "description": "现场签到时由组织者标记"
             }
           ]
         }
@@ -74,8 +74,9 @@
           "title": "报名数据",
           "region": "main",
           "order": 0,
+          "width": "full",
           "params": {
-            "entityId": "lectureSignup",
+            "entityId": "registration",
             "sort": {
               "field": "createdAt",
               "dir": "desc"
@@ -83,14 +84,14 @@
           }
         },
         {
-          "id": "metricTotal",
+          "id": "metricCount",
           "type": "Metric",
-          "title": "报名总人数",
+          "title": "报名人数",
           "region": "main",
           "order": 1,
           "width": "half",
           "params": {
-            "label": "报名总人数",
+            "label": "报名人数",
             "aggregate": "count",
             "format": "number"
           }
@@ -100,15 +101,15 @@
           "type": "Chart",
           "title": "专业分布",
           "region": "main",
-          "order": 2,
+          "order": 3,
           "width": "half",
           "params": {
-            "kind": "donut",
+            "kind": "bar",
             "groupBy": "major"
           }
         },
         {
-          "id": "tableSignup",
+          "id": "tableRegistrations",
           "type": "Table",
           "title": "报名名单",
           "region": "main",
@@ -120,6 +121,7 @@
               "studentId",
               "major",
               "phone",
+              "checkedIn",
               "createdAt"
             ],
             "searchable": true,
@@ -129,13 +131,13 @@
           }
         },
         {
-          "id": "formSignup",
+          "id": "formRegistration",
           "type": "Form",
-          "title": "新增报名",
+          "title": "填写报名",
           "region": "aside",
           "order": 1,
           "params": {
-            "entityId": "lectureSignup",
+            "entityId": "registration",
             "fields": [
               "name",
               "studentId",
@@ -143,24 +145,35 @@
               "phone"
             ],
             "submitLabel": "提交报名",
-            "successMessage": "报名成功，请留意讲座通知。"
+            "successMessage": "报名成功，请准时参加讲座。"
           }
         },
         {
-          "id": "exportSignup",
+          "id": "exportRegistrations",
           "type": "CSVExport",
           "title": "导出报名名单",
           "region": "aside",
           "order": 2,
           "params": {
-            "columns": [
+            "filename": "讲座报名名单"
+          }
+        },
+        {
+          "id": "formSignup",
+          "type": "Form",
+          "title": "填写报名",
+          "order": 1,
+          "view": "signupPage",
+          "params": {
+            "entityId": "registration",
+            "fields": [
               "name",
               "studentId",
               "major",
-              "phone",
-              "createdAt"
+              "phone"
             ],
-            "filename": "讲座报名名单"
+            "submitLabel": "提交报名",
+            "successMessage": "报名成功，请准时参加讲座。"
           }
         },
         {
@@ -168,7 +181,7 @@
           "type": "Metric",
           "title": "签到率",
           "region": "main",
-          "order": 3,
+          "order": 2,
           "width": "half",
           "params": {
             "label": "签到率",
@@ -182,7 +195,7 @@
           }
         },
         {
-          "id": "filterNoCheckin",
+          "id": "filterUncheckedCS",
           "type": "Filter",
           "title": "计算机专业未签到",
           "region": "main",
@@ -210,7 +223,7 @@
         {
           "id": "quickCheckin",
           "type": "QuickAction",
-          "title": "现场签到",
+          "title": "签到登记",
           "region": "aside",
           "order": 3,
           "params": {
@@ -231,31 +244,68 @@
           }
         },
         {
-          "id": "draftReminder",
+          "id": "messageReminder",
           "type": "MessageDraft",
-          "title": "未签到提醒",
+          "title": "签到提醒",
           "region": "aside",
           "order": 4,
           "params": {
-            "template": "{{name}}同学你好，讲座即将开始，你还没有签到，请尽快到签到台完成签到。",
-            "channelLabel": "短信提醒"
+            "template": "{{name}}同学你好，讲座即将开始，你还没有签到，请尽快到签到处完成签到。",
+            "channelLabel": "站内消息草稿"
+          }
+        },
+        {
+          "id": "filterUncheckedDesk",
+          "type": "Filter",
+          "title": "未签到记录",
+          "order": 1,
+          "view": "checkinDesk",
+          "params": {
+            "filter": {
+              "field": "checkedIn",
+              "operator": "eq",
+              "value": false
+            },
+            "showChips": false
+          }
+        },
+        {
+          "id": "quickDeskCheckin",
+          "type": "QuickAction",
+          "title": "签到登记",
+          "order": 2,
+          "view": "checkinDesk",
+          "params": {
+            "label": "签到登记",
+            "searchFields": [
+              "name"
+            ],
+            "set": {
+              "checkedIn": true
+            },
+            "availableWhen": {
+              "field": "checkedIn",
+              "operator": "eq",
+              "value": false
+            },
+            "buttonLabel": "标记已签到"
           }
         }
       ],
       "bindings": [
         {
-          "id": "bSourceMetric",
+          "id": "bindMetric",
           "from": {
             "node": "source",
             "port": "records"
           },
           "to": {
-            "node": "metricTotal",
+            "node": "metricCount",
             "port": "rows"
           }
         },
         {
-          "id": "bSourceChart",
+          "id": "bindChart",
           "from": {
             "node": "source",
             "port": "records"
@@ -266,29 +316,29 @@
           }
         },
         {
-          "id": "bSourceTable",
+          "id": "bindTable",
           "from": {
             "node": "source",
             "port": "records"
           },
           "to": {
-            "node": "tableSignup",
+            "node": "tableRegistrations",
             "port": "rows"
           }
         },
         {
-          "id": "bSourceExport",
+          "id": "bindExport",
           "from": {
             "node": "source",
             "port": "records"
           },
           "to": {
-            "node": "exportSignup",
+            "node": "exportRegistrations",
             "port": "rows"
           }
         },
         {
-          "id": "bSourceCheckinRate",
+          "id": "bindCheckinRate",
           "from": {
             "node": "source",
             "port": "records"
@@ -299,18 +349,18 @@
           }
         },
         {
-          "id": "bSourceFilterNoCheckin",
+          "id": "bindUnchecked",
           "from": {
             "node": "source",
             "port": "records"
           },
           "to": {
-            "node": "filterNoCheckin",
+            "node": "filterUncheckedCS",
             "port": "input"
           }
         },
         {
-          "id": "bSourceQuickCheckin",
+          "id": "bindCheckinAction",
           "from": {
             "node": "source",
             "port": "records"
@@ -321,31 +371,70 @@
           }
         },
         {
-          "id": "bFilterToDraft",
+          "id": "bindReminder",
           "from": {
-            "node": "filterNoCheckin",
+            "node": "filterUncheckedCS",
             "port": "result"
           },
           "to": {
-            "node": "draftReminder",
+            "node": "messageReminder",
             "port": "recipients"
           }
+        },
+        {
+          "id": "bindDeskFilter",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "filterUncheckedDesk",
+            "port": "input"
+          }
+        },
+        {
+          "id": "bindDeskCheckin",
+          "from": {
+            "node": "filterUncheckedDesk",
+            "port": "result"
+          },
+          "to": {
+            "node": "quickDeskCheckin",
+            "port": "rows"
+          }
+        }
+      ],
+      "views": [
+        {
+          "id": "signupPage",
+          "label": "报名页",
+          "audience": "报名参加讲座的同学",
+          "description": "填写姓名、学号、专业和手机号即可完成讲座报名。"
+        },
+        {
+          "id": "checkinDesk",
+          "label": "签到台",
+          "audience": "门口签到志愿者",
+          "description": "按姓名搜索报名记录并标记已签到。",
+          "restrictedFields": [
+            "phone"
+          ]
         }
       ]
     }
   },
   "rounds": [
     {
-      "reasoning": "用户要求删除未签到记录并重置数据。协议不支持删除业务记录、清空数据。需要 refusal，并给非破坏性替代：用筛选器只显示已签到的人，或隐藏未签到记录。\n\n建议：新增一个 Filter 只显示已签到记录，接到表格，不删除数据。suggestion 要给用户可直接提的需求。",
-      "content": "{\"kind\":\"refusal\",\"intent\":\"把没签到的人从名单里删掉并重置数据\",\"reason\":\"MorphOS 不提供删除或清空业务记录的操作，也不能重置数据；删除未签到名单会永久丢失报名信息，且无法撤销。\",\"suggestion\":\"不要删除数据，改为让“报名名单”表格只显示已签到的记录：新增一个筛选“已签到”的筛选器接到表格，原有记录全部保留。\"}",
+      "reasoning": "用户要求删除记录和重置数据，协议不支持删除记录/清空数据。必须 refusal。建议非破坏性替代：用筛选只显示未签到。",
+      "content": "{\"kind\":\"refusal\",\"intent\":\"把没签到的人从名单里删掉并重置数据\",\"reason\":\"系统不支持删除业务记录或清空/重置数据，也不能通过提案执行任何批量删除；已登记的报名记录不能被移除。\",\"suggestion\":\"请改为：在报名名单上方增加一个筛选，只显示已签到的报名记录，未签到的人不显示（数据保留）。\"}",
       "usage": {
-        "promptTokens": 3656,
-        "completionTokens": 171,
-        "reasoningTokens": 73,
-        "totalTokens": 3827
+        "promptTokens": 4614,
+        "completionTokens": 118,
+        "reasoningTokens": 33,
+        "totalTokens": 4732
       },
       "finishReason": "stop",
-      "ms": 1555
+      "ms": 1495
     }
   ]
 }

@@ -4,19 +4,19 @@
   "kind": "patch",
   "intent": "标出借出超过 7 天的设备",
   "model": "deepseek-flash",
-  "recordedAt": "2026-11-12T01:53:10.426Z",
-  "promptVersion": "planner-v1.1",
+  "recordedAt": "2026-11-12T05:09:45.188Z",
+  "promptVersion": "planner-v1.2",
   "temperature": 0.2,
   "base": {
     "version": 1,
     "definition": {
       "schemaVersion": 1,
       "name": "设备借用管理",
-      "description": "登记设备的名称、编号、类别与借用情况，支持借出与归还的状态变更，并按类别和可借用数量做统计。",
+      "description": "登记设备信息与借用情况，支持借出、归还操作与类别统计。",
       "icon": "package",
       "entities": [
         {
-          "id": "equipment",
+          "id": "device",
           "label": "设备",
           "displayField": "name",
           "fields": [
@@ -36,13 +36,13 @@
               "id": "category",
               "label": "类别",
               "type": "enum",
-              "required": true,
+              "required": false,
               "options": [
-                "笔记本电脑",
-                "平板",
+                "电脑",
                 "投影仪",
                 "相机",
-                "外设配件",
+                "音响",
+                "实验仪器",
                 "其他"
               ]
             },
@@ -77,15 +77,8 @@
         {
           "id": "source",
           "type": "CollectionSource",
-          "title": "设备数据",
-          "region": "main",
-          "order": 0,
           "params": {
-            "entityId": "equipment",
-            "sort": {
-              "field": "code",
-              "dir": "asc"
-            }
+            "entityId": "device"
           }
         },
         {
@@ -102,37 +95,27 @@
           }
         },
         {
-          "id": "metricAvailable",
+          "id": "metricBorrowed",
           "type": "Metric",
-          "title": "可借用数量",
+          "title": "已借出设备",
           "region": "main",
           "order": 2,
           "width": "half",
           "params": {
-            "label": "可借用设备",
+            "label": "已借出设备",
             "aggregate": "count",
-            "format": "number"
-          }
-        },
-        {
-          "id": "filterAvailable",
-          "type": "Filter",
-          "title": "可借用筛选",
-          "region": "main",
-          "order": 0,
-          "params": {
-            "filter": {
+            "where": {
               "field": "status",
               "operator": "eq",
-              "value": "可借用"
+              "value": "已借出"
             },
-            "showChips": true
+            "format": "number"
           }
         },
         {
           "id": "chartCategory",
           "type": "Chart",
-          "title": "按类别分布",
+          "title": "类别分布",
           "region": "main",
           "order": 3,
           "width": "half",
@@ -142,7 +125,7 @@
           }
         },
         {
-          "id": "table",
+          "id": "tableDevice",
           "type": "Table",
           "title": "设备清单",
           "region": "main",
@@ -165,13 +148,13 @@
           }
         },
         {
-          "id": "form",
+          "id": "formDevice",
           "type": "Form",
           "title": "登记设备",
           "region": "aside",
           "order": 1,
           "params": {
-            "entityId": "equipment",
+            "entityId": "device",
             "fields": [
               "name",
               "code",
@@ -180,12 +163,12 @@
               "borrower",
               "borrowDate"
             ],
-            "submitLabel": "保存设备",
+            "submitLabel": "保存",
             "successMessage": "设备已登记"
           }
         },
         {
-          "id": "actionBorrow",
+          "id": "qaBorrow",
           "type": "QuickAction",
           "title": "借出设备",
           "region": "aside",
@@ -194,7 +177,8 @@
             "label": "借出设备",
             "searchFields": [
               "name",
-              "code"
+              "code",
+              "borrower"
             ],
             "ask": [
               "borrower",
@@ -212,7 +196,7 @@
           }
         },
         {
-          "id": "actionReturn",
+          "id": "qaReturn",
           "type": "QuickAction",
           "title": "归还设备",
           "region": "aside",
@@ -221,7 +205,8 @@
             "label": "归还设备",
             "searchFields": [
               "name",
-              "code"
+              "code",
+              "borrower"
             ],
             "set": {
               "status": "已归还"
@@ -235,7 +220,7 @@
           }
         },
         {
-          "id": "export",
+          "id": "exportDevice",
           "type": "CSVExport",
           "title": "导出设备清单",
           "region": "aside",
@@ -247,8 +232,7 @@
               "category",
               "status",
               "borrower",
-              "borrowDate",
-              "createdAt"
+              "borrowDate"
             ],
             "filename": "设备借用清单"
           }
@@ -273,23 +257,12 @@
             "port": "records"
           },
           "to": {
-            "node": "filterAvailable",
-            "port": "input"
-          }
-        },
-        {
-          "id": "b3",
-          "from": {
-            "node": "filterAvailable",
-            "port": "result"
-          },
-          "to": {
-            "node": "metricAvailable",
+            "node": "metricBorrowed",
             "port": "rows"
           }
         },
         {
-          "id": "b4",
+          "id": "b3",
           "from": {
             "node": "source",
             "port": "records"
@@ -300,13 +273,24 @@
           }
         },
         {
+          "id": "b4",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "tableDevice",
+            "port": "rows"
+          }
+        },
+        {
           "id": "b5",
           "from": {
             "node": "source",
             "port": "records"
           },
           "to": {
-            "node": "table",
+            "node": "qaBorrow",
             "port": "rows"
           }
         },
@@ -317,7 +301,7 @@
             "port": "records"
           },
           "to": {
-            "node": "actionBorrow",
+            "node": "qaReturn",
             "port": "rows"
           }
         },
@@ -328,18 +312,7 @@
             "port": "records"
           },
           "to": {
-            "node": "actionReturn",
-            "port": "rows"
-          }
-        },
-        {
-          "id": "b8",
-          "from": {
-            "node": "source",
-            "port": "records"
-          },
-          "to": {
-            "node": "export",
+            "node": "exportDevice",
             "port": "rows"
           }
         }
@@ -348,16 +321,16 @@
   },
   "rounds": [
     {
-      "reasoning": "用户要标出借出超过7天的设备。当前没有借出时间字段（borrowDate 是借用日期，可用来判断）。已借出的设备借用日期早于7天前即为超期。可以用 Filter：status eq 已借出 and borrowDate lte daysAgo 7。然后新增 Table 显示这些记录，标题“超期未还设备”。\n\n但要注意 borrowDate 可能为空？已借出通常有借用人/日期。用 borrowDate lte relative daysAgo 7。\n\n方案：\n- addNode filterOverdue（Filter，main，order 5），filter: {op:\"and\", conditions:[{field:\"status\",operator:\"eq\",value:\"已借出\"},{field:\"borrowDate\",operator:\"lte\",value:{\"relative\":\"daysAgo\",\"days\":7}}]}\n- bind source.records -> filterOverdue.input\n- addNode tableOverdue（Table，main，order 6，full），columns 同 table，editable true, allowDelete false。\n- bind filterOverdue.result -> tableOverdue.rows\n- 也可以加 Metric 统计超期数量？需求是“标出”，一个清单即可。可加 Metric 数量？可选。保持简洁，加一个 Table 就够。也可以加 Metric 显示超期数量 half？现有 order 是 metricTotal 1, metricAvailable 2, chartCategory 3, table 4。加 tableOverdue order 5。\n\n只输出必要增量。也可加 filterOverdue 的 showChips true。\n\nbindings ids: b9, b10。",
-      "content": "{\"kind\":\"patch\",\"intent\":\"标出借出超过 7 天的设备\",\"summary\":\"新增一个筛选器，筛出状态为“已借出”且借用日期在 7 天前的设备，并新增超期未还设备表格展示结果\",\"baseVersion\":1,\"operations\":[{\"op\":\"addNode\",\"node\":{\"id\":\"filterOverdue\",\"type\":\"Filter\",\"title\":\"超期未还筛选\",\"region\":\"main\",\"order\":5,\"params\":{\"filter\":{\"op\":\"and\",\"conditions\":[{\"field\":\"status\",\"operator\":\"eq\",\"value\":\"已借出\"},{\"field\":\"borrowDate\",\"operator\":\"lte\",\"value\":{\"relative\":\"daysAgo\",\"days\":7}}]},\"showChips\":true}}},{\"op\":\"addNode\",\"node\":{\"id\":\"tableOverdue\",\"type\":\"Table\",\"title\":\"超期未还设备（借出超过7天）\",\"region\":\"main\",\"order\":6,\"width\":\"full\",\"params\":{\"columns\":[\"name\",\"code\",\"category\",\"status\",\"borrower\",\"borrowDate\",\"createdAt\"],\"searchable\":true,\"editable\":true,\"allowDelete\":false,\"pageSize\":20}}},{\"op\":\"bind\",\"binding\":{\"id\":\"b9\",\"from\":{\"node\":\"source\",\"port\":\"records\"},\"to\":{\"node\":\"filterOverdue\",\"port\":\"input\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"b10\",\"from\":{\"node\":\"filterOverdue\",\"port\":\"result\"},\"to\":{\"node\":\"tableOverdue\",\"port\":\"rows\"}}}]}",
+      "reasoning": "用户想标出借出超过7天的设备。需要一个方式：借用日期早于7天前且状态为已借出。可以新增一个 Metric（超期未还数量）、一个 Filter + Table（超期设备清单），或用 Filter 加 Table。\n\n考虑实现：新增 Filter 节点 filterOverdue，条件 and: status eq 已借出 AND borrowDate lte {relative daysAgo 7}。然后接 Table 显示设备清单（超期）。还可加 Metric 显示超期数量。\n\n不要重复太多。合理做法：\n- addNode filterOverdue（Filter, main, order 3?）Filter是界面组件，需要 region/order。参数 filter, showChips。\n- 新增 Metric metricOverdue（main, order 3, half）接 filterOverdue.result，显示“超期未还设备”。但 Metric 有 where 参数也能做，不过接入 filter 更好——不过 Metric where 也可以：aggregate count, where and(...)。用 filter 复用更简洁。\n\n其实可以直接加 Metric 用 where 表达，避免新增 Filter。但用户说“标出”——标出设备清单，Table 更有用。用 Filter + Table。\n\n计划：\n1. addNode filterOverdue: Filter, title \"借出超7天\", main, order 3（现有 main: 1 metricTotal, 2 metricBorrowed, 3 chartCategory, 4 tableDevice）。把 filterOverdue 放 order 5，Table 放 order 6。Filter 在 main 显示条件标签。也可以 order 4，然后 moveNode tableDevice 到 6。简单点：filterOverdue order 5, tableOverdue order 6。\n\n也可以再放 Metric 显示数量 width half, order 5，filter order 6, table order 7。保持精简：加一个 Metric 数量较好？用户只说标出，Table 足够。我加 Filter + Table + 绑定。\n\n2. addNode tableOverdue: Table, columns [\"name\",\"code\",\"category\",\"status\",\"borrower\",\"borrowDate\"], searchable true, editable false, pageSize 10。管理页可以编辑？不必要，设 editable true 也行。保持只读 false 不写。写 searchable:true。\n\n3. bindings: b8 source.records -> filterOverdue.input; b9 filterOverdue.result -> tableOverdue.rows。\n\n日期相对值 daysAgo 7：borrowDate lte daysAgo 7 表示借用日期早于或等于7天前，即借出超过7天。好。\n\n操作：\n- addNode filterOverdue\n- addNode tableOverdue\n- bind b8, b9\n- 可能更新应用描述？不必。\n\nFilter 参数：{\"filter\": {...}, \"showChips\": true}。\n\n注意 Filter 是界面组件在 main 区，需要 region 和 order。给 filterOverdue width? Filter 没有 width 要求，main 可选 width。省略。",
+      "content": "{\"kind\":\"patch\",\"intent\":\"标出借出超过 7 天的设备\",\"summary\":\"新增“超期未还筛选”与“超期设备清单”表格，筛出状态为已借出且借用日期早于 7 天前的设备。\",\"baseVersion\":1,\"operations\":[{\"op\":\"addNode\",\"node\":{\"id\":\"filterOverdue\",\"type\":\"Filter\",\"title\":\"借出超7天\",\"region\":\"main\",\"order\":5,\"params\":{\"filter\":{\"op\":\"and\",\"conditions\":[{\"field\":\"status\",\"operator\":\"eq\",\"value\":\"已借出\"},{\"field\":\"borrowDate\",\"operator\":\"lte\",\"value\":{\"relative\":\"daysAgo\",\"days\":7}}]},\"showChips\":true}}},{\"op\":\"addNode\",\"node\":{\"id\":\"tableOverdue\",\"type\":\"Table\",\"title\":\"超期未还设备\",\"region\":\"main\",\"order\":6,\"width\":\"full\",\"params\":{\"columns\":[\"name\",\"code\",\"category\",\"status\",\"borrower\",\"borrowDate\",\"createdAt\"],\"searchable\":true,\"editable\":true,\"allowDelete\":false,\"pageSize\":10}}},{\"op\":\"bind\",\"binding\":{\"id\":\"b8\",\"from\":{\"node\":\"source\",\"port\":\"records\"},\"to\":{\"node\":\"filterOverdue\",\"port\":\"input\"}}},{\"op\":\"bind\",\"binding\":{\"id\":\"b9\",\"from\":{\"node\":\"filterOverdue\",\"port\":\"result\"},\"to\":{\"node\":\"tableOverdue\",\"port\":\"rows\"}}}]}",
       "usage": {
-        "promptTokens": 3601,
-        "completionTokens": 661,
-        "reasoningTokens": 339,
-        "totalTokens": 4262
+        "promptTokens": 4171,
+        "completionTokens": 953,
+        "reasoningTokens": 637,
+        "totalTokens": 5124
       },
       "finishReason": "stop",
-      "ms": 3782
+      "ms": 5679
     }
   ]
 }

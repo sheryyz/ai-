@@ -1,0 +1,215 @@
+{
+  "id": "06-event-signup-page",
+  "title": "场景 A · 给报名的同学一个报名页",
+  "kind": "patch",
+  "intent": "给报名的同学一个报名页，填完表就行。",
+  "model": "deepseek-flash",
+  "recordedAt": "2026-11-12T05:09:07.451Z",
+  "promptVersion": "planner-v1.2",
+  "temperature": 0.2,
+  "base": {
+    "version": 1,
+    "definition": {
+      "schemaVersion": 1,
+      "name": "校园讲座报名",
+      "description": "用于校园讲座的报名登记，收集姓名、学号、专业与手机号，并统计报名人数与专业分布。",
+      "icon": "graduation",
+      "entities": [
+        {
+          "id": "registration",
+          "label": "讲座报名",
+          "displayField": "name",
+          "fields": [
+            {
+              "id": "name",
+              "label": "姓名",
+              "type": "string",
+              "required": true
+            },
+            {
+              "id": "studentId",
+              "label": "学号",
+              "type": "string",
+              "required": true,
+              "sensitive": true
+            },
+            {
+              "id": "major",
+              "label": "专业",
+              "type": "enum",
+              "required": true,
+              "options": [
+                "计算机科学与技术",
+                "软件工程",
+                "电子信息工程",
+                "机械工程",
+                "汉语言文学",
+                "工商管理",
+                "临床医学",
+                "其他"
+              ]
+            },
+            {
+              "id": "phone",
+              "label": "手机号",
+              "type": "string",
+              "required": true,
+              "sensitive": true
+            }
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "source",
+          "type": "CollectionSource",
+          "title": "报名数据",
+          "region": "main",
+          "order": 0,
+          "width": "full",
+          "params": {
+            "entityId": "registration",
+            "sort": {
+              "field": "createdAt",
+              "dir": "desc"
+            }
+          }
+        },
+        {
+          "id": "metricCount",
+          "type": "Metric",
+          "title": "报名人数",
+          "region": "main",
+          "order": 1,
+          "width": "half",
+          "params": {
+            "label": "报名人数",
+            "aggregate": "count",
+            "format": "number"
+          }
+        },
+        {
+          "id": "chartMajor",
+          "type": "Chart",
+          "title": "专业分布",
+          "region": "main",
+          "order": 2,
+          "width": "half",
+          "params": {
+            "kind": "bar",
+            "groupBy": "major"
+          }
+        },
+        {
+          "id": "tableRegistrations",
+          "type": "Table",
+          "title": "报名名单",
+          "region": "main",
+          "order": 3,
+          "width": "full",
+          "params": {
+            "columns": [
+              "name",
+              "studentId",
+              "major",
+              "phone",
+              "createdAt"
+            ],
+            "searchable": true,
+            "editable": true,
+            "allowDelete": false,
+            "pageSize": 20
+          }
+        },
+        {
+          "id": "formRegistration",
+          "type": "Form",
+          "title": "填写报名",
+          "region": "aside",
+          "order": 1,
+          "params": {
+            "entityId": "registration",
+            "fields": [
+              "name",
+              "studentId",
+              "major",
+              "phone"
+            ],
+            "submitLabel": "提交报名",
+            "successMessage": "报名成功，请准时参加讲座。"
+          }
+        },
+        {
+          "id": "exportRegistrations",
+          "type": "CSVExport",
+          "title": "导出报名名单",
+          "region": "aside",
+          "order": 2,
+          "params": {
+            "filename": "讲座报名名单"
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "id": "bindMetric",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "metricCount",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindChart",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "chartMajor",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindTable",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "tableRegistrations",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "bindExport",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "exportRegistrations",
+            "port": "rows"
+          }
+        }
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "reasoning": "用户想要一个报名页给报名的同学，填完表就行。需要创建分享页（view），包含 Form 组件。注意分享页上 Form 提交自己的信息是允许的。\n\n需要 addView，然后 addNode 一个 Form，view 为该分享页。\n\n分享页的 Form 字段：name, studentId, major, phone。学号和手机号是 sensitive 字段——规则说\"让分享页逐条看到 sensitive 字段需要组织者额外确认，所以除非用户明确要求，不要把 sensitive 字段放进分享页\"。但这里是 Form，学生填自己的信息……规则说\"要让他们提交新记录用 Form（填写自己的手机号等信息是允许的）\"。所以 Form 是允许的。\n\n设计：addView id \"signupPage\"，label \"报名页\"，audience \"报名参加讲座的同学\"，description 简短。\n\naddNode: {\"id\":\"formSignup\",\"type\":\"Form\",\"title\":\"填写报名\",\"region\":\"main\",\"order\":1,\"view\":\"signupPage\",\"params\":{...}}。分享页 region 可省略，但管理页组件必填 region。分享页可省略 region。我写 region \"main\" 也可以，但规则说\"分享页单列显示，按 order 升序；region、width 可省略\"。我加上 order 1。\n\n注意原管理页已有 formRegistration，那是管理页的 aside，保留不动。\n\nForm 提交后需要绑定吗？Form 没有输入端口，无需绑定。\n\n输出 patch。",
+      "content": "{\"kind\":\"patch\",\"intent\":\"给报名的同学一个报名页，填完表就行。\",\"summary\":\"新增一个面向报名同学的分享页「报名页」，页面上只放一个填写报名的表单，管理页保持不变。\",\"baseVersion\":1,\"operations\":[{\"op\":\"addView\",\"view\":{\"id\":\"signupPage\",\"label\":\"报名页\",\"audience\":\"报名参加讲座的同学\",\"description\":\"填写姓名、学号、专业和手机号即可完成讲座报名。\"}},{\"op\":\"addNode\",\"node\":{\"id\":\"formSignup\",\"type\":\"Form\",\"title\":\"填写报名\",\"order\":1,\"view\":\"signupPage\",\"params\":{\"entityId\":\"registration\",\"fields\":[\"name\",\"studentId\",\"major\",\"phone\"],\"submitLabel\":\"提交报名\",\"successMessage\":\"报名成功，请准时参加讲座。\"}}}]}",
+      "usage": {
+        "promptTokens": 3807,
+        "completionTokens": 489,
+        "reasoningTokens": 313,
+        "totalTokens": 4296
+      },
+      "finishReason": "stop",
+      "ms": 3078
+    }
+  ]
+}
