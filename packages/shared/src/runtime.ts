@@ -380,13 +380,21 @@ export interface Layout {
   aside: NodeDef[]
 }
 
-/** Visible visual nodes grouped by region, ordered by `order` then declaration order. */
-export function layoutNodes(def: AppDefinition, opts: { includeHidden?: boolean } = {}): Layout {
+/**
+ * Visible visual nodes of one page, ordered by `order` then declaration order (protocol §3.1).
+ * Default: the admin page (nodes without `view`) grouped by region. With `view`: that role view,
+ * a single column returned as `main`.
+ */
+export function layoutNodes(
+  def: AppDefinition,
+  opts: { includeHidden?: boolean; view?: string } = {},
+): Layout {
   const visual = def.nodes
     .map((n, i) => ({ n, i }))
-    .filter(({ n }) => REGISTRY[n.type].visual && (opts.includeHidden || !n.hidden))
+    .filter(({ n }) => REGISTRY[n.type].visual && (opts.includeHidden || !n.hidden) && n.view === opts.view)
   const sort = (a: { n: NodeDef; i: number }, b: { n: NodeDef; i: number }) =>
     (a.n.order ?? 500 + a.i) - (b.n.order ?? 500 + b.i) || a.i - b.i
+  if (opts.view !== undefined) return { main: visual.sort(sort).map(({ n }) => n), aside: [] }
   return {
     main: visual
       .filter(({ n }) => (n.region ?? 'main') === 'main')
