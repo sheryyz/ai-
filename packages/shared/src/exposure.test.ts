@@ -5,109 +5,16 @@ import { applyPatch } from './patch'
 import { validateProposal } from './proposal'
 import { layoutNodes } from './runtime'
 import type { AppDefinition } from './schema'
-import { checkinProposal, eventDef, rawEvent } from './test-helpers'
+import { deskOps, eventDef, patchOn, rawEvent, signupPageOps, withCheckin, withDesk } from './test-helpers'
 import { validateDefinition } from './validate'
 
-const patch = (operations: unknown[], baseVersion = 1) => ({
-  kind: 'patch',
-  intent: '测试',
-  summary: '测试',
-  baseVersion,
-  operations,
-})
-const run = (definition: AppDefinition, operations: unknown[]) =>
-  validateProposal(patch(operations), { current: { definition, version: 1 } })
+const run = patchOn
 const errors = (r: ReturnType<typeof run>) => r.issues.filter((i) => i.level === 'error')
 const codes = (r: ReturnType<typeof run>) => r.issues.map((i) => i.code)
 const ids = (nodes: { id: string }[]) => nodes.map((n) => n.id)
 const diff = (before: AppDefinition, after: AppDefinition) =>
   computeDiff(before, after, { fromVersion: 1, recordCount: 6 })
-
-const signupPage = [
-  { op: 'addView', view: { id: 'signupPage', label: '报名页', audience: '报名的同学' } },
-  {
-    op: 'addNode',
-    node: {
-      id: 'publicForm',
-      type: 'Form',
-      view: 'signupPage',
-      title: '报名',
-      params: { entityId: 'attendee', fields: ['name', 'studentId', 'major', 'phone'] },
-    },
-  },
-]
-
-/** Event app after the check-in evolution (AC-03). */
-const withCheckin = () =>
-  validateProposal(checkinProposal(), { current: { definition: eventDef(), version: 1 } }).after!
-
-/** A volunteer desk: search by name, tick checked-in, see the rate; phone explicitly forbidden. */
-const deskOps = [
-  {
-    op: 'addView',
-    view: { id: 'desk', label: '签到台', audience: '门口志愿者', restrictedFields: ['phone'] },
-  },
-  {
-    op: 'addNode',
-    node: {
-      id: 'deskPending',
-      type: 'Filter',
-      view: 'desk',
-      title: '未签到',
-      params: { filter: { field: 'checkedIn', operator: 'eq', value: false }, showChips: false },
-    },
-  },
-  {
-    op: 'addNode',
-    node: {
-      id: 'deskAction',
-      type: 'QuickAction',
-      view: 'desk',
-      order: 1,
-      params: { label: '签到', searchFields: ['name'], set: { checkedIn: true } },
-    },
-  },
-  {
-    op: 'addNode',
-    node: {
-      id: 'deskRate',
-      type: 'Metric',
-      view: 'desk',
-      order: 0,
-      params: {
-        label: '签到率',
-        aggregate: 'ratio',
-        where: { field: 'checkedIn', operator: 'eq', value: true },
-        format: 'percent',
-      },
-    },
-  },
-  {
-    op: 'bind',
-    binding: {
-      id: 'b_dp',
-      from: { node: 'source', port: 'records' },
-      to: { node: 'deskPending', port: 'input' },
-    },
-  },
-  {
-    op: 'bind',
-    binding: {
-      id: 'b_da',
-      from: { node: 'deskPending', port: 'result' },
-      to: { node: 'deskAction', port: 'rows' },
-    },
-  },
-  {
-    op: 'bind',
-    binding: {
-      id: 'b_dr',
-      from: { node: 'source', port: 'records' },
-      to: { node: 'deskRate', port: 'rows' },
-    },
-  },
-]
-const withDesk = () => run(withCheckin(), deskOps).after!
+const signupPage = signupPageOps() as { node?: Record<string, unknown> }[]
 
 const exportOnDesk = (params: Record<string, unknown>) => [
   { op: 'addNode', node: { id: 'deskExport', type: 'CSVExport', view: 'desk', order: 2, params } },
@@ -195,7 +102,7 @@ describe('role views (protocol §2.2, §3.1)', () => {
 
 describe('computeExposure (protocol §11.1)', () => {
   it('splits a check-in desk into row-level reads, aggregates, writes and record scope', () => {
-    const r = run(withCheckin(), deskOps)
+    const r = run(withCheckin(), deskOps())
     expect(errors(r)).toEqual([])
     const e = computeExposure(r.after!, 'desk')!
     expect(e).toMatchObject({
