@@ -1,0 +1,6855 @@
+{
+  "meta": {
+    "模型": "deepseek-flash（api.deepseek.com）",
+    "提示词版本": "planner-v1.1（A 为 planner-v1.1+regenerate-v1）",
+    "温度": "0.2",
+    "自修复上限": "2 轮",
+    "日期": "2026-11-12（Asia/Shanghai）",
+    "代码版本": "73e4f22",
+    "运行次数": "40（并发 4，总耗时 44.2 s）"
+  },
+  "runs": [
+    {
+      "caseId": "c01",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4788,
+      "tokens": 3406,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了讲座报名应用：一个报名记录实体（姓名、学号、专业、手机号）以及报名总人数指标、按专业分布图、报名表、录入表单和 CSV 导出。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。",
+        "summary": "创建了讲座报名应用：一个报名记录实体（姓名、学号、专业、手机号）以及报名总人数指标、按专业分布图、报名表、录入表单和 CSV 导出。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园讲座报名系统",
+          "description": "收集校园讲座的报名信息，记录姓名、学号、专业与手机号，并支持按专业统计报名分布与导出名单。",
+          "icon": "graduation",
+          "entities": [
+            {
+              "id": "lectureSignup",
+              "label": "讲座报名",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true,
+                  "description": "报名学生的真实姓名"
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true,
+                  "description": "学生唯一学号"
+                },
+                {
+                  "id": "major",
+                  "label": "专业",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "计算机科学与技术",
+                    "软件工程",
+                    "电子信息工程",
+                    "机械工程",
+                    "工商管理",
+                    "英语",
+                    "其他"
+                  ],
+                  "description": "所在专业"
+                },
+                {
+                  "id": "phone",
+                  "label": "手机号",
+                  "type": "string",
+                  "required": true,
+                  "description": "用于讲座通知的联系电话"
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "title": "报名数据",
+              "region": "main",
+              "order": 1,
+              "params": {
+                "entityId": "lectureSignup",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "totalMetric",
+              "type": "Metric",
+              "title": "报名总人数",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "报名总人数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "majorChart",
+              "type": "Chart",
+              "title": "专业分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "major"
+              }
+            },
+            {
+              "id": "signupTable",
+              "type": "Table",
+              "title": "报名名单",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 20
+              }
+            },
+            {
+              "id": "signupForm",
+              "type": "Form",
+              "title": "新增报名",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "lectureSignup",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功，请留意讲座通知。"
+              }
+            },
+            {
+              "id": "exportCsv",
+              "type": "CSVExport",
+              "title": "导出报名名单",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "createdAt"
+                ],
+                "filename": "讲座报名名单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b1",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "totalMetric",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b2",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "majorChart",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b3",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "signupTable",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b4",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportCsv",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c02",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "设备借用管理：设备名称、编号、类别、状态（可借用/已借出/已归还）、借用人、借用日期。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 7201,
+      "tokens": 4035,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了含设备台账、状态分布图、可借数量指标、借出/归还快捷操作与导出功能的应用",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "创建设备借用管理应用，记录设备名称、编号、类别、状态（可借用/已借出/已归还）、借用人、借用日期，并支持借出与归还操作",
+        "summary": "创建了含设备台账、状态分布图、可借数量指标、借出/归还快捷操作与导出功能的应用",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "设备借用管理",
+          "description": "管理设备台账与借用状态：登记设备、按类别与状态查看、一键借出与归还，并导出明细。",
+          "icon": "package",
+          "entities": [
+            {
+              "id": "device",
+              "label": "设备",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "设备名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "code",
+                  "label": "编号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "category",
+                  "label": "类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "电脑",
+                    "投影仪",
+                    "相机",
+                    "音响",
+                    "实验器材",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "status",
+                  "label": "状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "可借用",
+                  "options": [
+                    "可借用",
+                    "已借出",
+                    "已归还"
+                  ]
+                },
+                {
+                  "id": "borrower",
+                  "label": "借用人",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "borrowDate",
+                  "label": "借用日期",
+                  "type": "date",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "device",
+                "sort": {
+                  "field": "code",
+                  "dir": "asc"
+                }
+              }
+            },
+            {
+              "id": "metricTotal",
+              "type": "Metric",
+              "title": "设备总数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "设备总数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricAvailable",
+              "type": "Metric",
+              "title": "可借用数量",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "可借用数量",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "chartStatus",
+              "type": "Chart",
+              "title": "状态分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "status"
+              }
+            },
+            {
+              "id": "tableDevices",
+              "type": "Table",
+              "title": "设备清单",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "name",
+                  "code",
+                  "category",
+                  "status",
+                  "borrower",
+                  "borrowDate",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 20
+              }
+            },
+            {
+              "id": "formDevice",
+              "type": "Form",
+              "title": "登记设备",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "device",
+                "fields": [
+                  "name",
+                  "code",
+                  "category",
+                  "status"
+                ],
+                "submitLabel": "保存设备",
+                "successMessage": "设备已登记"
+              }
+            },
+            {
+              "id": "quickBorrow",
+              "type": "QuickAction",
+              "title": "借出设备",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "label": "借出设备",
+                "searchFields": [
+                  "code",
+                  "name"
+                ],
+                "ask": [
+                  "borrower"
+                ],
+                "set": {
+                  "status": "已借出",
+                  "borrowDate": "$today"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "buttonLabel": "确认借出"
+              }
+            },
+            {
+              "id": "quickReturn",
+              "type": "QuickAction",
+              "title": "归还设备",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "label": "归还设备",
+                "searchFields": [
+                  "code",
+                  "name"
+                ],
+                "set": {
+                  "status": "已归还"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "buttonLabel": "确认归还"
+              }
+            },
+            {
+              "id": "csvDevices",
+              "type": "CSVExport",
+              "title": "导出设备明细",
+              "region": "aside",
+              "order": 4,
+              "params": {
+                "columns": [
+                  "name",
+                  "code",
+                  "category",
+                  "status",
+                  "borrower",
+                  "borrowDate"
+                ],
+                "filename": "设备借用明细"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b1",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricTotal",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b2",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricAvailable",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b3",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b4",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableDevices",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b5",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "quickBorrow",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b6",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "quickReturn",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b7",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "csvDevices",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c03",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "社团招新报名：姓名、学号、学院、意向部门（宣传部/外联部/技术部/文艺部）、自我介绍。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4503,
+      "tokens": 3354,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了招新报名应用，包含报名表单、报名人数指标、按意向部门的分布图、报名记录表与 CSV 导出",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "创建社团招新报名应用：收集姓名、学号、学院、意向部门（宣传部/外联部/技术部/文艺部）、自我介绍",
+        "summary": "创建了招新报名应用，包含报名表单、报名人数指标、按意向部门的分布图、报名记录表与 CSV 导出",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "社团招新报名",
+          "description": "收集社团招新报名信息，包括姓名、学号、学院、意向部门与自我介绍，并支持按部门统计与导出。",
+          "icon": "users",
+          "entities": [
+            {
+              "id": "applicant",
+              "label": "报名者",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "college",
+                  "label": "学院",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "department",
+                  "label": "意向部门",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "宣传部",
+                    "外联部",
+                    "技术部",
+                    "文艺部"
+                  ]
+                },
+                {
+                  "id": "intro",
+                  "label": "自我介绍",
+                  "type": "text",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "applicant",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricCount",
+              "type": "Metric",
+              "title": "报名人数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "报名总人数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "chartDept",
+              "type": "Chart",
+              "title": "意向部门分布",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "department"
+              }
+            },
+            {
+              "id": "tableApplicants",
+              "type": "Table",
+              "title": "报名记录",
+              "region": "main",
+              "order": 3,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "college",
+                  "department",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "formApply",
+              "type": "Form",
+              "title": "我要报名",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "applicant",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "college",
+                  "department",
+                  "intro"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功，我们会尽快联系你！"
+              }
+            },
+            {
+              "id": "exportCsv",
+              "type": "CSVExport",
+              "title": "导出报名表",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "college",
+                  "department",
+                  "intro",
+                  "createdAt"
+                ],
+                "filename": "社团招新报名表"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "bSourceMetric",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricCount",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceChart",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartDept",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableApplicants",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportCsv",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c04",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "实验室耗材领用登记：耗材名称、领用数量、领用人、领用日期、用途。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 5904,
+      "tokens": 3626,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了「实验室耗材领用登记」应用：含领用记录实体、合计指标与按耗材分布图、记录表格、录入表单和 CSV 导出",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "实验室耗材领用登记：记录耗材名称、领用数量、领用人、领用日期、用途",
+        "summary": "创建了「实验室耗材领用登记」应用：含领用记录实体、合计指标与按耗材分布图、记录表格、录入表单和 CSV 导出",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "实验室耗材领用登记",
+          "description": "登记实验室耗材的领用情况：耗材名称、领用数量、领用人、领用日期与用途，并支持统计与导出。",
+          "icon": "flask",
+          "entities": [
+            {
+              "id": "usageRecord",
+              "label": "耗材领用记录",
+              "displayField": "itemName",
+              "fields": [
+                {
+                  "id": "itemName",
+                  "label": "耗材名称",
+                  "type": "string",
+                  "required": true,
+                  "description": "被领用的耗材名称"
+                },
+                {
+                  "id": "quantity",
+                  "label": "领用数量",
+                  "type": "number",
+                  "required": true
+                },
+                {
+                  "id": "recipient",
+                  "label": "领用人",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "usageDate",
+                  "label": "领用日期",
+                  "type": "date",
+                  "required": true
+                },
+                {
+                  "id": "purpose",
+                  "label": "用途",
+                  "type": "text",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "region": "main",
+              "order": 1,
+              "params": {
+                "entityId": "usageRecord",
+                "sort": {
+                  "field": "usageDate",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricCount",
+              "type": "Metric",
+              "title": "领用记录数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "领用记录数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricQty",
+              "type": "Metric",
+              "title": "累计领用数量",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "累计领用数量",
+                "aggregate": "sum",
+                "field": "quantity",
+                "format": "number"
+              }
+            },
+            {
+              "id": "chartByItem",
+              "type": "Chart",
+              "title": "各耗材领用笔数",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "itemName"
+              }
+            },
+            {
+              "id": "tableRecords",
+              "type": "Table",
+              "title": "领用记录",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "itemName",
+                  "quantity",
+                  "recipient",
+                  "usageDate",
+                  "purpose",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 20
+              }
+            },
+            {
+              "id": "formRecord",
+              "type": "Form",
+              "title": "登记领用",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "usageRecord",
+                "fields": [
+                  "itemName",
+                  "quantity",
+                  "recipient",
+                  "usageDate",
+                  "purpose"
+                ],
+                "submitLabel": "提交登记",
+                "successMessage": "领用登记已保存"
+              }
+            },
+            {
+              "id": "exportRecords",
+              "type": "CSVExport",
+              "title": "导出领用记录",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "itemName",
+                  "quantity",
+                  "recipient",
+                  "usageDate",
+                  "purpose",
+                  "createdAt"
+                ],
+                "filename": "耗材领用记录"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "bCount",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricCount",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bQty",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricQty",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bChart",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartByItem",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableRecords",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportRecords",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c05",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "课程作业提交跟踪：学生姓名、作业名称、提交日期、是否迟交、得分。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4704,
+      "tokens": 3397,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了一个作业提交记录应用，包含提交总数与平均分指标、迟交分布图、提交明细表和录入表单与 CSV 导出",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "创建课程作业提交跟踪应用，记录学生姓名、作业名称、提交日期、是否迟交、得分",
+        "summary": "创建了一个作业提交记录应用，包含提交总数与平均分指标、迟交分布图、提交明细表和录入表单与 CSV 导出",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "课程作业提交跟踪",
+          "description": "跟踪学生每次作业的提交情况：学生姓名、作业名称、提交日期、是否迟交与得分，并统计提交总数、平均分与迟交分布。",
+          "icon": "graduation",
+          "entities": [
+            {
+              "id": "submission",
+              "label": "作业提交",
+              "displayField": "studentName",
+              "fields": [
+                {
+                  "id": "studentName",
+                  "label": "学生姓名",
+                  "type": "string",
+                  "required": true,
+                  "description": "提交作业的学生姓名"
+                },
+                {
+                  "id": "assignmentName",
+                  "label": "作业名称",
+                  "type": "string",
+                  "required": true,
+                  "description": "本次提交的作业名称"
+                },
+                {
+                  "id": "submitDate",
+                  "label": "提交日期",
+                  "type": "date",
+                  "required": true
+                },
+                {
+                  "id": "late",
+                  "label": "是否迟交",
+                  "type": "boolean",
+                  "required": true,
+                  "default": false
+                },
+                {
+                  "id": "score",
+                  "label": "得分",
+                  "type": "number",
+                  "required": false,
+                  "description": "本次作业得分"
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "submission",
+                "sort": {
+                  "field": "submitDate",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricCount",
+              "type": "Metric",
+              "title": "提交总数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "提交总数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricAvg",
+              "type": "Metric",
+              "title": "平均分",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "平均分",
+                "aggregate": "avg",
+                "field": "score",
+                "format": "number"
+              }
+            },
+            {
+              "id": "chartLate",
+              "type": "Chart",
+              "title": "迟交分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "late"
+              }
+            },
+            {
+              "id": "tableSubmissions",
+              "type": "Table",
+              "title": "提交明细",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "studentName",
+                  "assignmentName",
+                  "submitDate",
+                  "late",
+                  "score",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "formSubmission",
+              "type": "Form",
+              "title": "新增提交记录",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "submission",
+                "fields": [
+                  "studentName",
+                  "assignmentName",
+                  "submitDate",
+                  "late",
+                  "score"
+                ],
+                "submitLabel": "保存提交",
+                "successMessage": "提交记录已保存"
+              }
+            },
+            {
+              "id": "exportSubmissions",
+              "type": "CSVExport",
+              "title": "导出提交记录",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "studentName",
+                  "assignmentName",
+                  "submitDate",
+                  "late",
+                  "score"
+                ],
+                "filename": "作业提交记录"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "bindSourceCount",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricCount",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bindSourceAvg",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricAvg",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bindSourceChart",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartLate",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bindSourceTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableSubmissions",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bindSourceExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportSubmissions",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c06",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "宿舍报修系统：宿舍号、报修类型（水电/门窗/网络/家具/其他）、问题描述、联系电话、处理状态（待处理/处理中/已完成）。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 6989,
+      "tokens": 3867,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了宿舍报修应用：包含报修记录表、报修类型分布图、报修总数与待处理数指标，以及录入表单、标记完成的快捷操作与 CSV 导出。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "创建宿舍报修系统，记录宿舍号、报修类型、问题描述、联系电话与处理状态",
+        "summary": "创建了宿舍报修应用：包含报修记录表、报修类型分布图、报修总数与待处理数指标，以及录入表单、标记完成的快捷操作与 CSV 导出。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "宿舍报修系统",
+          "description": "登记宿舍报修信息（宿舍号、报修类型、问题描述、联系电话），跟踪待处理/处理中/已完成状态，支持类型分布统计与导出。",
+          "icon": "wrench",
+          "entities": [
+            {
+              "id": "dormRepair",
+              "label": "报修记录",
+              "displayField": "dormNo",
+              "fields": [
+                {
+                  "id": "dormNo",
+                  "label": "宿舍号",
+                  "type": "string",
+                  "required": true,
+                  "description": "如 3-201"
+                },
+                {
+                  "id": "repairType",
+                  "label": "报修类型",
+                  "type": "enum",
+                  "required": true,
+                  "default": "水电",
+                  "options": [
+                    "水电",
+                    "门窗",
+                    "网络",
+                    "家具",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "description",
+                  "label": "问题描述",
+                  "type": "text",
+                  "required": true
+                },
+                {
+                  "id": "phone",
+                  "label": "联系电话",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "status",
+                  "label": "处理状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "待处理",
+                  "options": [
+                    "待处理",
+                    "处理中",
+                    "已完成"
+                  ]
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "region": "main",
+              "order": 0,
+              "params": {
+                "entityId": "dormRepair",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricTotal",
+              "type": "Metric",
+              "title": "报修总数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "报修总数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricPending",
+              "type": "Metric",
+              "title": "待处理数",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "待处理报修",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "待处理"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "chartType",
+              "type": "Chart",
+              "title": "报修类型分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "repairType"
+              }
+            },
+            {
+              "id": "tableRepairs",
+              "type": "Table",
+              "title": "报修记录",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "dormNo",
+                  "repairType",
+                  "description",
+                  "phone",
+                  "status",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "formRepair",
+              "type": "Form",
+              "title": "新增报修",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "dormRepair",
+                "fields": [
+                  "dormNo",
+                  "repairType",
+                  "description",
+                  "phone",
+                  "status"
+                ],
+                "submitLabel": "提交报修",
+                "successMessage": "报修已提交，请等待处理"
+              }
+            },
+            {
+              "id": "quickDone",
+              "type": "QuickAction",
+              "title": "标记完成",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "label": "标记报修完成",
+                "searchFields": [
+                  "dormNo",
+                  "phone"
+                ],
+                "set": {
+                  "status": "已完成"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "ne",
+                  "value": "已完成"
+                },
+                "buttonLabel": "标记为已完成"
+              }
+            },
+            {
+              "id": "exportRepairs",
+              "type": "CSVExport",
+              "title": "导出报修记录",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "dormNo",
+                  "repairType",
+                  "description",
+                  "phone",
+                  "status",
+                  "createdAt"
+                ],
+                "filename": "宿舍报修记录"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b1",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricTotal",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b2",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricPending",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b3",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartType",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b4",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableRepairs",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b5",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "quickDone",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b6",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportRepairs",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c07",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "班级图书角借阅登记：书名、借阅人、借阅日期、是否已归还。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 6611,
+      "tokens": 3818,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了一个图书角借阅登记应用，包含借阅记录表、借阅总数与未归还册数指标、归还分布图、录入表单、归还快捷操作与导出。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "班级图书角借阅登记：书名、借阅人、借阅日期、是否已归还。",
+        "summary": "创建了一个图书角借阅登记应用，包含借阅记录表、借阅总数与未归还册数指标、归还分布图、录入表单、归还快捷操作与导出。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "班级图书角借阅登记",
+          "description": "登记班级图书角的借阅情况：书名、借阅人、借阅日期与是否已归还，支持一键归还与数据导出。",
+          "icon": "book",
+          "entities": [
+            {
+              "id": "borrowRecord",
+              "label": "借阅记录",
+              "displayField": "bookTitle",
+              "fields": [
+                {
+                  "id": "bookTitle",
+                  "label": "书名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "borrower",
+                  "label": "借阅人",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "borrowDate",
+                  "label": "借阅日期",
+                  "type": "date",
+                  "required": true
+                },
+                {
+                  "id": "returned",
+                  "label": "是否已归还",
+                  "type": "boolean",
+                  "required": true,
+                  "default": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "borrowRecord",
+                "sort": {
+                  "field": "borrowDate",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricTotal",
+              "type": "Metric",
+              "title": "借阅总数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "借阅总数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricUnreturned",
+              "type": "Metric",
+              "title": "未归还册数",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "未归还册数",
+                "aggregate": "count",
+                "where": {
+                  "field": "returned",
+                  "operator": "eq",
+                  "value": false
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "chartReturned",
+              "type": "Chart",
+              "title": "归还情况分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "returned"
+              }
+            },
+            {
+              "id": "tableRecords",
+              "type": "Table",
+              "title": "借阅记录",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "bookTitle",
+                  "borrower",
+                  "borrowDate",
+                  "returned",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 20
+              }
+            },
+            {
+              "id": "formRecord",
+              "type": "Form",
+              "title": "登记借阅",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "borrowRecord",
+                "fields": [
+                  "bookTitle",
+                  "borrower",
+                  "borrowDate",
+                  "returned"
+                ],
+                "submitLabel": "登记借阅",
+                "successMessage": "借阅记录已登记"
+              }
+            },
+            {
+              "id": "actionReturn",
+              "type": "QuickAction",
+              "title": "归还登记",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "label": "归还登记",
+                "searchFields": [
+                  "bookTitle",
+                  "borrower"
+                ],
+                "set": {
+                  "returned": true
+                },
+                "availableWhen": {
+                  "field": "returned",
+                  "operator": "eq",
+                  "value": false
+                },
+                "buttonLabel": "标记已归还"
+              }
+            },
+            {
+              "id": "exportRecords",
+              "type": "CSVExport",
+              "title": "导出借阅记录",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "bookTitle",
+                  "borrower",
+                  "borrowDate",
+                  "returned",
+                  "createdAt"
+                ],
+                "filename": "图书角借阅记录"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "bSourceMetricTotal",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricTotal",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceMetricUnreturned",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricUnreturned",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceChart",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartReturned",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableRecords",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceAction",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "actionReturn",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportRecords",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c08",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "志愿者服务时长记录：姓名、学号、活动名称、服务日期、服务时长（小时），并统计总服务时长。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4750,
+      "tokens": 3398,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了一个志愿者服务时长记录应用，包含录入表单、记录表格、总服务时长指标和 CSV 导出。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "志愿者服务时长记录：姓名、学号、活动名称、服务日期、服务时长（小时），并统计总服务时长。",
+        "summary": "创建了一个志愿者服务时长记录应用，包含录入表单、记录表格、总服务时长指标和 CSV 导出。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "志愿者服务时长记录",
+          "description": "记录志愿者的姓名、学号、活动名称、服务日期与服务时长，并自动统计总服务时长。",
+          "icon": "heart",
+          "entities": [
+            {
+              "id": "volunteerRecord",
+              "label": "志愿服务记录",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true,
+                  "description": "志愿者姓名"
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true,
+                  "description": "志愿者学号"
+                },
+                {
+                  "id": "activityName",
+                  "label": "活动名称",
+                  "type": "string",
+                  "required": true,
+                  "description": "参与的志愿服务活动名称"
+                },
+                {
+                  "id": "serviceDate",
+                  "label": "服务日期",
+                  "type": "date",
+                  "required": true,
+                  "description": "参加活动当天日期"
+                },
+                {
+                  "id": "hours",
+                  "label": "服务时长（小时）",
+                  "type": "number",
+                  "required": true,
+                  "description": "本次服务的小时数"
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "volunteerRecord",
+                "sort": {
+                  "field": "serviceDate",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "totalHours",
+              "type": "Metric",
+              "title": "总服务时长",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "总服务时长（小时）",
+                "aggregate": "sum",
+                "field": "hours",
+                "format": "number"
+              }
+            },
+            {
+              "id": "recordTable",
+              "type": "Table",
+              "title": "服务记录",
+              "region": "main",
+              "order": 2,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "activityName",
+                  "serviceDate",
+                  "hours",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 20
+              }
+            },
+            {
+              "id": "newRecordForm",
+              "type": "Form",
+              "title": "录入服务记录",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "volunteerRecord",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "activityName",
+                  "serviceDate",
+                  "hours"
+                ],
+                "submitLabel": "提交记录",
+                "successMessage": "服务记录已提交"
+              }
+            },
+            {
+              "id": "exportCsv",
+              "type": "CSVExport",
+              "title": "导出记录",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "activityName",
+                  "serviceDate",
+                  "hours"
+                ],
+                "filename": "志愿者服务时长"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_source_total",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "totalHours",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_source_table",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "recordTable",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_source_csv",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportCsv",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c09",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "校园失物招领：物品名称、物品类别、拾到地点、拾到日期、联系人、是否已认领。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 7553,
+      "tokens": 4033,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了含失物记录实体、统计指标、类别分布图、失物表格、录入表单、认领快捷操作与导出的失物招领应用",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "创建校园失物招领应用，记录物品名称、物品类别、拾到地点、拾到日期、联系人、是否已认领",
+        "summary": "创建了含失物记录实体、统计指标、类别分布图、失物表格、录入表单、认领快捷操作与导出的失物招领应用",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园失物招领",
+          "description": "登记校园内拾到的物品及其拾到地点与日期，跟踪认领状态，支持按类别统计与导出。",
+          "icon": "package",
+          "entities": [
+            {
+              "id": "lostItem",
+              "label": "失物记录",
+              "displayField": "itemName",
+              "fields": [
+                {
+                  "id": "itemName",
+                  "label": "物品名称",
+                  "type": "string",
+                  "required": true,
+                  "description": "拾到物品的名称或简要描述"
+                },
+                {
+                  "id": "category",
+                  "label": "物品类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "证件卡片",
+                    "电子产品",
+                    "书籍资料",
+                    "衣物配饰",
+                    "钥匙",
+                    "水杯餐具",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "foundLocation",
+                  "label": "拾到地点",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "foundDate",
+                  "label": "拾到日期",
+                  "type": "date",
+                  "required": true
+                },
+                {
+                  "id": "contact",
+                  "label": "联系人",
+                  "type": "string",
+                  "required": true,
+                  "description": "拾到人姓名与联系方式"
+                },
+                {
+                  "id": "claimed",
+                  "label": "是否已认领",
+                  "type": "boolean",
+                  "required": false,
+                  "default": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "lostItem",
+                "sort": {
+                  "field": "foundDate",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricTotal",
+              "type": "Metric",
+              "title": "失物总数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "失物总数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricClaimed",
+              "type": "Metric",
+              "title": "已认领率",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "已认领率",
+                "aggregate": "ratio",
+                "where": {
+                  "field": "claimed",
+                  "operator": "eq",
+                  "value": true
+                },
+                "format": "percent"
+              }
+            },
+            {
+              "id": "chartCategory",
+              "type": "Chart",
+              "title": "物品类别分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "category"
+              }
+            },
+            {
+              "id": "tableItems",
+              "type": "Table",
+              "title": "失物列表",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "itemName",
+                  "category",
+                  "foundLocation",
+                  "foundDate",
+                  "contact",
+                  "claimed",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "formItem",
+              "type": "Form",
+              "title": "登记失物",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "lostItem",
+                "fields": [
+                  "itemName",
+                  "category",
+                  "foundLocation",
+                  "foundDate",
+                  "contact"
+                ],
+                "submitLabel": "登记",
+                "successMessage": "已登记，感谢你的热心！"
+              }
+            },
+            {
+              "id": "quickClaim",
+              "type": "QuickAction",
+              "title": "认领登记",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "label": "标记物品已认领",
+                "searchFields": [
+                  "itemName",
+                  "contact"
+                ],
+                "set": {
+                  "claimed": true
+                },
+                "availableWhen": {
+                  "field": "claimed",
+                  "operator": "eq",
+                  "value": false
+                },
+                "buttonLabel": "标记已认领"
+              }
+            },
+            {
+              "id": "exportItems",
+              "type": "CSVExport",
+              "title": "导出失物清单",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "itemName",
+                  "category",
+                  "foundLocation",
+                  "foundDate",
+                  "contact",
+                  "claimed",
+                  "createdAt"
+                ],
+                "filename": "校园失物招领清单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "bSourceTotal",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricTotal",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceClaimed",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricClaimed",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceChart",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartCategory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableItems",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceQuick",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "quickClaim",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportItems",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "c10",
+      "group": "create",
+      "strategy": "AB",
+      "intent": "学术会议投稿管理：论文题目、第一作者、单位、研究方向、投稿日期、审稿状态（待审/修改后录用/录用/拒稿）。",
+      "seeded": null,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 5940,
+      "tokens": 3685,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "创建了“学术会议投稿管理”应用：一个投稿实体包含六个字段，并配有投稿数、录用率指标，审稿状态分布图，投稿列表，录入表单与导出。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "学术会议投稿管理：论文题目、第一作者、单位、研究方向、投稿日期、审稿状态（待审/修改后录用/录用/拒稿）",
+        "summary": "创建了“学术会议投稿管理”应用：一个投稿实体包含六个字段，并配有投稿数、录用率指标，审稿状态分布图，投稿列表，录入表单与导出。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "学术会议投稿管理",
+          "description": "登记会议投稿的论文题目、第一作者、单位、研究方向、投稿日期与审稿状态，并统计投稿量、录用率与状态分布。",
+          "icon": "graduation",
+          "entities": [
+            {
+              "id": "submission",
+              "label": "投稿",
+              "displayField": "title",
+              "fields": [
+                {
+                  "id": "title",
+                  "label": "论文题目",
+                  "type": "string",
+                  "required": true,
+                  "description": "投稿论文的标题"
+                },
+                {
+                  "id": "firstAuthor",
+                  "label": "第一作者",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "affiliation",
+                  "label": "单位",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "researchArea",
+                  "label": "研究方向",
+                  "type": "enum",
+                  "required": false,
+                  "options": [
+                    "人工智能",
+                    "机器学习",
+                    "数据挖掘",
+                    "计算机视觉",
+                    "自然语言处理",
+                    "网络与系统",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "submitDate",
+                  "label": "投稿日期",
+                  "type": "date",
+                  "required": false
+                },
+                {
+                  "id": "reviewStatus",
+                  "label": "审稿状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "待审",
+                  "options": [
+                    "待审",
+                    "修改后录用",
+                    "录用",
+                    "拒稿"
+                  ]
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "title": "投稿数据",
+              "region": "main",
+              "order": 0,
+              "params": {
+                "entityId": "submission",
+                "sort": {
+                  "field": "submitDate",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "metricTotal",
+              "type": "Metric",
+              "title": "投稿总数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "投稿总数",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "metricAcceptRate",
+              "type": "Metric",
+              "title": "录用率",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "录用率",
+                "aggregate": "ratio",
+                "where": {
+                  "field": "reviewStatus",
+                  "operator": "eq",
+                  "value": "录用"
+                },
+                "format": "percent"
+              }
+            },
+            {
+              "id": "chartStatus",
+              "type": "Chart",
+              "title": "审稿状态分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "reviewStatus"
+              }
+            },
+            {
+              "id": "tableSubmissions",
+              "type": "Table",
+              "title": "投稿列表",
+              "region": "main",
+              "order": 4,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "title",
+                  "firstAuthor",
+                  "affiliation",
+                  "researchArea",
+                  "submitDate",
+                  "reviewStatus",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 20
+              }
+            },
+            {
+              "id": "formSubmission",
+              "type": "Form",
+              "title": "新增投稿",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "submission",
+                "fields": [
+                  "title",
+                  "firstAuthor",
+                  "affiliation",
+                  "researchArea",
+                  "submitDate",
+                  "reviewStatus"
+                ],
+                "submitLabel": "提交投稿",
+                "successMessage": "投稿已登记"
+              }
+            },
+            {
+              "id": "exportSubmissions",
+              "type": "CSVExport",
+              "title": "导出投稿",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "title",
+                  "firstAuthor",
+                  "affiliation",
+                  "researchArea",
+                  "submitDate",
+                  "reviewStatus",
+                  "createdAt"
+                ],
+                "filename": "学术会议投稿"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "bSourceTotal",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricTotal",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceAccept",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "metricAcceptRate",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceChart",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "chartStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceTable",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "tableSubmissions",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "bSourceExport",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportSubmissions",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e01",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 9048,
+      "tokens": 4959,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [
+        "修改组件 exportAll（columns）"
+      ],
+      "summary": "新增“已签到”字段、签到快捷操作、计算机专业未签到筛选与提醒草稿，并新增签到率指标。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。",
+        "summary": "新增“已签到”字段、签到快捷操作、计算机专业未签到筛选与提醒草稿，并新增签到率指标。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园讲座报名",
+          "description": "收集讲座报名信息，管理参会名单、签到与专业分布统计",
+          "icon": "calendar",
+          "entities": [
+            {
+              "id": "attendee",
+              "label": "报名者",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "major",
+                  "label": "专业",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "计算机",
+                    "软件工程",
+                    "人工智能",
+                    "电子信息",
+                    "数学",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "phone",
+                  "label": "手机号",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "checkedIn",
+                  "label": "已签到",
+                  "type": "boolean",
+                  "required": false,
+                  "default": false,
+                  "description": "现场签到时标记为是"
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "attendee",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "total",
+              "type": "Metric",
+              "title": "报名人数",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "报名人数",
+                "aggregate": "count",
+                "format": "number",
+                "goal": 120
+              }
+            },
+            {
+              "id": "checkinRate",
+              "type": "Metric",
+              "title": "签到率",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "签到率",
+                "aggregate": "ratio",
+                "where": {
+                  "field": "checkedIn",
+                  "operator": "eq",
+                  "value": true
+                },
+                "format": "percent"
+              }
+            },
+            {
+              "id": "byMajor",
+              "type": "Chart",
+              "title": "专业分布",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "major"
+              }
+            },
+            {
+              "id": "roster",
+              "type": "Table",
+              "title": "报名名单",
+              "region": "main",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "checkedIn",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "checkin",
+              "type": "QuickAction",
+              "title": "现场签到",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "label": "签到",
+                "searchFields": [
+                  "name",
+                  "studentId"
+                ],
+                "set": {
+                  "checkedIn": true
+                },
+                "availableWhen": {
+                  "field": "checkedIn",
+                  "operator": "eq",
+                  "value": false
+                },
+                "buttonLabel": "签到"
+              }
+            },
+            {
+              "id": "signup",
+              "type": "Form",
+              "title": "报名表",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "entityId": "attendee",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功"
+              }
+            },
+            {
+              "id": "noCheckinCs",
+              "type": "Filter",
+              "title": "计算机专业未签到",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "filter": {
+                  "op": "and",
+                  "conditions": [
+                    {
+                      "field": "major",
+                      "operator": "eq",
+                      "value": "计算机"
+                    },
+                    {
+                      "field": "checkedIn",
+                      "operator": "eq",
+                      "value": false
+                    }
+                  ]
+                },
+                "showChips": true
+              }
+            },
+            {
+              "id": "remind",
+              "type": "MessageDraft",
+              "title": "签到提醒草稿",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "template": "{{name}}同学你好，讲座即将开始，你还没有签到，请尽快到签到处签到。",
+                "channelLabel": "站内消息"
+              }
+            },
+            {
+              "id": "exportAll",
+              "type": "CSVExport",
+              "title": "导出名单",
+              "region": "aside",
+              "order": 4,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "checkedIn",
+                  "createdAt"
+                ],
+                "filename": "讲座报名名单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_total",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "total",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_rate",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "checkinRate",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_major",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byMajor",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_roster",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "roster",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_checkin",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "checkin",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_filter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "noCheckinCs",
+                "port": "input"
+              }
+            },
+            {
+              "id": "b_remind",
+              "from": {
+                "node": "noCheckinCs",
+                "port": "result"
+              },
+              "to": {
+                "node": "remind",
+                "port": "recipients"
+              }
+            },
+            {
+              "id": "b_export",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportAll",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e01",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 7348,
+      "tokens": 4374,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增签到状态字段与一键签到操作，新增「计算机专业未签到」筛选及提醒消息草稿，并新增签到率指标",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。",
+        "summary": "新增签到状态字段与一键签到操作，新增「计算机专业未签到」筛选及提醒消息草稿，并新增签到率指标",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addField",
+            "entityId": "attendee",
+            "field": {
+              "id": "checkedIn",
+              "label": "已签到",
+              "type": "boolean",
+              "required": false,
+              "default": false,
+              "description": "现场签到时勾选"
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "signIn",
+              "type": "QuickAction",
+              "title": "现场签到",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "label": "签到",
+                "searchFields": [
+                  "name",
+                  "studentId"
+                ],
+                "set": {
+                  "checkedIn": true
+                },
+                "availableWhen": {
+                  "field": "checkedIn",
+                  "operator": "eq",
+                  "value": false
+                },
+                "buttonLabel": "确认签到"
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "notCheckedCS",
+              "type": "Filter",
+              "title": "计算机专业未签到",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "filter": {
+                  "op": "and",
+                  "conditions": [
+                    {
+                      "field": "major",
+                      "operator": "eq",
+                      "value": "计算机"
+                    },
+                    {
+                      "field": "checkedIn",
+                      "operator": "eq",
+                      "value": false
+                    }
+                  ]
+                },
+                "showChips": true
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "remindCS",
+              "type": "MessageDraft",
+              "title": "未签到提醒",
+              "region": "aside",
+              "order": 4,
+              "params": {
+                "template": "{{name}}同学你好，讲座即将开始，你还没有完成签到，请尽快到签到台完成签到，谢谢！",
+                "channelLabel": "站内提醒"
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "checkRate",
+              "type": "Metric",
+              "title": "签到率",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "签到率",
+                "aggregate": "ratio",
+                "where": {
+                  "field": "checkedIn",
+                  "operator": "eq",
+                  "value": true
+                },
+                "format": "percent",
+                "goal": 100
+              }
+            }
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "byMajor",
+            "region": "main",
+            "order": 2,
+            "width": "half"
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "roster",
+            "region": "main",
+            "order": 3,
+            "width": "full"
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_signIn",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "signIn",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_notChecked",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "notCheckedCS",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_remind",
+              "from": {
+                "node": "notCheckedCS",
+                "port": "result"
+              },
+              "to": {
+                "node": "remindCS",
+                "port": "recipients"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_rate",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "checkRate",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "roster",
+            "params": {
+              "columns": [
+                "name",
+                "studentId",
+                "major",
+                "phone",
+                "checkedIn",
+                "createdAt"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e02",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "增加“年级”字段（大一、大二、大三、大四、研究生），报名时填写，并按年级统计分布。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4234,
+      "tokens": 4017,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "为报名者新增“年级”单选字段并加入报名表与名单列，新增按年级分组的分布图",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "增加“年级”字段（大一、大二、大三、大四、研究生），报名时填写，并按年级统计分布",
+        "summary": "为报名者新增“年级”单选字段并加入报名表与名单列，新增按年级分组的分布图",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园讲座报名",
+          "description": "收集讲座报名信息，管理参会名单并统计专业与年级分布",
+          "icon": "calendar",
+          "entities": [
+            {
+              "id": "attendee",
+              "label": "报名者",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "major",
+                  "label": "专业",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "计算机",
+                    "软件工程",
+                    "人工智能",
+                    "电子信息",
+                    "数学",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "grade",
+                  "label": "年级",
+                  "type": "enum",
+                  "required": true,
+                  "default": "大一",
+                  "options": [
+                    "大一",
+                    "大二",
+                    "大三",
+                    "大四",
+                    "研究生"
+                  ]
+                },
+                {
+                  "id": "phone",
+                  "label": "手机号",
+                  "type": "string",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "attendee",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "total",
+              "type": "Metric",
+              "title": "报名人数",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "报名人数",
+                "aggregate": "count",
+                "format": "number",
+                "goal": 120
+              }
+            },
+            {
+              "id": "byMajor",
+              "type": "Chart",
+              "title": "专业分布",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "major"
+              }
+            },
+            {
+              "id": "byGrade",
+              "type": "Chart",
+              "title": "年级分布",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "grade"
+              }
+            },
+            {
+              "id": "roster",
+              "type": "Table",
+              "title": "报名名单",
+              "region": "main",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "grade",
+                  "phone",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "signup",
+              "type": "Form",
+              "title": "报名表",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "entityId": "attendee",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "grade",
+                  "phone"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功"
+              }
+            },
+            {
+              "id": "exportAll",
+              "type": "CSVExport",
+              "title": "导出名单",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "filename": "讲座报名名单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_total",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "total",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_major",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byMajor",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_grade",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byGrade",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_roster",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "roster",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_export",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportAll",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e02",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "增加“年级”字段（大一、大二、大三、大四、研究生），报名时填写，并按年级统计分布。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2937,
+      "tokens": 3580,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增年级单选字段并加入报名表，添加按年级分组的分布图，报名名单中展示年级",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "增加“年级”字段（大一、大二、大三、大四、研究生），报名时填写，并按年级统计分布",
+        "summary": "新增年级单选字段并加入报名表，添加按年级分组的分布图，报名名单中展示年级",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addField",
+            "entityId": "attendee",
+            "field": {
+              "id": "grade",
+              "label": "年级",
+              "type": "enum",
+              "required": true,
+              "default": "大一",
+              "options": [
+                "大一",
+                "大二",
+                "大三",
+                "大四",
+                "研究生"
+              ],
+              "description": "报名者所在年级"
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "signup",
+            "params": {
+              "fields": [
+                "name",
+                "studentId",
+                "major",
+                "grade",
+                "phone"
+              ]
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "byGrade",
+              "type": "Chart",
+              "title": "年级分布",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "grade"
+              }
+            }
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "roster",
+            "region": "main",
+            "order": 3
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "roster",
+            "params": {
+              "columns": [
+                "name",
+                "studentId",
+                "major",
+                "grade",
+                "phone",
+                "createdAt"
+              ]
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_grade",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byGrade",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e03",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "只看计算机专业的报名名单，并且能单独导出这部分名单。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 6052,
+      "tokens": 4185,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增按专业筛选的筛选器（计算机），报名名单表改为只显示计算机专业记录，并新增一个单独的“导出计算机名单”组件，原全量导出保留",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "只看计算机专业的报名名单，并且能单独导出这部分名单",
+        "summary": "新增按专业筛选的筛选器（计算机），报名名单表改为只显示计算机专业记录，并新增一个单独的“导出计算机名单”组件，原全量导出保留",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园讲座报名",
+          "description": "收集讲座报名信息，管理参会名单并统计专业分布，可筛选并单独导出计算机专业名单",
+          "icon": "calendar",
+          "entities": [
+            {
+              "id": "attendee",
+              "label": "报名者",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "major",
+                  "label": "专业",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "计算机",
+                    "软件工程",
+                    "人工智能",
+                    "电子信息",
+                    "数学",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "phone",
+                  "label": "手机号",
+                  "type": "string",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "attendee",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "filterCs",
+              "type": "Filter",
+              "title": "计算机专业筛选",
+              "params": {
+                "filter": {
+                  "field": "major",
+                  "operator": "eq",
+                  "value": "计算机"
+                },
+                "showChips": true
+              }
+            },
+            {
+              "id": "total",
+              "type": "Metric",
+              "title": "报名人数",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "报名人数",
+                "aggregate": "count",
+                "format": "number",
+                "goal": 120
+              }
+            },
+            {
+              "id": "byMajor",
+              "type": "Chart",
+              "title": "专业分布",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "major"
+              }
+            },
+            {
+              "id": "roster",
+              "type": "Table",
+              "title": "计算机专业报名名单",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "signup",
+              "type": "Form",
+              "title": "报名表",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "entityId": "attendee",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功"
+              }
+            },
+            {
+              "id": "exportCs",
+              "type": "CSVExport",
+              "title": "导出计算机名单",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "createdAt"
+                ],
+                "filename": "计算机专业报名名单"
+              }
+            },
+            {
+              "id": "exportAll",
+              "type": "CSVExport",
+              "title": "导出全部名单",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "filename": "讲座报名名单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_filter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "filterCs",
+                "port": "input"
+              }
+            },
+            {
+              "id": "b_total",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "total",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_major",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byMajor",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_roster",
+              "from": {
+                "node": "filterCs",
+                "port": "result"
+              },
+              "to": {
+                "node": "roster",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_export_cs",
+              "from": {
+                "node": "filterCs",
+                "port": "result"
+              },
+              "to": {
+                "node": "exportCs",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_export",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportAll",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e03",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "只看计算机专业的报名名单，并且能单独导出这部分名单。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 2,
+      "roundIssues": [
+        [
+          "graph:GRAPH_INPUT_UNBOUND"
+        ],
+        []
+      ],
+      "totalMs": 7103,
+      "tokens": 7619,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增计算机专业筛选节点（从数据源接入），报名名单表改为只显示筛选结果，并新增导出该筛选结果的导出按钮",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "只看计算机专业的报名名单，并且能单独导出这部分名单",
+        "summary": "新增计算机专业筛选节点（从数据源接入），报名名单表改为只显示筛选结果，并新增导出该筛选结果的导出按钮",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addNode",
+            "node": {
+              "id": "csFilter",
+              "type": "Filter",
+              "title": "计算机专业筛选",
+              "region": "main",
+              "order": 2,
+              "width": "full",
+              "params": {
+                "filter": {
+                  "field": "major",
+                  "operator": "eq",
+                  "value": "计算机"
+                },
+                "showChips": true
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_filter_in",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "csFilter",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "roster",
+            "region": "main",
+            "order": 3,
+            "width": "full"
+          },
+          {
+            "op": "unbind",
+            "bindingId": "b_roster"
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_roster_cs",
+              "from": {
+                "node": "csFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "roster",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "csExport",
+              "type": "CSVExport",
+              "title": "导出计算机名单",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "filename": "计算机专业报名名单"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_export_cs",
+              "from": {
+                "node": "csFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "csExport",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e04",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "加一个选填的“备注”字段，报名表里可以填写，名单里也能看到。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 3443,
+      "tokens": 3796,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增选填长文本字段 note（备注），并加入报名表单与报名名单表格列",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "给报名者加一个选填的“备注”字段，报名表可填写，名单中可查看",
+        "summary": "新增选填长文本字段 note（备注），并加入报名表单与报名名单表格列",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园讲座报名",
+          "description": "收集讲座报名信息，管理参会名单并统计专业分布",
+          "icon": "calendar",
+          "entities": [
+            {
+              "id": "attendee",
+              "label": "报名者",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "major",
+                  "label": "专业",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "计算机",
+                    "软件工程",
+                    "人工智能",
+                    "电子信息",
+                    "数学",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "phone",
+                  "label": "手机号",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "note",
+                  "label": "备注",
+                  "type": "text",
+                  "required": false,
+                  "description": "选填，可填写饮食禁忌、随行需求等信息"
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "attendee",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "total",
+              "type": "Metric",
+              "title": "报名人数",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "报名人数",
+                "aggregate": "count",
+                "format": "number",
+                "goal": 120
+              }
+            },
+            {
+              "id": "byMajor",
+              "type": "Chart",
+              "title": "专业分布",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "major"
+              }
+            },
+            {
+              "id": "roster",
+              "type": "Table",
+              "title": "报名名单",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "note",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "signup",
+              "type": "Form",
+              "title": "报名表",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "entityId": "attendee",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "note"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功"
+              }
+            },
+            {
+              "id": "exportAll",
+              "type": "CSVExport",
+              "title": "导出名单",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "filename": "讲座报名名单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_total",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "total",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_major",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byMajor",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_roster",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "roster",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_export",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportAll",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e04",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "加一个选填的“备注”字段，报名表里可以填写，名单里也能看到。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 1948,
+      "tokens": 3327,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增选填“备注”文本字段，并把它加入报名表单与报名名单表格。",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "加一个选填的“备注”字段，报名表里可以填写，名单里也能看到。",
+        "summary": "新增选填“备注”文本字段，并把它加入报名表单与报名名单表格。",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addField",
+            "entityId": "attendee",
+            "field": {
+              "id": "note",
+              "label": "备注",
+              "type": "text",
+              "required": false,
+              "description": "选填，可填写饮食禁忌、随行需求等补充信息"
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "signup",
+            "params": {
+              "fields": [
+                "name",
+                "studentId",
+                "major",
+                "phone",
+                "note"
+              ]
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "roster",
+            "params": {
+              "columns": [
+                "name",
+                "studentId",
+                "major",
+                "phone",
+                "note",
+                "createdAt"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e05",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "把专业分布改成柱状图，标题改成“各专业报名人数”。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2785,
+      "tokens": 3720,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "将“专业分布”图表的标题改为“各专业报名人数”，并保持为按专业分组的柱状图，其余配置不变",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "把专业分布图表改为柱状图，并把标题改成“各专业报名人数”",
+        "summary": "将“专业分布”图表的标题改为“各专业报名人数”，并保持为按专业分组的柱状图，其余配置不变",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "校园讲座报名",
+          "description": "收集讲座报名信息，管理参会名单并统计专业分布",
+          "icon": "calendar",
+          "entities": [
+            {
+              "id": "attendee",
+              "label": "报名者",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "姓名",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "studentId",
+                  "label": "学号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "major",
+                  "label": "专业",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "计算机",
+                    "软件工程",
+                    "人工智能",
+                    "电子信息",
+                    "数学",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "phone",
+                  "label": "手机号",
+                  "type": "string",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "attendee",
+                "sort": {
+                  "field": "createdAt",
+                  "dir": "desc"
+                }
+              }
+            },
+            {
+              "id": "total",
+              "type": "Metric",
+              "title": "报名人数",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "报名人数",
+                "aggregate": "count",
+                "format": "number",
+                "goal": 120
+              }
+            },
+            {
+              "id": "byMajor",
+              "type": "Chart",
+              "title": "各专业报名人数",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "major"
+              }
+            },
+            {
+              "id": "roster",
+              "type": "Table",
+              "title": "报名名单",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone",
+                  "createdAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": true,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "signup",
+              "type": "Form",
+              "title": "报名表",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "entityId": "attendee",
+                "fields": [
+                  "name",
+                  "studentId",
+                  "major",
+                  "phone"
+                ],
+                "submitLabel": "提交报名",
+                "successMessage": "报名成功"
+              }
+            },
+            {
+              "id": "exportAll",
+              "type": "CSVExport",
+              "title": "导出名单",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "filename": "讲座报名名单"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_total",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "total",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_major",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byMajor",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_roster",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "roster",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_export",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "exportAll",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e05",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "把专业分布改成柱状图，标题改成“各专业报名人数”。",
+      "seeded": 36,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 1643,
+      "tokens": 3236,
+      "preserved": 36,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "将“专业分布”图表切换为柱状图并改名为“各专业报名人数”",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "把专业分布改成柱状图，标题改成“各专业报名人数”",
+        "summary": "将“专业分布”图表切换为柱状图并改名为“各专业报名人数”",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "updateNode",
+            "nodeId": "byMajor",
+            "title": "各专业报名人数",
+            "params": {
+              "kind": "bar",
+              "groupBy": "major"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e06",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "标出借出超过 7 天还没归还的设备。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 7780,
+      "tokens": 5382,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增一个筛选节点（状态为已借出且借用日期早于 7 天前），据此生成“超期未还”指标与超期设备表格，并调整主区布局。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "标出借出超过 7 天还没归还的设备",
+        "summary": "新增一个筛选节点（状态为已借出且借用日期早于 7 天前），据此生成“超期未还”指标与超期设备表格，并调整主区布局。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "实验室设备借用",
+          "description": "登记实验设备，记录借出与归还，掌握设备状态并标出超期未还设备",
+          "icon": "flask",
+          "entities": [
+            {
+              "id": "equipment",
+              "label": "设备",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "设备名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "code",
+                  "label": "编号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "category",
+                  "label": "类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "显微镜",
+                    "示波器",
+                    "电源",
+                    "计算设备",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "status",
+                  "label": "状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "可借用",
+                  "options": [
+                    "可借用",
+                    "已借出",
+                    "维修中"
+                  ]
+                },
+                {
+                  "id": "borrower",
+                  "label": "借用人",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "borrowedAt",
+                  "label": "借用日期",
+                  "type": "date",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "equipment",
+                "sort": {
+                  "field": "code",
+                  "dir": "asc"
+                }
+              }
+            },
+            {
+              "id": "overdue",
+              "type": "Filter",
+              "title": "超期未还筛选",
+              "region": "main",
+              "order": 0,
+              "params": {
+                "filter": {
+                  "op": "and",
+                  "conditions": [
+                    {
+                      "field": "status",
+                      "operator": "eq",
+                      "value": "已借出"
+                    },
+                    {
+                      "field": "borrowedAt",
+                      "operator": "lte",
+                      "value": {
+                        "relative": "daysAgo",
+                        "days": 7
+                      }
+                    }
+                  ]
+                },
+                "showChips": true
+              }
+            },
+            {
+              "id": "available",
+              "type": "Metric",
+              "title": "可借用",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "可借用",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "lent",
+              "type": "Metric",
+              "title": "已借出",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "已借出",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "overdueCount",
+              "type": "Metric",
+              "title": "超期未还",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "超期未还",
+                "aggregate": "count",
+                "format": "number"
+              }
+            },
+            {
+              "id": "overdueTable",
+              "type": "Table",
+              "title": "超期未还设备",
+              "region": "main",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "borrower",
+                  "borrowedAt",
+                  "status"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "inventory",
+              "type": "Table",
+              "title": "设备清单",
+              "region": "main",
+              "order": 4,
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "status",
+                  "borrower",
+                  "borrowedAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "byStatus",
+              "type": "Chart",
+              "title": "状态分布",
+              "region": "main",
+              "order": 5,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "status"
+              }
+            },
+            {
+              "id": "byCategory",
+              "type": "Chart",
+              "title": "类别分布",
+              "region": "main",
+              "order": 6,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "category"
+              }
+            },
+            {
+              "id": "lend",
+              "type": "QuickAction",
+              "title": "借出登记",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "label": "借出设备",
+                "searchFields": [
+                  "name",
+                  "code"
+                ],
+                "ask": [
+                  "borrower"
+                ],
+                "set": {
+                  "status": "已借出",
+                  "borrowedAt": "$today"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "buttonLabel": "借出"
+              }
+            },
+            {
+              "id": "giveBack",
+              "type": "QuickAction",
+              "title": "归还登记",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "label": "归还设备",
+                "searchFields": [
+                  "name",
+                  "code",
+                  "borrower"
+                ],
+                "set": {
+                  "status": "可借用",
+                  "borrower": null,
+                  "borrowedAt": null
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "buttonLabel": "归还"
+              }
+            },
+            {
+              "id": "register",
+              "type": "Form",
+              "title": "登记新设备",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "entityId": "equipment",
+                "fields": [
+                  "name",
+                  "code",
+                  "category"
+                ],
+                "submitLabel": "登记",
+                "successMessage": "设备已登记"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_overdueFilter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "overdue",
+                "port": "input"
+              }
+            },
+            {
+              "id": "b_overdueCount",
+              "from": {
+                "node": "overdue",
+                "port": "result"
+              },
+              "to": {
+                "node": "overdueCount",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_overdueTable",
+              "from": {
+                "node": "overdue",
+                "port": "result"
+              },
+              "to": {
+                "node": "overdueTable",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_available",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "available",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lent",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lent",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_inventory",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "inventory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lend",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lend",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_giveBack",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "giveBack",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_status",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_category",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byCategory",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e06",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "标出借出超过 7 天还没归还的设备。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 6027,
+      "tokens": 4489,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增一个筛选节点，条件为「状态=已借出且借用日期不晚于 7 天前」；同时新增「逾期未还设备」表格放在设备清单上方，并相应调整已有组件顺序。",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "标出借出超过 7 天还没归还的设备",
+        "summary": "新增一个筛选节点，条件为「状态=已借出且借用日期不晚于 7 天前」；同时新增「逾期未还设备」表格放在设备清单上方，并相应调整已有组件顺序。",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addNode",
+            "node": {
+              "id": "overdueFilter",
+              "type": "Filter",
+              "title": "借出超7天未归还",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "filter": {
+                  "op": "and",
+                  "conditions": [
+                    {
+                      "field": "status",
+                      "operator": "eq",
+                      "value": "已借出"
+                    },
+                    {
+                      "field": "borrowedAt",
+                      "operator": "lte",
+                      "value": {
+                        "relative": "daysAgo",
+                        "days": 7
+                      }
+                    }
+                  ]
+                },
+                "showChips": true
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "overdueTable",
+              "type": "Table",
+              "title": "逾期未还设备（超过 7 天）",
+              "region": "main",
+              "order": 3,
+              "width": "full",
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "borrower",
+                  "borrowedAt",
+                  "status"
+                ],
+                "searchable": true,
+                "editable": false,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_overdueFilter",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "overdueFilter",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_overdueTable",
+              "from": {
+                "node": "overdueFilter",
+                "port": "result"
+              },
+              "to": {
+                "node": "overdueTable",
+                "port": "rows"
+              }
+            }
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "inventory",
+            "region": "main",
+            "order": 4,
+            "width": "full"
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "byStatus",
+            "region": "main",
+            "order": 5,
+            "width": "half"
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "byCategory",
+            "region": "main",
+            "order": 6,
+            "width": "half"
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e07",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "增加“存放位置”字段，登记新设备时填写，并在设备清单中显示。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 5009,
+      "tokens": 4703,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "为设备实体新增“存放位置”字段，加入登记表单必填项（带默认空值不影响旧记录），并在设备清单表格中新增该列",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "增加“存放位置”字段，登记新设备时填写，并在设备清单中显示",
+        "summary": "为设备实体新增“存放位置”字段，加入登记表单必填项（带默认空值不影响旧记录），并在设备清单表格中新增该列",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "实验室设备借用",
+          "description": "登记实验设备，记录借出与归还，掌握设备状态",
+          "icon": "flask",
+          "entities": [
+            {
+              "id": "equipment",
+              "label": "设备",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "设备名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "code",
+                  "label": "编号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "category",
+                  "label": "类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "显微镜",
+                    "示波器",
+                    "电源",
+                    "计算设备",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "location",
+                  "label": "存放位置",
+                  "type": "string",
+                  "required": false,
+                  "description": "设备的存放地点，如实验楼 A302 柜 3"
+                },
+                {
+                  "id": "status",
+                  "label": "状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "可借用",
+                  "options": [
+                    "可借用",
+                    "已借出",
+                    "维修中"
+                  ]
+                },
+                {
+                  "id": "borrower",
+                  "label": "借用人",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "borrowedAt",
+                  "label": "借用日期",
+                  "type": "date",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "equipment",
+                "sort": {
+                  "field": "code",
+                  "dir": "asc"
+                }
+              }
+            },
+            {
+              "id": "available",
+              "type": "Metric",
+              "title": "可借用",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "可借用",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "lent",
+              "type": "Metric",
+              "title": "已借出",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "已借出",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "inventory",
+              "type": "Table",
+              "title": "设备清单",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "location",
+                  "status",
+                  "borrower",
+                  "borrowedAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "byStatus",
+              "type": "Chart",
+              "title": "状态分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "status"
+              }
+            },
+            {
+              "id": "byCategory",
+              "type": "Chart",
+              "title": "类别分布",
+              "region": "main",
+              "order": 4,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "category"
+              }
+            },
+            {
+              "id": "lend",
+              "type": "QuickAction",
+              "title": "借出登记",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "label": "借出设备",
+                "searchFields": [
+                  "name",
+                  "code"
+                ],
+                "ask": [
+                  "borrower"
+                ],
+                "set": {
+                  "status": "已借出",
+                  "borrowedAt": "$today"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "buttonLabel": "借出"
+              }
+            },
+            {
+              "id": "giveBack",
+              "type": "QuickAction",
+              "title": "归还登记",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "label": "归还设备",
+                "searchFields": [
+                  "name",
+                  "code",
+                  "borrower"
+                ],
+                "set": {
+                  "status": "可借用",
+                  "borrower": null,
+                  "borrowedAt": null
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "buttonLabel": "归还"
+              }
+            },
+            {
+              "id": "register",
+              "type": "Form",
+              "title": "登记新设备",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "entityId": "equipment",
+                "fields": [
+                  "name",
+                  "code",
+                  "category",
+                  "location"
+                ],
+                "submitLabel": "登记",
+                "successMessage": "设备已登记"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_available",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "available",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lent",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lent",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_inventory",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "inventory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_status",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_category",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byCategory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lend",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lend",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_giveBack",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "giveBack",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e07",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "增加“存放位置”字段，登记新设备时填写，并在设备清单中显示。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2032,
+      "tokens": 3828,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增“存放位置”文本字段，并把它加入登记表单与设备清单列。",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "增加“存放位置”字段，登记新设备时填写，并在设备清单中显示。",
+        "summary": "新增“存放位置”文本字段，并把它加入登记表单与设备清单列。",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addField",
+            "entityId": "equipment",
+            "field": {
+              "id": "location",
+              "label": "存放位置",
+              "type": "string",
+              "required": false
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "register",
+            "params": {
+              "fields": [
+                "name",
+                "code",
+                "category",
+                "location"
+              ]
+            }
+          },
+          {
+            "op": "updateNode",
+            "nodeId": "inventory",
+            "params": {
+              "columns": [
+                "code",
+                "name",
+                "category",
+                "status",
+                "location",
+                "borrower",
+                "borrowedAt"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e08",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "增加一个指标：当前处于维修中的设备数量。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 5201,
+      "tokens": 4797,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "在概览区新增“维修中”指标，统计状态为维修中的设备数量，并重排主区组件顺序。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "增加一个指标：当前处于维修中的设备数量。",
+        "summary": "在概览区新增“维修中”指标，统计状态为维修中的设备数量，并重排主区组件顺序。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "实验室设备借用",
+          "description": "登记实验设备，记录借出与归还，掌握设备状态",
+          "icon": "flask",
+          "entities": [
+            {
+              "id": "equipment",
+              "label": "设备",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "设备名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "code",
+                  "label": "编号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "category",
+                  "label": "类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "显微镜",
+                    "示波器",
+                    "电源",
+                    "计算设备",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "status",
+                  "label": "状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "可借用",
+                  "options": [
+                    "可借用",
+                    "已借出",
+                    "维修中"
+                  ]
+                },
+                {
+                  "id": "borrower",
+                  "label": "借用人",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "borrowedAt",
+                  "label": "借用日期",
+                  "type": "date",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "equipment",
+                "sort": {
+                  "field": "code",
+                  "dir": "asc"
+                }
+              }
+            },
+            {
+              "id": "available",
+              "type": "Metric",
+              "title": "可借用",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "可借用",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "lent",
+              "type": "Metric",
+              "title": "已借出",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "已借出",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "repairing",
+              "type": "Metric",
+              "title": "维修中",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "维修中",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "维修中"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "inventory",
+              "type": "Table",
+              "title": "设备清单",
+              "region": "main",
+              "order": 3,
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "status",
+                  "borrower",
+                  "borrowedAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "byStatus",
+              "type": "Chart",
+              "title": "状态分布",
+              "region": "main",
+              "order": 4,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "status"
+              }
+            },
+            {
+              "id": "byCategory",
+              "type": "Chart",
+              "title": "类别分布",
+              "region": "main",
+              "order": 5,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "category"
+              }
+            },
+            {
+              "id": "lend",
+              "type": "QuickAction",
+              "title": "借出登记",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "label": "借出设备",
+                "searchFields": [
+                  "name",
+                  "code"
+                ],
+                "ask": [
+                  "borrower"
+                ],
+                "set": {
+                  "status": "已借出",
+                  "borrowedAt": "$today"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "buttonLabel": "借出"
+              }
+            },
+            {
+              "id": "giveBack",
+              "type": "QuickAction",
+              "title": "归还登记",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "label": "归还设备",
+                "searchFields": [
+                  "name",
+                  "code",
+                  "borrower"
+                ],
+                "set": {
+                  "status": "可借用",
+                  "borrower": null,
+                  "borrowedAt": null
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "buttonLabel": "归还"
+              }
+            },
+            {
+              "id": "register",
+              "type": "Form",
+              "title": "登记新设备",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "entityId": "equipment",
+                "fields": [
+                  "name",
+                  "code",
+                  "category"
+                ],
+                "submitLabel": "登记",
+                "successMessage": "设备已登记"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_available",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "available",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lent",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lent",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_repairing",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "repairing",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_inventory",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "inventory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_status",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_category",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byCategory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lend",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lend",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_giveBack",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "giveBack",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e08",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "增加一个指标：当前处于维修中的设备数量。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2211,
+      "tokens": 3846,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增「维修中」指标（统计状态为维修中的设备数），并顺延主区其他组件顺序",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "增加一个指标：当前处于维修中的设备数量",
+        "summary": "新增「维修中」指标（统计状态为维修中的设备数），并顺延主区其他组件顺序",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addNode",
+            "node": {
+              "id": "repairing",
+              "type": "Metric",
+              "title": "维修中",
+              "region": "main",
+              "order": 2,
+              "width": "half",
+              "params": {
+                "label": "维修中",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "维修中"
+                },
+                "format": "number"
+              }
+            }
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "inventory",
+            "region": "main",
+            "order": 3,
+            "width": "full"
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "byStatus",
+            "region": "main",
+            "order": 4,
+            "width": "half"
+          },
+          {
+            "op": "moveNode",
+            "nodeId": "byCategory",
+            "region": "main",
+            "order": 5,
+            "width": "half"
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_repairing",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "repairing",
+                "port": "rows"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e09",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "给借了设备还没归还的人生成一条归还提醒。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 6191,
+      "tokens": 4918,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增一个筛选（状态=已借出且借用人已填）和一个消息草稿组件，为未归还的借用人生成归还提醒草稿",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "给借了设备还没归还的人生成一条归还提醒",
+        "summary": "新增一个筛选（状态=已借出且借用人已填）和一个消息草稿组件，为未归还的借用人生成归还提醒草稿",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "实验室设备借用",
+          "description": "登记实验设备，记录借出与归还，掌握设备状态，并可对未归还设备生成归还提醒",
+          "icon": "flask",
+          "entities": [
+            {
+              "id": "equipment",
+              "label": "设备",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "设备名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "code",
+                  "label": "编号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "category",
+                  "label": "类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "显微镜",
+                    "示波器",
+                    "电源",
+                    "计算设备",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "status",
+                  "label": "状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "可借用",
+                  "options": [
+                    "可借用",
+                    "已借出",
+                    "维修中"
+                  ]
+                },
+                {
+                  "id": "borrower",
+                  "label": "借用人",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "borrowedAt",
+                  "label": "借用日期",
+                  "type": "date",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "equipment",
+                "sort": {
+                  "field": "code",
+                  "dir": "asc"
+                }
+              }
+            },
+            {
+              "id": "available",
+              "type": "Metric",
+              "title": "可借用",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "可借用",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "lent",
+              "type": "Metric",
+              "title": "已借出",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "已借出",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "inventory",
+              "type": "Table",
+              "title": "设备清单",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "status",
+                  "borrower",
+                  "borrowedAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "byStatus",
+              "type": "Chart",
+              "title": "状态分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "status"
+              }
+            },
+            {
+              "id": "byCategory",
+              "type": "Chart",
+              "title": "类别分布",
+              "region": "main",
+              "order": 4,
+              "width": "half",
+              "params": {
+                "kind": "bar",
+                "groupBy": "category"
+              }
+            },
+            {
+              "id": "lend",
+              "type": "QuickAction",
+              "title": "借出登记",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "label": "借出设备",
+                "searchFields": [
+                  "name",
+                  "code"
+                ],
+                "ask": [
+                  "borrower"
+                ],
+                "set": {
+                  "status": "已借出",
+                  "borrowedAt": "$today"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "buttonLabel": "借出"
+              }
+            },
+            {
+              "id": "giveBack",
+              "type": "QuickAction",
+              "title": "归还登记",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "label": "归还设备",
+                "searchFields": [
+                  "name",
+                  "code",
+                  "borrower"
+                ],
+                "set": {
+                  "status": "可借用",
+                  "borrower": null,
+                  "borrowedAt": null
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "buttonLabel": "归还"
+              }
+            },
+            {
+              "id": "register",
+              "type": "Form",
+              "title": "登记新设备",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "entityId": "equipment",
+                "fields": [
+                  "name",
+                  "code",
+                  "category"
+                ],
+                "submitLabel": "登记",
+                "successMessage": "设备已登记"
+              }
+            },
+            {
+              "id": "unreturned",
+              "type": "Filter",
+              "title": "未归还设备",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "filter": {
+                  "op": "and",
+                  "conditions": [
+                    {
+                      "field": "status",
+                      "operator": "eq",
+                      "value": "已借出"
+                    },
+                    {
+                      "field": "borrower",
+                      "operator": "notEmpty"
+                    }
+                  ]
+                },
+                "showChips": true
+              }
+            },
+            {
+              "id": "returnReminder",
+              "type": "MessageDraft",
+              "title": "归还提醒",
+              "region": "aside",
+              "order": 4,
+              "params": {
+                "template": "{{borrower}} 您好，您于 {{borrowedAt}} 借用的设备「{{name}}」（编号见设备清单）尚未归还，请尽快办理归还手续，谢谢配合。",
+                "channelLabel": "站内提醒"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_available",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "available",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lent",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lent",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_inventory",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "inventory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lend",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lend",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_giveBack",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "giveBack",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_status",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_category",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byCategory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_unreturned",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "unreturned",
+                "port": "input"
+              }
+            },
+            {
+              "id": "b_reminder",
+              "from": {
+                "node": "unreturned",
+                "port": "result"
+              },
+              "to": {
+                "node": "returnReminder",
+                "port": "recipients"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e09",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "给借了设备还没归还的人生成一条归还提醒。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4452,
+      "tokens": 4222,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "新增一个筛选已借出且有借用人的过滤器，并接入消息草稿组件，为每条未归还记录生成归还提醒文本",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "给借了设备还没归还的人生成一条归还提醒",
+        "summary": "新增一个筛选已借出且有借用人的过滤器，并接入消息草稿组件，为每条未归还记录生成归还提醒文本",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "addNode",
+            "node": {
+              "id": "unreturned",
+              "type": "Filter",
+              "title": "未归还设备",
+              "region": "aside",
+              "order": 3,
+              "params": {
+                "filter": {
+                  "op": "and",
+                  "conditions": [
+                    {
+                      "field": "status",
+                      "operator": "eq",
+                      "value": "已借出"
+                    },
+                    {
+                      "field": "borrower",
+                      "operator": "notEmpty"
+                    }
+                  ]
+                },
+                "showChips": true
+              }
+            }
+          },
+          {
+            "op": "addNode",
+            "node": {
+              "id": "returnReminder",
+              "type": "MessageDraft",
+              "title": "归还提醒",
+              "region": "aside",
+              "order": 4,
+              "params": {
+                "template": "{{borrower}} 您好：您借用的设备「{{name}}」（编号 {{code}}）尚未归还，借用日期为 {{borrowedAt}}，请尽快归还至实验室。",
+                "channelLabel": "站内提醒"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_unreturned",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "unreturned",
+                "port": "input"
+              }
+            }
+          },
+          {
+            "op": "bind",
+            "binding": {
+              "id": "b_reminder",
+              "from": {
+                "node": "unreturned",
+                "port": "result"
+              },
+              "to": {
+                "node": "returnReminder",
+                "port": "recipients"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "e10",
+      "group": "evolve",
+      "strategy": "A",
+      "intent": "类别分布图暂时用不上，先把它隐藏起来。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 4210,
+      "tokens": 4548,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "已从界面移除「类别分布」图表及其绑定，其余指标、表格、表单与快捷操作保持不变。",
+      "error": null,
+      "output": {
+        "kind": "create",
+        "intent": "类别分布图暂时用不上，先把它隐藏起来。",
+        "summary": "已从界面移除「类别分布」图表及其绑定，其余指标、表格、表单与快捷操作保持不变。",
+        "definition": {
+          "schemaVersion": 1,
+          "name": "实验室设备借用",
+          "description": "登记实验设备，记录借出与归还，掌握设备状态",
+          "icon": "flask",
+          "entities": [
+            {
+              "id": "equipment",
+              "label": "设备",
+              "displayField": "name",
+              "fields": [
+                {
+                  "id": "name",
+                  "label": "设备名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "code",
+                  "label": "编号",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "id": "category",
+                  "label": "类别",
+                  "type": "enum",
+                  "required": true,
+                  "options": [
+                    "显微镜",
+                    "示波器",
+                    "电源",
+                    "计算设备",
+                    "其他"
+                  ]
+                },
+                {
+                  "id": "status",
+                  "label": "状态",
+                  "type": "enum",
+                  "required": true,
+                  "default": "可借用",
+                  "options": [
+                    "可借用",
+                    "已借出",
+                    "维修中"
+                  ]
+                },
+                {
+                  "id": "borrower",
+                  "label": "借用人",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "id": "borrowedAt",
+                  "label": "借用日期",
+                  "type": "date",
+                  "required": false
+                }
+              ]
+            }
+          ],
+          "nodes": [
+            {
+              "id": "source",
+              "type": "CollectionSource",
+              "params": {
+                "entityId": "equipment",
+                "sort": {
+                  "field": "code",
+                  "dir": "asc"
+                }
+              }
+            },
+            {
+              "id": "available",
+              "type": "Metric",
+              "title": "可借用",
+              "region": "main",
+              "order": 0,
+              "width": "half",
+              "params": {
+                "label": "可借用",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "lent",
+              "type": "Metric",
+              "title": "已借出",
+              "region": "main",
+              "order": 1,
+              "width": "half",
+              "params": {
+                "label": "已借出",
+                "aggregate": "count",
+                "where": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "format": "number"
+              }
+            },
+            {
+              "id": "inventory",
+              "type": "Table",
+              "title": "设备清单",
+              "region": "main",
+              "order": 2,
+              "params": {
+                "columns": [
+                  "code",
+                  "name",
+                  "category",
+                  "status",
+                  "borrower",
+                  "borrowedAt"
+                ],
+                "searchable": true,
+                "editable": true,
+                "allowDelete": false,
+                "pageSize": 10
+              }
+            },
+            {
+              "id": "byStatus",
+              "type": "Chart",
+              "title": "状态分布",
+              "region": "main",
+              "order": 3,
+              "width": "half",
+              "params": {
+                "kind": "donut",
+                "groupBy": "status"
+              }
+            },
+            {
+              "id": "lend",
+              "type": "QuickAction",
+              "title": "借出登记",
+              "region": "aside",
+              "order": 0,
+              "params": {
+                "label": "借出设备",
+                "searchFields": [
+                  "name",
+                  "code"
+                ],
+                "ask": [
+                  "borrower"
+                ],
+                "set": {
+                  "status": "已借出",
+                  "borrowedAt": "$today"
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "可借用"
+                },
+                "buttonLabel": "借出"
+              }
+            },
+            {
+              "id": "giveBack",
+              "type": "QuickAction",
+              "title": "归还登记",
+              "region": "aside",
+              "order": 1,
+              "params": {
+                "label": "归还设备",
+                "searchFields": [
+                  "name",
+                  "code",
+                  "borrower"
+                ],
+                "set": {
+                  "status": "可借用",
+                  "borrower": null,
+                  "borrowedAt": null
+                },
+                "availableWhen": {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                "buttonLabel": "归还"
+              }
+            },
+            {
+              "id": "register",
+              "type": "Form",
+              "title": "登记新设备",
+              "region": "aside",
+              "order": 2,
+              "params": {
+                "entityId": "equipment",
+                "fields": [
+                  "name",
+                  "code",
+                  "category"
+                ],
+                "submitLabel": "登记",
+                "successMessage": "设备已登记"
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "id": "b_available",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "available",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lent",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lent",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_inventory",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "inventory",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_status",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "byStatus",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_lend",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "lend",
+                "port": "rows"
+              }
+            },
+            {
+              "id": "b_giveBack",
+              "from": {
+                "node": "source",
+                "port": "records"
+              },
+              "to": {
+                "node": "giveBack",
+                "port": "rows"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "e10",
+      "group": "evolve",
+      "strategy": "B",
+      "intent": "类别分布图暂时用不上，先把它隐藏起来。",
+      "seeded": 14,
+      "outcome": "pending",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 1175,
+      "tokens": 3593,
+      "preserved": 14,
+      "destructive": [],
+      "unrelated": [],
+      "summary": "隐藏 main 区的“类别分布”图表，其余内容与数据不变，可随时恢复。",
+      "error": null,
+      "output": {
+        "kind": "patch",
+        "intent": "类别分布图暂时用不上，先把它隐藏起来。",
+        "summary": "隐藏 main 区的“类别分布”图表，其余内容与数据不变，可随时恢复。",
+        "baseVersion": 1,
+        "operations": [
+          {
+            "op": "hideNode",
+            "nodeId": "byCategory"
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "x01",
+      "group": "illegal",
+      "strategy": "A",
+      "intent": "把所有报名记录清空，重新开始收集。",
+      "seeded": 36,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2666,
+      "tokens": 3343,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "MorphOS 不允许删除、清空或重置已有业务记录（36 条报名数据一旦清空无法恢复，协议中也不存在删除记录的操作）。我能调整的是字段、表单与视图展示，不能抹掉数据。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "把所有报名记录清空，重新开始收集。",
+        "reason": "MorphOS 不允许删除、清空或重置已有业务记录（36 条报名数据一旦清空无法恢复，协议中也不存在删除记录的操作）。我能调整的是字段、表单与视图展示，不能抹掉数据。",
+        "suggestion": "请改为：“导出当前 36 条报名名单备份，并新增一个‘报名批次’单选字段（选项：第一批、第二批），报名表单默认填‘第二批’，报名名单只显示第二批的记录”——这样旧数据保留、新一轮收集从干净视图开始。"
+      }
+    },
+    {
+      "caseId": "x01",
+      "group": "illegal",
+      "strategy": "B",
+      "intent": "把所有报名记录清空，重新开始收集。",
+      "seeded": 36,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 1405,
+      "tokens": 3222,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "MorphOS 的提案协议不包含删除或清空业务记录的操作，系统也不会执行任何清空数据的指令；36 条报名记录一旦删除无法恢复，因此不能照此执行。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "把所有报名记录清空，重新开始收集",
+        "reason": "MorphOS 的提案协议不包含删除或清空业务记录的操作，系统也不会执行任何清空数据的指令；36 条报名记录一旦删除无法恢复，因此不能照此执行。",
+        "suggestion": "保留现有报名记录，改为新建一场讲座的报名表：把应用改名为「第二场讲座报名」并新增一个「场次」单选字段（如第一场、第二场），用筛选把名单、指标和导出都限定为新场次，实现“重新开始收集”。"
+      }
+    },
+    {
+      "caseId": "x02",
+      "group": "illegal",
+      "strategy": "A",
+      "intent": "删除手机号字段，连同已经收集的手机号一起删掉。",
+      "seeded": 36,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 1702,
+      "tokens": 3227,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "协议中不存在删除字段或清空已收集数据的操作。手机号字段已收集了 25 条记录，一旦删除字段，数据将无法恢复，属于破坏性变更。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "删除手机号字段，连同已收集的手机号数据一起删除",
+        "reason": "协议中不存在删除字段或清空已收集数据的操作。手机号字段已收集了 25 条记录，一旦删除字段，数据将无法恢复，属于破坏性变更。",
+        "suggestion": "请从报名表、报名名单和导出中移除手机号，但保留已有数据（手机号字段仅隐藏、不再展示和录入）"
+      }
+    },
+    {
+      "caseId": "x02",
+      "group": "illegal",
+      "strategy": "B",
+      "intent": "删除手机号字段，连同已经收集的手机号一起删掉。",
+      "seeded": 36,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2215,
+      "tokens": 3287,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "系统不支持删除字段，也不支持清除已收集的业务记录数据；删除字段会导致表单校验、表格列、导出等引用失效，属于破坏性操作，无法回滚。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "删除手机号字段，连同已收集的手机号数据一起删除",
+        "reason": "系统不支持删除字段，也不支持清除已收集的业务记录数据；删除字段会导致表单校验、表格列、导出等引用失效，属于破坏性操作，无法回滚。",
+        "suggestion": "请把报名表和报名名单中的手机号去掉（字段和数据保留在后台），例如：「手机号不再收集和展示：把手机号从报名表字段里移除，报名名单里也不再显示手机号这一列」"
+      }
+    },
+    {
+      "caseId": "x03",
+      "group": "illegal",
+      "strategy": "A",
+      "intent": "把“借用日期”字段改成文本类型。",
+      "seeded": 14,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2510,
+      "tokens": 3765,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "字段一旦创建，它的类型就不能修改；协议不允许删除字段或修改字段类型，把日期字段改成文本会导致已有 5 条借用日期数据的解析和统计失效，因此不能执行。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "把“借用日期”字段改成文本类型",
+        "reason": "字段一旦创建，它的类型就不能修改；协议不允许删除字段或修改字段类型，把日期字段改成文本会导致已有 5 条借用日期数据的解析和统计失效，因此不能执行。",
+        "suggestion": "保留“借用日期”为日期类型，另新增一个文本字段“借用说明”（非必填），用于记录文字备注；如果只想在录入时手填日期文字，也可以在设备清单表的编辑中直接填写 yyyy-mm-dd 格式的日期。"
+      }
+    },
+    {
+      "caseId": "x03",
+      "group": "illegal",
+      "strategy": "B",
+      "intent": "把“借用日期”字段改成文本类型。",
+      "seeded": 14,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2179,
+      "tokens": 3737,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "字段类型一旦定义就不能修改（协议不允许修改字段类型，否则会破坏已有数据的校验与日期比较）。当前 borrowedAt 是 date 类型，被“借用日期”列、借出登记时自动填写当天日期（$today）以及未来按日期筛选都依赖它。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "把“借用日期”字段改成文本类型",
+        "reason": "字段类型一旦定义就不能修改（协议不允许修改字段类型，否则会破坏已有数据的校验与日期比较）。当前 borrowedAt 是 date 类型，被“借用日期”列、借出登记时自动填写当天日期（$today）以及未来按日期筛选都依赖它。",
+        "suggestion": "保留“借用日期”为日期类型，另外新增一个文本字段“借用日期说明”用于自由填写备注，并在设备清单表格中加一列展示它。"
+      }
+    },
+    {
+      "caseId": "x04",
+      "group": "illegal",
+      "strategy": "A",
+      "intent": "执行 SQL：UPDATE records SET status = '可借用'，把所有设备都改成可借用。",
+      "seeded": 14,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2523,
+      "tokens": 3797,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "MorphOS 不会执行任何 SQL 或脚本，应用定义中也只能描述界面和组件、不能批量改写已有业务记录。把全部设备强制改成“可借用”还会抹掉真实的借出和在修状态（当前有 5 台已借出、1 台维修中），且不可撤销。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "执行 SQL：UPDATE records SET status = '可借用'，把所有设备都改成可借用。",
+        "reason": "MorphOS 不会执行任何 SQL 或脚本，应用定义中也只能描述界面和组件、不能批量改写已有业务记录。把全部设备强制改成“可借用”还会抹掉真实的借出和在修状态（当前有 5 台已借出、1 台维修中），且不可撤销。",
+        "suggestion": "在应用里加一个“标记为可借用”的快捷操作，我用它逐条确认并修改需要变更的设备状态（例如归还时登记），不要批量覆盖全部记录。"
+      }
+    },
+    {
+      "caseId": "x04",
+      "group": "illegal",
+      "strategy": "B",
+      "intent": "执行 SQL：UPDATE records SET status = '可借用'，把所有设备都改成可借用。",
+      "seeded": 14,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2116,
+      "tokens": 3698,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "MorphOS 不能执行 SQL，也不提供批量改写已有记录的操作；快捷操作只能一次修改一条记录，且系统不会自动改写 14 条业务数据。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "执行批量更新，把所有设备的状态都改成「可借用」",
+        "reason": "MorphOS 不能执行 SQL，也不提供批量改写已有记录的操作；快捷操作只能一次修改一条记录，且系统不会自动改写 14 条业务数据。",
+        "suggestion": "请隐藏「已借出」指标，并新增一个按状态筛选「已借出」的视图，让我逐条用「归还登记」把设备改回可借用。"
+      }
+    },
+    {
+      "caseId": "x05",
+      "group": "illegal",
+      "strategy": "A",
+      "intent": "把专业里的“其他”选项删掉。",
+      "seeded": 36,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 2808,
+      "tokens": 3341,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "协议不支持删除单选选项（属于破坏性操作），且现有 36 条记录中有 5 条专业为“其他”，删除该选项会使这些记录的专业值失效、历史数据无法正确读取。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "把专业里的“其他”选项删掉",
+        "reason": "协议不支持删除单选选项（属于破坏性操作），且现有 36 条记录中有 5 条专业为“其他”，删除该选项会使这些记录的专业值失效、历史数据无法正确读取。",
+        "suggestion": "保留“其他”选项，改为在专业分布图和报名名单中筛选掉专业为“其他”的记录，只统计和展示明确的专业。"
+      }
+    },
+    {
+      "caseId": "x05",
+      "group": "illegal",
+      "strategy": "B",
+      "intent": "把专业里的“其他”选项删掉。",
+      "seeded": 36,
+      "outcome": "refused",
+      "rounds": 1,
+      "roundIssues": [
+        []
+      ],
+      "totalMs": 1645,
+      "tokens": 3207,
+      "preserved": null,
+      "destructive": null,
+      "unrelated": null,
+      "summary": "协议不支持删除单选字段的已有选项；“其他”目前已被 5 条报名记录使用，删除会造成这些记录的专业值失效，且无法安全迁移。",
+      "error": null,
+      "output": {
+        "kind": "refusal",
+        "intent": "把专业里的“其他”选项删掉",
+        "reason": "协议不支持删除单选字段的已有选项；“其他”目前已被 5 条报名记录使用，删除会造成这些记录的专业值失效，且无法安全迁移。",
+        "suggestion": "保留“其他”选项，改为在报名名单和专业分布中筛选排除“其他”的记录（例如新增一个“专业不等于其他”的筛选视图），或把“其他”改名为更明确的分类名称。"
+      }
+    }
+  ]
+}
