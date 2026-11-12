@@ -290,19 +290,25 @@ interface ViewExposure {        // computeExposure(definition, viewId) 的结果
   canCreate: boolean            // 视图内有 Form
   sensitiveRead: Slug[]         // read ∩ 敏感字段
   restricted: Slug[]
-  scopes: { nodeId: Slug; filters: string[] }[]   // 每个组件看到的记录范围：上游经过的筛选标题，空数组 = 全部记录
+  nodes: {                      // 页面顺序；每个组件各自的 read / aggregate / write
+    nodeId: Slug; type: ComponentType; title?: string
+    read: Slug[]; aggregate: Slug[]; write: Slug[]; creates: boolean
+    filters: string[]           // 记录范围：上游经过的筛选标题（源头在前），空数组 = 全部记录
+  }[]
 }
 
 interface ExposureChange {
-  viewId: Slug
+  viewId: Slug; label: string; audience: string
   before: ViewExposure | null   // null = 新视图
   after:  ViewExposure | null   // null = 视图被移除
   newlyRead: Slug[]; newlyWritable: Slug[]
-  loosened: Slug[]              // 移出 restrictedFields 或取消 sensitive 的字段
+  newlySensitive: Slug[]        // 因本次改动变为逐条可见的敏感字段
+  loosened: Slug[]              // 移出 restrictedFields 的字段；或取消 sensitive、且该视图逐条可见的字段
+  changed: boolean              // 暴露是否有任何变化（界面折叠未变化的视图）
 }
 ```
 
-**风险规则补充**：新增敏感字段逐条可见、`loosened` 非空 → `risk = 'high'` 且 `confirmExposure = true`；只新增视图且不涉及敏感字段 → 不提高风险。
+**风险规则补充**：`newlySensitive` 或 `loosened` 非空 → `risk = 'high'` 且 `confirmExposure = true`；移除视图 → 至少 `medium`；只新增视图且不涉及敏感字段 → 不提高风险。
 
 ## 9. 版本语义
 
@@ -342,6 +348,7 @@ interface ExposureChange {
 | 视图中任一组件逐条可见或可写 `restrictedFields` 中的字段（只参与统计不算） | 错误 | `EXPOSURE_RESTRICTED_FIELD` |
 | 视图中的 Table 显式开启 `editable` 或 `allowDelete` | 错误 | `EXPOSURE_FREE_EDIT` |
 | 视图让持链接的人逐条看到敏感字段（`sensitiveRead` 非空） | 警告 | `EXPOSURE_SENSITIVE_FIELD` |
+| 视图没有任何可见组件（链接打开会显示“已停用”） | 警告 | `EXPOSURE_VIEW_EMPTY` |
 
 错误进入 Validator-in-the-loop 自修复，hint 指出越界的组件与字段。警告不阻止提案生成，但会触发 §11.5 的批准确认。
 
