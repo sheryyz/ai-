@@ -3,50 +3,13 @@ import path from 'node:path'
 import type { PlanEvent, ProposalRecord } from '@morphos/shared'
 import { describe, expect, it } from 'vitest'
 import { REPO_ROOT } from './config'
-import type { ChatMessage, LlmClient } from './llm/client'
 import { createReplayClient, type Recording } from './llm/replay'
 import { parseModelJson, runPlan } from './services/planner'
-import { createFromTemplate, testServer } from './test-utils'
+import { createFromTemplate, parseStream, resultOf, scripted, testServer } from './test-utils'
 
 const fixture = (p: string) => JSON.parse(readFileSync(path.join(REPO_ROOT, 'fixtures', p), 'utf8'))
 const eventTemplate = () => fixture('templates/event-registration.json')
 const checkinPatch = (baseVersion = 1) => ({ ...fixture('proposals/event-checkin.patch.json'), baseVersion })
-
-/** A scripted stand-in for the model: returns the given outputs in order and records every request. */
-function scripted(outputs: (string | object)[]): LlmClient & { calls: ChatMessage[][] } {
-  const calls: ChatMessage[][] = []
-  return {
-    model: 'scripted-test-model',
-    origin: 'live',
-    temperature: 0,
-    calls,
-    async chat(messages, opts) {
-      calls.push(messages)
-      const next = outputs[calls.length - 1]
-      if (next === undefined) throw new Error('scripted model ran out of outputs')
-      const content = typeof next === 'string' ? next : JSON.stringify(next)
-      opts.onReasoning?.('先理解需求，')
-      opts.onReasoning?.('再规划组件。')
-      opts.onContent?.(content)
-      return {
-        content,
-        reasoning: '先理解需求，再规划组件。',
-        usage: null,
-        model: 'scripted-test-model',
-        finishReason: 'stop',
-      }
-    },
-  }
-}
-
-function parseStream(text: string): PlanEvent[] {
-  return text
-    .split('\n')
-    .filter(Boolean)
-    .map((l) => JSON.parse(l) as PlanEvent)
-}
-const resultOf = (events: PlanEvent[]) =>
-  events.find((e): e is Extract<PlanEvent, { type: 'result' }> => e.type === 'result')
 
 describe('parseModelJson', () => {
   it('accepts fenced or prose-wrapped JSON and reports real parse errors', () => {
