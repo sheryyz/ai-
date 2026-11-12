@@ -3,9 +3,11 @@
  * Types only — no runtime code, so this module adds nothing to either bundle.
  */
 import type { MorphDiff } from './diff'
+import type { ViewExposure } from './exposure'
 import type { ValidationIssue } from './issues'
 import type { StoredRecord } from './runtime'
-import type { AppDefinition } from './schema'
+import type { AppDefinition, EntityDef } from './schema'
+import type { ViewNodeSnapshot } from './view-snapshot'
 
 export interface HealthInfo {
   ok: boolean
@@ -161,4 +163,38 @@ export interface RecordingInfo {
   recordedAt: string
   /** Patch recordings only replay onto an app whose current definition equals the recorded base. */
   applicable?: boolean
+}
+
+// ── Role views and share links (protocol §11, ADR-0007 / 0008) ──────────────
+
+/** GET /api/v/:token — everything a share page gets, already trimmed by the server. */
+export interface ViewSnapshot {
+  app: { name: string; icon: string; description: string | null }
+  view: { id: string; label: string; audience: string; description: string | null }
+  /** Only the fields this page uses. */
+  entity: EntityDef
+  nodes: ViewNodeSnapshot[]
+  timeZone: string
+  today: string
+}
+
+/** GET /api/apps/:id/views — admin-side share status of each view in the current definition. */
+export interface ViewLinkInfo {
+  viewId: string
+  label: string
+  audience: string
+  /** null until the organizer first asks for the link. */
+  token: string | null
+  /** false when the view has no visible component (the link would answer 410). */
+  active: boolean
+  exposure: ViewExposure
+}
+
+/** GET /api/share-info — where phones can reach this server. */
+export interface ShareInfo {
+  port: number
+  /** LAN addresses of this machine, or PUBLIC_BASE_URL when set. */
+  baseUrls: string[]
+  /** false in development: the server does not serve the web app, so share links only open on this machine. */
+  servesWeb: boolean
 }
