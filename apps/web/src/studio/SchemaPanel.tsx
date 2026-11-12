@@ -1,9 +1,24 @@
-import { type AppDefinition, FIELD_TYPE_LABELS, primaryEntity, REGISTRY } from '@morphos/shared'
+import {
+  type AppDefinition,
+  FIELD_TYPE_LABELS,
+  primaryEntity,
+  REGISTRY,
+  type StoredRecord,
+} from '@morphos/shared'
 import { Badge } from '../components/ui/badge'
 import { describeValue } from '../runtime/describe'
+import { FlowGraph } from './FlowGraph'
 
-/** Read-only view of the data model and the typed binding graph. */
-export function SchemaPanel({ definition }: { definition: AppDefinition }) {
+/** Read-only view of the typed binding graph and the data model. `before` marks what a proposal adds. */
+export function SchemaPanel({
+  definition,
+  before,
+  records,
+}: {
+  definition: AppDefinition
+  before?: AppDefinition | null
+  records: StoredRecord[]
+}) {
   const entity = primaryEntity(definition)
   const title = (id: string) => {
     const n = definition.nodes.find((x) => x.id === id)
@@ -11,6 +26,14 @@ export function SchemaPanel({ definition }: { definition: AppDefinition }) {
   }
   return (
     <div className="space-y-5 p-4">
+      <section>
+        <h4 className="mb-2 text-xs font-semibold">
+          数据流（{definition.bindings.length} 条连接）
+          <span className="ml-1.5 font-normal text-muted">从左到右，数字为当前流过的记录数</span>
+        </h4>
+        <FlowGraph definition={definition} before={before} records={records} />
+      </section>
+
       <section>
         <h4 className="mb-2 text-xs font-semibold">
           实体 {entity.label}{' '}
@@ -46,9 +69,9 @@ export function SchemaPanel({ definition }: { definition: AppDefinition }) {
         </table>
       </section>
 
-      <section>
-        <h4 className="mb-2 text-xs font-semibold">类型化数据流（{definition.bindings.length} 条连接）</h4>
-        <ul className="space-y-1 font-mono text-[11px]">
+      <details>
+        <summary className="cursor-pointer text-xs font-semibold">连接明细（端口与类型）</summary>
+        <ul className="mt-2 space-y-1 font-mono text-[11px]">
           {definition.bindings.map((b) => (
             <li key={b.id} className="rounded-[var(--radius-control)] bg-surface-2/60 px-2 py-1">
               <span className="font-sans">{title(b.from.node)}</span>
@@ -65,7 +88,7 @@ export function SchemaPanel({ definition }: { definition: AppDefinition }) {
             </li>
           ))}
         </ul>
-      </section>
+      </details>
 
       <section>
         <h4 className="mb-2 text-xs font-semibold">组件（{definition.nodes.length}）</h4>

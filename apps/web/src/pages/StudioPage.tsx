@@ -513,7 +513,11 @@ export function StudioPage() {
                     <Badge tone="morph">提案中的结构</Badge>
                   </div>
                 ) : null}
-                <SchemaPanel definition={previewDef} />
+                <SchemaPanel
+                  definition={previewDef}
+                  before={view === 'proposal' ? current : undefined}
+                  records={records.data ?? []}
+                />
               </>
             ) : (
               <EmptyState className="h-full" title="还没有应用结构" />
