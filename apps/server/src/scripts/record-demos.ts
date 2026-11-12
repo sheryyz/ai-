@@ -3,7 +3,11 @@
  * Runs the actual planner pipeline against the live model on an in-memory database, approving each
  * proposal so the next step is planned against exactly the definition the demo will have.
  *
- *   npm run record-demos -w @morphos/server        (requires LLM_API_KEY in .env)
+ *   npm run record-demos -w @morphos/server                            (requires LLM_API_KEY in .env)
+ *   npm run record-demos -w @morphos/server -- --only=05-equipment-overdue
+ *
+ * With --only, the other steps are *replayed* from their existing recordings (no model call, files left
+ * untouched), so a newly recorded step sees exactly the definition a demo user will have when replaying.
  *
  * Output files contain model text, reasoning, usage and timing only — never the API key.
  */
@@ -12,8 +16,7 @@ import path from 'node:path'
 import type { ProposalRecord } from '@morphos/shared'
 import { createApp } from '../app'
 import { loadEnvFile, parseConfig } from '../config'
-import type { Recording } from '../llm/replay'
-import { RECORDINGS_DIR } from '../llm/replay'
+import { createReplayClient, getRecording, RECORDINGS_DIR, type Recording } from '../llm/replay'
 import { getApp } from '../services/apps'
 import { runPlan } from '../services/planner'
 import { approveProposal } from '../services/proposals'
@@ -64,7 +67,24 @@ const STEPS: Step[] = [
     intent: '设备借用管理：设备名称、编号、类别、状态（可借用/已借出/已归还）、借用人、借用日期。',
     approve: true,
   },
+  {
+    id: '05-equipment-overdue',
+    title: '场景 B · 标出借出超过 7 天的设备',
+    intent: '标出借出超过 7 天的设备',
+    on: '04-equipment-create',
+    approve: true,
+  },
 ]
+
+const only = process.argv
+  .find((a) => a.startsWith('--only='))
+  ?.slice('--only='.length)
+  .split(',')
+const unknown = only?.filter((id) => !STEPS.some((s) => s.id === id)) ?? []
+if (unknown.length) {
+  console.error(`未知的步骤：${unknown.join(', ')}`)
+  process.exit(1)
+}
 
 /** A few generic records so evolution prompts see realistic statistics (fictional values). */
 function seed(appId: string) {
@@ -95,14 +115,29 @@ for (const step of STEPS) {
   const appId = step.on ? apps.get(step.on) : undefined
   if (step.on && !appId) throw new Error(`step ${step.on} did not produce an app`)
   const base = appId ? getApp(ctx, appId) : null
-  process.stdout.write(`▶ ${step.id} … `)
-  const saved: ProposalRecord | null = await runPlan(ctx, llm, { intent: step.intent, appId }, (ev) => {
+  const live = !only || only.includes(step.id)
+  const existing = live ? null : getRecording(step.id)
+  const client = existing ? createReplayClient(existing, { speed: 0 }) : llm
+  process.stdout.write(`${live ? '▶' : '↺ replay'} ${step.id} … `)
+  const saved: ProposalRecord | null = await runPlan(ctx, client, { intent: step.intent, appId }, (ev) => {
     if (ev.type === 'issues') process.stdout.write(`[round ${ev.round}: ${ev.issues.length} issue(s)] `)
     if (ev.type === 'error') process.stdout.write(`[${ev.code}: ${ev.message}] `)
   })
   if (!saved) throw new Error(`${step.id}: model call failed`)
   console.log(`${saved.status} · ${saved.trace.rounds.length} round(s) · ${saved.trace.totalMs} ms`)
 
+  if (live) writeRecording(step, saved, base)
+  if (step.approve) {
+    if (saved.status !== 'pending')
+      throw new Error(`${step.id}: expected a pending proposal, got ${saved.status}`)
+    const r = approveProposal(ctx, saved.id)
+    apps.set(step.id, r.appId)
+    if (!step.on) seed(r.appId)
+  }
+}
+console.log(`✓ 已写入 ${RECORDINGS_DIR}`)
+
+function writeRecording(step: Step, saved: ProposalRecord, base: ReturnType<typeof getApp> | null) {
   const rec: Recording = {
     id: step.id,
     title: step.title,
@@ -122,13 +157,4 @@ for (const step of STEPS) {
     })),
   }
   writeFileSync(path.join(RECORDINGS_DIR, `${step.id}.json`), `${JSON.stringify(rec, null, 2)}\n`)
-
-  if (step.approve) {
-    if (saved.status !== 'pending')
-      throw new Error(`${step.id}: expected a pending proposal, got ${saved.status}`)
-    const r = approveProposal(ctx, saved.id)
-    apps.set(step.id, r.appId)
-    if (!step.on) seed(r.appId)
-  }
 }
-console.log(`✓ 已写入 ${RECORDINGS_DIR}`)
