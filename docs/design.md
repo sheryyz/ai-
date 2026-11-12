@@ -23,10 +23,12 @@
 | `--danger` | 拒绝 / 风险 | `#DC2626` | `#F87171` |
 | `--on-morph` | 变形色 / 危险色按钮上的文字 | `#FFFFFF` | `#0B0B0D` |
 | `--overlay` | 对话框遮罩 | `rgb(9 9 11 / .32)` | `rgb(0 0 0 / .55)` |
+| `--qr-light` / `--qr-dark` | 二维码底色 / 码点 | `#FFFFFF` / `#0B0B0D` | 同亮色（深色码点、浅色底，扫码器才能稳定识别） |
 
 - 字体：Inter Variable（拉丁与数字）+ 系统中文字体（PingFang SC / Microsoft YaHei）；Schema、Diff、JSON 使用 JetBrains Mono。字体通过 npm 打包，**不依赖 Google Fonts**（评委网络环境不确定）。
 - 圆角 10px（卡片）/ 8px（控件）；阴影只用一层极浅阴影；间距 4 的倍数。
 - 数字使用 `tabular-nums`。
+- Toast 固定在顶部居中：底部会盖住 Studio 右栏的“批准”按钮和手机分享页的提交按钮（R3 实测发现）。
 
 ## 3. 关键界面
 

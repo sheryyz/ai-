@@ -33,5 +33,5 @@
 | AC-19 | 视图中的 Table 显式开启编辑或删除 | L7 错误 `EXPOSURE_FREE_EDIT` | 单测 | `exposure.test.ts › AC-19: tables on a share page default to read-only; opening edit or delete is rejected` |
 | AC-20 | 非本机来源访问管理接口 | `403 ADMIN_LOCAL_ONLY`；同一来源访问分享接口正常 | 接口测试 + 手动 | `views.test.ts › AC-20: …`（4 条：管理接口 403、分享与健康检查可用；只看 TCP 对端地址，`X-Forwarded-For` 无效；`ADMIN_ACCESS=any`；share-info）。2026-11-11 手动：临时实例经真实网卡访问，本机 `127.0.0.1` 200、局域网 IP 403、带 `X-Forwarded-For: 127.0.0.1` 仍 403、`/api/health` 200 |
 | AC-21 | 恢复到没有该视图的版本，再恢复回来 | 链接先返回 `410 VIEW_INACTIVE`，再次可用且令牌不变；记录全程逐字节一致 | 接口测试 + E2E | `views.test.ts › AC-21: restore to before the desk → 410; restore forward → the same link works again`（记录逐字节一致）与 `hiding every component of a view also makes its link inactive`。E2E 待补（R4） |
-| AC-22 | 在分享页签到 | 管理页 5 秒内显示新的签到状态与签到率 | E2E（两个浏览器上下文） | 待补 |
+| AC-22 | 在分享页签到 | 管理页 5 秒内显示新的签到状态与签到率 | E2E（两个浏览器上下文） | 2026-11-11 手动（Playwright 脚本，生产构建 + 临时库）：手机上下文经局域网 IP 在签到台签到，管理页约 2.9 s 显示新的签到率（轮询 3 s）。自动化 E2E 待补（R4） |
 | AC-23 | 演示以外领域的视图请求（评测集 8 条） | 报告暴露正确率与禁令守住率；只写实际结果 | 评测脚本（真实模型） | 待补 |
