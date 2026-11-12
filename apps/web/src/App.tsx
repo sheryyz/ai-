@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'motion/react'
+import type { CSSProperties } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Toaster } from 'sonner'
 import { Shell } from './components/Shell'
@@ -8,6 +9,13 @@ import { HubPage } from './pages/HubPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RuntimePage } from './pages/RuntimePage'
 import { StudioPage } from './pages/StudioPage'
+
+// Sonner ships its own light palette; point it at the design tokens so toasts follow the theme.
+const toastTokens = {
+  '--normal-bg': 'var(--surface)',
+  '--normal-border': 'var(--border)',
+  '--normal-text': 'var(--text)',
+} as CSSProperties
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +46,11 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
         <RouterProvider router={router} />
-        <Toaster position="bottom-right" toastOptions={{ className: 'font-sans text-sm' }} />
+        <Toaster
+          position="bottom-right"
+          style={toastTokens}
+          toastOptions={{ className: 'font-sans text-sm' }}
+        />
       </MotionConfig>
     </QueryClientProvider>
   )
