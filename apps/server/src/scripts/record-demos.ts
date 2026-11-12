@@ -38,6 +38,8 @@ interface Step {
   /** Which earlier step's app to evolve; omitted for create. */
   on?: string
   approve: boolean
+  /** Approve with confirmExposure (protocol §11.5). Off by default so an unexpected exposure stops the run. */
+  confirm?: boolean
 }
 
 const STEPS: Step[] = [
@@ -48,17 +50,38 @@ const STEPS: Step[] = [
     approve: true,
   },
   {
+    id: '06-event-signup-page',
+    title: '场景 A · 给报名的同学一个报名页',
+    intent: '给报名的同学一个报名页，填完表就行。',
+    on: '01-event-create',
+    approve: true,
+  },
+  {
     id: '02-event-checkin',
     title: '场景 A · 加签到、未签到提醒与签到率',
     intent: '活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。',
-    on: '01-event-create',
+    on: '06-event-signup-page',
     approve: true,
+  },
+  {
+    id: '07-event-desk',
+    title: '场景 A · 门口志愿者的签到台（不让看手机号）',
+    intent: '门口志愿者要一个签到台，只能搜名字点签到，别让他们看到手机号。',
+    on: '02-event-checkin',
+    approve: true,
+  },
+  {
+    id: '08-event-export',
+    title: '场景 A · 越界请求：让志愿者导出完整名单',
+    intent: '让志愿者也能导出完整名单。',
+    on: '07-event-desk',
+    approve: false,
   },
   {
     id: '03-event-delete',
     title: '场景 A · 非法意图：删除未签到人员',
     intent: '把没签到的人从名单里删掉并重置数据',
-    on: '01-event-create',
+    on: '07-event-desk',
     approve: false,
   },
   {
@@ -130,7 +153,9 @@ for (const step of STEPS) {
   if (step.approve) {
     if (saved.status !== 'pending')
       throw new Error(`${step.id}: expected a pending proposal, got ${saved.status}`)
-    const r = approveProposal(ctx, saved.id)
+    if (saved.diff?.confirmExposure)
+      console.log(`  ⚠ ${step.id} 需要公开确认${step.confirm ? '（已按步骤配置确认）' : ''}`)
+    const r = approveProposal(ctx, saved.id, { confirmExposure: step.confirm })
     apps.set(step.id, r.appId)
     if (!step.on) seed(r.appId)
   }
