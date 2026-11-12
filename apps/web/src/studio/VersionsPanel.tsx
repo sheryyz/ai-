@@ -12,7 +12,7 @@ import { cn } from '../lib/cn'
 import { relativeTime } from '../lib/format'
 import { SOURCE_LABELS } from '../lib/labels'
 import { keys, useTimeZone, useVersions } from '../lib/queries'
-import { DiffBody } from './DiffPanel'
+import { DiffBody, ExposureConfirm, exposureConfirmLines, labeler } from './DiffPanel'
 
 export function VersionsPanel({
   app,
@@ -28,13 +28,19 @@ export function VersionsPanel({
   const tz = useTimeZone()
   const qc = useQueryClient()
   const [target, setTarget] = useState<VersionInfo | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
   const preview = useQuery({
     queryKey: ['restore-diff', app.id, target?.version, app.version],
     queryFn: () => api.restoreDiff(app.id, target?.version ?? 0),
     enabled: target !== null,
   })
+  // Restoring a version that shows sensitive fields on a share page needs the same yes as approving it.
+  const confirmLines = preview.data?.confirmExposure
+    ? exposureConfirmLines(preview.data, labeler(app.definition))
+    : []
   const restore = useMutation({
-    mutationFn: () => api.restore(app.id, target?.version ?? 0, app.version),
+    mutationFn: () =>
+      api.restore(app.id, target?.version ?? 0, app.version, confirmLines.length > 0 && confirmed),
     onSuccess: async (r) => {
       await Promise.all([
         qc.invalidateQueries({ queryKey: keys.app(app.id) }),
@@ -93,7 +99,10 @@ export function VersionsPanel({
                   className="mt-1 -ml-2"
                   disabled={locked}
                   title={locked ? '请先批准或拒绝当前提案' : undefined}
-                  onClick={() => setTarget(v)}
+                  onClick={() => {
+                    setConfirmed(false)
+                    setTarget(v)
+                  }}
                 >
                   <RotateCcw className="size-3.5" /> 恢复此版本界面
                 </Button>
@@ -115,7 +124,7 @@ export function VersionsPanel({
             <Button
               variant="primary"
               loading={restore.isPending}
-              disabled={!preview.data}
+              disabled={!preview.data || (confirmLines.length > 0 && !confirmed)}
               onClick={() => restore.mutate()}
             >
               恢复
@@ -132,6 +141,11 @@ export function VersionsPanel({
             <>
               <p className="mb-3 text-sm font-medium">{preview.data.summary}</p>
               <DiffBody diff={preview.data} before={app.definition} after={null} />
+              {confirmLines.length ? (
+                <div className="mt-3">
+                  <ExposureConfirm lines={confirmLines} checked={confirmed} onChange={setConfirmed} />
+                </div>
+              ) : null}
             </>
           )}
         </div>

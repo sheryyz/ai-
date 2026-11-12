@@ -2,9 +2,19 @@
  * AI Studio (design.md §3): conversation + pipeline | live / ghost preview | Morph Diff · versions · schema.
  * Works for an existing app (/apps/:id/studio) and for creating one (/studio/new?intent=… or ?recording=…).
  */
-import type { AppDefinition, ProposalRecord, RecordingInfo } from '@morphos/shared'
+import { type AppDefinition, type ProposalRecord, type RecordingInfo, viewsOf } from '@morphos/shared'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ClockArrowUp, ExternalLink, Eye, GitCompare, Layers, MessageSquare } from 'lucide-react'
+import {
+  ArrowLeft,
+  ClockArrowUp,
+  ExternalLink,
+  Eye,
+  GitCompare,
+  Layers,
+  MessageSquare,
+  Share2,
+  Smartphone,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -14,13 +24,14 @@ import { EmptyState, ErrorState, Skeleton } from '../components/ui/feedback'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ApiError, api, errorMessage } from '../lib/api'
 import { cn } from '../lib/cn'
-import { keys, useAiBlocker } from '../lib/queries'
+import { keys, POLL_MS, useAiBlocker } from '../lib/queries'
 import { AppRuntime } from '../runtime/AppRuntime'
 import type { Mark } from '../runtime/NodeFrame'
 import { Composer } from '../studio/Composer'
 import { DiffPanel } from '../studio/DiffPanel'
 import { diffMarks } from '../studio/marks'
 import { SchemaPanel } from '../studio/SchemaPanel'
+import { SharePanel } from '../studio/SharePanel'
 import { TurnCard } from '../studio/TurnCard'
 import { fromRecord, type Turn } from '../studio/turn'
 import { usePlanRunner } from '../studio/usePlanRunner'
@@ -42,10 +53,12 @@ export function StudioPage() {
     queryFn: () => api.app(appId ?? ''),
     enabled: Boolean(appId),
   })
+  // Polled so check-ins made on share pages show up in the live preview.
   const records = useQuery({
     queryKey: keys.records(appId ?? ''),
     queryFn: () => api.records(appId ?? ''),
     enabled: Boolean(appId),
+    refetchInterval: POLL_MS,
   })
   const proposals = useQuery({
     queryKey: keys.proposals(appId ?? ''),
@@ -61,6 +74,8 @@ export function StudioPage() {
   const [localProposal, setLocalProposal] = useState<ProposalRecord | null>(null)
   const [draft, setDraft] = useState('')
   const [view, setView] = useState<View>('live')
+  /** Which page of the app the preview shows: the admin page (null) or a role view (protocol §3.1). */
+  const [page, setPage] = useState<string | null>(null)
   const [tab, setTab] = useState('diff')
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null)
   const [flash, setFlash] = useState<Map<string, Mark> | null>(null)
@@ -92,6 +107,12 @@ export function StudioPage() {
   useEffect(() => {
     if (!pending) setView('live')
   }, [pending])
+
+  // A proposal that adds a share page opens on it, so the user sees what that audience will get.
+  const addedView = pending?.diff?.views?.added[0]?.id
+  useEffect(() => {
+    if (addedView) setPage(addedView)
+  }, [addedView])
 
   const history = useMemo(
     () => (proposals.data ?? []).filter((p) => p.id !== runner.turn?.proposal?.id).map(fromRecord),
@@ -137,11 +158,11 @@ export function StudioPage() {
     } else if (intent) plan(intent)
   }, [appId, params, setParams, runner, plan])
 
-  async function approve() {
+  async function approve(confirmExposure: boolean) {
     if (!pending) return
     setBusy('approve')
     try {
-      const r = await api.approve(pending.id)
+      const r = await api.approve(pending.id, confirmExposure)
       await Promise.all([
         qc.invalidateQueries({ queryKey: keys.apps }),
         qc.invalidateQueries({ queryKey: ['recordings'] }),
@@ -220,6 +241,10 @@ export function StudioPage() {
 
   const current: AppDefinition | null = app.data?.definition ?? null
   const previewDef = view === 'proposal' && pending?.after ? pending.after : current
+  const pages = previewDef ? viewsOf(previewDef) : []
+  const shownPage = page && pages.some((v) => v.id === page) ? page : null
+  const pageInfo = pages.find((v) => v.id === shownPage)
+  const newViews = new Set(view === 'proposal' ? (pending?.diff?.views?.added ?? []).map((v) => v.id) : [])
   const marks =
     view === 'proposal' && pending
       ? appId
@@ -339,8 +364,35 @@ export function StudioPage() {
               <Eye className="size-3.5" /> 提案预览
             </button>
           </div>
+          {pages.length ? (
+            <div
+              className="inline-flex max-w-full overflow-x-auto rounded-[var(--radius-control)] border border-border bg-surface p-0.5 text-xs"
+              role="tablist"
+              aria-label="预览页面"
+            >
+              {[{ id: null, label: '管理页' }, ...pages.map((v) => ({ id: v.id, label: v.label }))].map(
+                (p) => (
+                  <button
+                    key={p.id ?? '__admin'}
+                    type="button"
+                    role="tab"
+                    aria-selected={shownPage === p.id}
+                    onClick={() => setPage(p.id)}
+                    className={cn(
+                      'inline-flex shrink-0 items-center gap-1 rounded-[6px] px-2.5 py-1 font-medium whitespace-nowrap transition-colors duration-150',
+                      shownPage === p.id ? 'bg-surface-2 text-fg' : 'text-muted hover:text-fg',
+                      p.id && newViews.has(p.id) && 'border border-dashed border-morph text-morph',
+                    )}
+                  >
+                    {p.id ? <Smartphone className="size-3.5" /> : null}
+                    {p.label}
+                  </button>
+                ),
+              )}
+            </div>
+          ) : null}
           {view === 'proposal' && pending ? (
-            <p className="truncate text-[11px] text-muted">
+            <p className="hidden truncate text-[11px] text-muted 2xl:block">
               用真实的 {records.data?.length ?? 0} 条记录渲染提案；虚线为 AI 新增，批准前不写入任何数据
             </p>
           ) : null}
@@ -351,8 +403,29 @@ export function StudioPage() {
               <Skeleton className="h-32" />
               <Skeleton className="h-72" />
             </div>
+          ) : previewDef && pageInfo ? (
+            <div className="mx-auto max-w-[390px]">
+              <p className="mb-3 text-center text-[11px] leading-relaxed text-muted">
+                「{pageInfo.label}」· {pageInfo.audience}通过分享链接看到的页面
+                <br />
+                此处用全部记录预览；实际下发的数据由服务端按页面裁剪
+              </p>
+              <div className="rounded-[28px] border border-border bg-bg p-3 shadow-sm">
+                <h2 className="mb-3 px-1 text-base font-semibold tracking-tight">{pageInfo.label}</h2>
+                <AppRuntime
+                  key={pageInfo.id}
+                  appId={appId ?? ''}
+                  definition={previewDef}
+                  records={records.data ?? []}
+                  mode={view === 'proposal' ? 'preview' : 'live'}
+                  marks={marks}
+                  view={pageInfo.id}
+                />
+              </div>
+            </div>
           ) : previewDef ? (
             <AppRuntime
+              key="__admin"
               appId={appId ?? ''}
               definition={previewDef}
               records={records.data ?? []}
@@ -390,10 +463,16 @@ export function StudioPage() {
             <TabsTrigger value="schema">
               <Layers className="size-3.5" /> 结构
             </TabsTrigger>
+            {appId ? (
+              <TabsTrigger value="share">
+                <Share2 className="size-3.5" /> 分享
+              </TabsTrigger>
+            ) : null}
           </TabsList>
           <TabsContent value="diff" className="min-h-0 flex-1 data-[state=inactive]:hidden">
             {pending ? (
               <DiffPanel
+                key={pending.id}
                 proposal={pending}
                 before={current}
                 busy={busy}
@@ -406,7 +485,7 @@ export function StudioPage() {
                 className="h-full"
                 icon={<GitCompare className="size-6" />}
                 title="暂无待批准的变更"
-                hint="AI 的每个提案都会先在这里以 Morph Diff 展示：新增、修改、保留、影响与六层校验结果。你批准后才会生效。"
+                hint="AI 的每个提案都会先在这里以 Morph Diff 展示：新增、修改、保留、数据暴露与七层校验结果。你批准后才会生效。"
               />
             )}
           </TabsContent>
@@ -416,6 +495,14 @@ export function StudioPage() {
               className="min-h-0 flex-1 overflow-y-auto data-[state=inactive]:hidden"
             >
               <VersionsPanel app={app.data} locked={Boolean(pending)} onRestored={() => setView('live')} />
+            </TabsContent>
+          ) : null}
+          {appId && app.data ? (
+            <TabsContent
+              value="share"
+              className="min-h-0 flex-1 overflow-y-auto data-[state=inactive]:hidden"
+            >
+              <SharePanel app={app.data} />
             </TabsContent>
           ) : null}
           <TabsContent value="schema" className="min-h-0 flex-1 overflow-y-auto data-[state=inactive]:hidden">

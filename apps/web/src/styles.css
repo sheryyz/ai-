@@ -16,6 +16,9 @@
   --danger: #dc2626;
   --on-morph: #ffffff;
   --overlay: rgb(9 9 11 / 0.32);
+  /* QR codes keep dark modules on a light ground in both themes, or some scanners fail. */
+  --qr-light: #ffffff;
+  --qr-dark: #0b0b0d;
 }
 
 @media (prefers-color-scheme: dark) {
