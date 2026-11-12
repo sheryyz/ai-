@@ -143,7 +143,10 @@ export function TurnCard({
         ))}
 
         {turn.error ? (
-          <div className="rounded-[var(--radius-control)] border border-danger/30 bg-danger/5 p-2.5 text-xs">
+          <div
+            role="alert"
+            className="rounded-[var(--radius-control)] border border-danger/30 bg-danger/5 p-2.5 text-xs"
+          >
             <p className="font-medium text-danger">规划中断：{turn.error.message}</p>
             <p className="mt-1 text-muted">应用没有任何改动。</p>
             {onRetry ? (
