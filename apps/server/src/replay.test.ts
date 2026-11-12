@@ -27,55 +27,93 @@ describe('recorded demos (offline mode, AC-10)', () => {
         '03-event-delete',
         '04-equipment-create',
         '05-equipment-overdue',
+        '06-event-signup-page',
+        '07-event-desk',
+        '08-event-export',
       ]),
     )
     for (const r of recs)
       expect(r).toMatchObject({ model: expect.any(String), recordedAt: expect.any(String) })
   })
 
-  it('replays scenario A end to end without a key: create → check-in → refused delete → restore keeps data', async () => {
+  it('replays scenario A end to end without a key: create → sign-up page → check-in → desk → export needs confirmation → refused delete → restore', async () => {
     const { api } = testServer()
     const list = await api().get('/api/recordings').expect(200)
     expect(list.body.recordings.find((r: RecordingInfo) => r.id === '01-event-create')).toMatchObject({
       applicable: true,
     })
+    const replay = async (recordingId: string, appId?: string) =>
+      result((await api().post('/api/ai/plan').send({ recordingId, appId }).expect(200)).text)
 
-    const created = result(
-      (await api().post('/api/ai/plan').send({ recordingId: '01-event-create' }).expect(200)).text,
-    )
+    const created = await replay('01-event-create')
     expect(created).toMatchObject({ outcome: 'pending', proposal: { origin: 'recorded' } })
     const app = (await api().post(`/api/proposals/${created.proposal.id}/approve`).expect(200)).body.app
+    // planner-v1.2 marks fields that identify a person (protocol §11.3).
+    const sensitive = app.definition.entities[0].fields.filter((f: { sensitive?: boolean }) => f.sensitive)
+    expect(sensitive.map((f: { label: string }) => f.label)).toEqual(['学号', '手机号'])
 
-    const form = app.definition.nodes.find((n: { type: string }) => n.type === 'Form')
-    const entity = app.definition.entities[0]
-    const values = Object.fromEntries(
-      form.params.fields.map((id: string) => {
-        const f = entity.fields.find((x: { id: string }) => x.id === id)
-        return [id, f.type === 'enum' ? f.options[0] : `测试${id}`]
-      }),
-    )
-    await api().post(`/api/apps/${app.id}/records`).send({ nodeId: form.id, values }).expect(201)
+    const signup = await replay('06-event-signup-page', app.id)
+    expect(signup.outcome).toBe('pending')
+    expect(signup.proposal.diff?.views.added).toHaveLength(1)
+    expect(signup.proposal.diff?.confirmExposure).toBe(false)
+    await api().post(`/api/proposals/${signup.proposal.id}/approve`).expect(200)
+
+    // Records arrive through the admin form; the share page form is checked separately below.
+    const def = (await api().get(`/api/apps/${app.id}`)).body.app.definition
+    const form = def.nodes.find((n: { type: string; view?: string }) => n.type === 'Form' && !n.view)
+    const entity = def.entities[0]
+    const values = (i: number) =>
+      Object.fromEntries(
+        form.params.fields.map((id: string) => {
+          const f = entity.fields.find((x: { id: string }) => x.id === id)
+          return [
+            id,
+            f.type === 'enum' ? f.options[0] : id === 'phone' ? `1380000${1000 + i}` : `测试${id}${i}`,
+          ]
+        }),
+      )
+    for (let i = 0; i < 3; i++)
+      await api()
+        .post(`/api/apps/${app.id}/records`)
+        .send({ nodeId: form.id, values: values(i) })
+        .expect(201)
 
     const applicable = await api().get(`/api/recordings?appId=${app.id}`).expect(200)
     expect(
       applicable.body.recordings.find((r: RecordingInfo) => r.id === '02-event-checkin').applicable,
     ).toBe(true)
-    const patch = result(
-      (await api().post('/api/ai/plan').send({ recordingId: '02-event-checkin', appId: app.id }).expect(200))
-        .text,
-    )
-    expect(patch.outcome).toBe('pending')
-    expect(patch.proposal.diff?.fields.added.length).toBeGreaterThan(0)
-    await api().post(`/api/proposals/${patch.proposal.id}/approve`).expect(200)
+    const checkin = await replay('02-event-checkin', app.id)
+    expect(checkin.outcome).toBe('pending')
+    expect(checkin.proposal.diff?.fields.added.length).toBeGreaterThan(0)
+    await api().post(`/api/proposals/${checkin.proposal.id}/approve`).expect(200)
 
-    const refused = result(
-      (await api().post('/api/ai/plan').send({ recordingId: '03-event-delete', appId: app.id }).expect(200))
-        .text,
-    )
+    const desk = await replay('07-event-desk', app.id)
+    expect(desk.outcome).toBe('pending')
+    const deskView = desk.proposal.diff?.exposure.find((e) => e.before === null)?.after
+    expect(deskView).toMatchObject({ restricted: ['phone'], sensitiveRead: [] })
+    expect(deskView?.read).not.toContain('phone')
+    await api().post(`/api/proposals/${desk.proposal.id}/approve`).expect(200)
+
+    // The recorded model kept phone out but showed student ids: the server insists on confirmation.
+    const exported = await replay('08-event-export', app.id)
+    expect(exported.outcome).toBe('pending')
+    expect(exported.proposal.diff).toMatchObject({ confirmExposure: true, risk: 'high' })
+    const needs = await api().post(`/api/proposals/${exported.proposal.id}/approve`).expect(409)
+    expect(needs.body.error.code).toBe('EXPOSURE_CONFIRM_REQUIRED')
+    await api().post(`/api/proposals/${exported.proposal.id}/reject`).expect(200)
+
+    const refused = await replay('03-event-delete', app.id)
     expect(['refused', 'blocked']).toContain(refused.outcome)
 
+    // Share link of the desk: no phone numbers; inactive after restoring to before the desk.
+    const deskId = deskView?.viewId as string
+    const token = (await api().post(`/api/apps/${app.id}/views/${deskId}/link`).expect(200)).body.token
+    const snap = await api().get(`/api/v/${token}`).expect(200)
+    expect(snap.text).not.toMatch(/1380000\d{4}/)
+
     const before = (await api().get(`/api/apps/${app.id}/records`).expect(200)).body.records
-    await api().post(`/api/apps/${app.id}/versions/1/restore`).send({ baseVersion: 2 }).expect(200)
+    await api().post(`/api/apps/${app.id}/versions/1/restore`).send({ baseVersion: 4 }).expect(200)
+    await api().get(`/api/v/${token}`).expect(410)
     expect((await api().get(`/api/apps/${app.id}/records`).expect(200)).body.records).toEqual(before)
   })
 
