@@ -61,7 +61,7 @@ function ordered(ids: Iterable<string>, entity: EntityDef): string[] {
   return [...order.filter((id) => set.has(id)), ...[...set].filter((id) => !order.includes(id))]
 }
 
-function filterFields(expr: FilterExpr | undefined): string[] {
+export function filterFieldIds(expr: FilterExpr | undefined): string[] {
   const out: string[] = []
   if (expr) forEachCondition(expr, (c) => out.push(c.field))
   return out
@@ -116,11 +116,14 @@ export function nodeExposure(node: NodeDef, entity: EntityDef): NodeExposure {
     case 'Metric': {
       const p = node.params as ParamsOf<'Metric'>
       if (p.field) aggregate.push(p.field)
-      aggregate.push(...filterFields(p.where))
+      aggregate.push(...filterFieldIds(p.where))
       break
     }
     case 'Chart': {
-      aggregate.push((node.params as ParamsOf<'Chart'>).groupBy)
+      // Grouping by a short-text field labels each bar with the raw values, so it reads them.
+      const groupBy = (node.params as ParamsOf<'Chart'>).groupBy
+      if (entity.fields.find((f) => f.id === groupBy)?.type === 'string') read.push(groupBy)
+      else aggregate.push(groupBy)
       break
     }
     case 'Filter':
