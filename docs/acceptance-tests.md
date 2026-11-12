@@ -26,12 +26,12 @@
 
 | 编号 | 操作 | 期望 | 自动化 | 证据 |
 |---|---|---|---|---|
-| AC-15 | 一句话为某类人新增视图（如报名页） | 提案含 `addView` 与归属该视图的组件；Diff 暴露栏列出该视图的可见 / 可写字段；批准后可获取分享链接，管理页不出现视图组件 | 单测 + 接口测试 + E2E | 待补 |
-| AC-16 | 持分享链接读取与写入 | 快照只含视图内组件与其 `read` 字段（响应 JSON 中查不到未暴露字段的值）；经视图外组件、表单外字段、Table 编辑 / 删除的请求被拒绝 | 接口测试 | 待补 |
-| AC-17 | 视图让持链接者逐条看到敏感字段 | L7 警告 `EXPOSURE_SENSITIVE_FIELD`，`risk = high`；不带 `confirmExposure` 的批准返回 409，带上后通过并写审计 | 单测 + 接口测试 | 待补 |
-| AC-18 | 视图声明 `restrictedFields` 后，改动让该视图读写受限字段 | L7 错误 `EXPOSURE_RESTRICTED_FIELD`，进入自修复；只参与统计不报错 | 单测 + 接口测试（脚本化模型） | 待补 |
-| AC-19 | 视图中的 Table 显式开启编辑或删除 | L7 错误 `EXPOSURE_FREE_EDIT` | 单测 | 待补 |
-| AC-20 | 非本机来源访问管理接口 | `403 ADMIN_LOCAL_ONLY`；同一来源访问分享接口正常 | 接口测试 | 待补 |
-| AC-21 | 恢复到没有该视图的版本，再恢复回来 | 链接先返回 `410 VIEW_INACTIVE`，再次可用且令牌不变；记录全程逐字节一致 | 接口测试 + E2E | 待补 |
+| AC-15 | 一句话为某类人新增视图（如报名页） | 提案含 `addView` 与归属该视图的组件；Diff 暴露栏列出该视图的可见 / 可写字段；批准后可获取分享链接，管理页不出现视图组件 | 单测 + 接口测试 + E2E | `exposure.test.ts › AC-15: a sign-up page is a view holding a form; the admin page layout is unchanged`；`views.test.ts › a sign-up page accepts only its form fields and answers with nothing but the new id`。E2E 待补（R4） |
+| AC-16 | 持分享链接读取与写入 | 快照只含视图内组件与其 `read` 字段（响应 JSON 中查不到未暴露字段的值）；经视图外组件、表单外字段、Table 编辑 / 删除的请求被拒绝 | 接口测试 | `view-snapshot.test.ts › AC-16: a check-in desk receives names of eligible people and a rate — never phone numbers`；`views.test.ts › AC-16: the snapshot carries only what the desk shows…` 与 `AC-16: writes go only through components of this view, and come back trimmed`（含视图外组件 5 种请求均 404、无编辑 / 删除接口） |
+| AC-17 | 视图让持链接者逐条看到敏感字段 | L7 警告 `EXPOSURE_SENSITIVE_FIELD`，`risk = high`；不带 `confirmExposure` 的批准返回 409，带上后通过并写审计 | 单测 + 接口测试 | `exposure.test.ts › AC-17: showing a sensitive field row by row is a warning…`；`views.test.ts › AC-17: showing student ids on the desk needs confirmation, enforced by the server`（不带确认 409、版本不变；带确认后通过并写审计；恢复到含该暴露的版本同样需要确认） |
+| AC-18 | 视图声明 `restrictedFields` 后，改动让该视图读写受限字段 | L7 错误 `EXPOSURE_RESTRICTED_FIELD`，进入自修复；只参与统计不报错 | 单测 + 接口测试（脚本化模型） | `exposure.test.ts › AC-18: a restricted field may not reach the view row by row, but may feed a statistic`、`AC-18: writing a restricted field is rejected too`；`views.test.ts › AC-18: exporting the full list onto the desk is caught at L7 and repaired by the model`（第 1 轮报错、修复提示含错误码与 columns、第 2 轮通过） |
+| AC-19 | 视图中的 Table 显式开启编辑或删除 | L7 错误 `EXPOSURE_FREE_EDIT` | 单测 | `exposure.test.ts › AC-19: tables on a share page default to read-only; opening edit or delete is rejected` |
+| AC-20 | 非本机来源访问管理接口 | `403 ADMIN_LOCAL_ONLY`；同一来源访问分享接口正常 | 接口测试 + 手动 | `views.test.ts › AC-20: …`（4 条：管理接口 403、分享与健康检查可用；只看 TCP 对端地址，`X-Forwarded-For` 无效；`ADMIN_ACCESS=any`；share-info）。2026-11-11 手动：临时实例经真实网卡访问，本机 `127.0.0.1` 200、局域网 IP 403、带 `X-Forwarded-For: 127.0.0.1` 仍 403、`/api/health` 200 |
+| AC-21 | 恢复到没有该视图的版本，再恢复回来 | 链接先返回 `410 VIEW_INACTIVE`，再次可用且令牌不变；记录全程逐字节一致 | 接口测试 + E2E | `views.test.ts › AC-21: restore to before the desk → 410; restore forward → the same link works again`（记录逐字节一致）与 `hiding every component of a view also makes its link inactive`。E2E 待补（R4） |
 | AC-22 | 在分享页签到 | 管理页 5 秒内显示新的签到状态与签到率 | E2E（两个浏览器上下文） | 待补 |
 | AC-23 | 演示以外领域的视图请求（评测集 8 条） | 报告暴露正确率与禁令守住率；只写实际结果 | 评测脚本（真实模型） | 待补 |

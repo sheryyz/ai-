@@ -336,7 +336,7 @@ interface ExposureChange {
 | CSVExport | `columns`；省略时为**全部字段** | — | — | `rows` 输入 |
 | Form | — | — | `fields`（只新增，看不到已有记录） | — |
 | Metric | — | `field`、`where` 中的字段 | — | `rows` 输入 |
-| Chart | — | `groupBy` | — | `rows` 输入 |
+| Chart | `groupBy` 为短文本时（分组标签就是原值） | `groupBy`（单选、是/否） | — | `rows` 输入 |
 | Filter | — | — | — | —（只显示条件标签与结果数） |
 
 记录范围由该组件的输入沿绑定向上追溯得到：经过的每个 Filter 记一次标题，到 `CollectionSource` 为止。
@@ -371,3 +371,6 @@ interface ExposureChange {
 ### 11.5 批准确认
 
 `MorphDiff.confirmExposure` 为 `true` 时，`POST /api/proposals/:id/approve` 必须带 `{ "confirmExposure": true }`，否则服务端返回 `409 EXPOSURE_CONFIRM_REQUIRED`。确认动作写入审计事件，记录被公开的视图与字段。界面上的勾选框只是这一规则的表现，不是规则本身。
+
+- 服务端在批准时按当前定义重新计算 Diff 判断是否需要确认，不采信提案中存的 Diff。
+- 恢复版本（`POST /api/apps/:id/versions/:v/restore`）适用同一规则：恢复到会公开敏感字段或解除限制的版本，同样需要 `confirmExposure: true`。

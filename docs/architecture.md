@@ -146,11 +146,12 @@ GET definition + GET records
 | `PATCH/DELETE /api/apps/:id/records/:rid` | 编辑 / 软删除 |
 | `GET /api/apps/:id/export.csv?node=` | 按某节点的绑定链导出（UTF-8 BOM） |
 | `POST /api/apps/:id/outbox` · `GET` | 模拟发送记录 |
-| `POST /api/proposals/:id/approve` 请求体 | `{ confirmExposure?: boolean }`；Diff 要求确认而未带时返回 `409 EXPOSURE_CONFIRM_REQUIRED`（protocol §11.5） |
+| `POST /api/proposals/:id/approve` 请求体 | `{ confirmExposure?: boolean }`；变更需要确认而未带时返回 `409 EXPOSURE_CONFIRM_REQUIRED`，`details` 列出视图与字段（protocol §11.5）。服务端按当前定义重新计算 Diff，不采信提案里存的 Diff |
+| `POST /api/apps/:id/versions/:v/restore` 请求体 | `{ baseVersion, confirmExposure? }`；恢复到会公开敏感字段的版本同样需要确认 |
 | `GET /api/apps/:id/views` | 各视图的分享状态（是否已生成链接、令牌、当前是否可用） |
 | `POST /api/apps/:id/views/:viewId/link` · `/reset` | 获取（无则创建）/ 重置分享链接 |
 | `GET /api/share-info` | 本机局域网地址与端口，供生成二维码；可用 `PUBLIC_BASE_URL` 覆盖 |
-| `GET /api/v/:token` | **分享接口**：视图快照（已裁剪） |
+| `GET /api/v/:token` | **分享接口**：`{ snapshot: ViewSnapshot }`。逐条组件只带其 `read` 字段；Metric / Chart / Filter / CSVExport 只带统计结果或计数；QuickAction 的 `availableWhen` 在服务端求值后从参数中去掉。响应头 `Cache-Control: no-store`；无效或已重置的链接 `404 LINK_INVALID`，视图停用 `410 VIEW_INACTIVE` |
 | `POST /api/v/:token/records` · `/actions/:nodeId` · `/outbox` | **分享接口**：经视图内组件新增记录 / 快捷操作 / 发件箱 |
 | `GET /api/v/:token/export.csv?node=` | **分享接口**：导出视图内 CSVExport 节点的数据（列按暴露规则） |
 
