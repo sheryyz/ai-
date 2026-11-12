@@ -1,4 +1,4 @@
-# MorphOS 架构设计 v1
+# MorphOS 架构设计 v1.1
 
 > 需求见 `requirements.md`，协议见 `protocol.md`，关键取舍见 `decisions/`。
 
@@ -19,7 +19,9 @@
 │            ├ ProposalService   提案生命周期：pending → approved / rejected            │
 │            ├ PlannerService    AI 流水线（见 §3），Validator-in-the-loop 自修复         │
 │            ├ ExportService     CSV（复用 shared 绑定图求值）                          │
-│            └ OutboxService     模拟消息发件箱                                        │
+│            ├ OutboxService     模拟消息发件箱                                        │
+│            └ ViewService       分享令牌、视图快照（服务端求值 + 按暴露裁剪）、视图内写入     │
+│  access    管理接口仅本机（ADR-0008）；/api/v/:token/* 对局域网开放                       │
 │  llm/      OpenAI 兼容客户端（流式、思考内容、超时、重试）+ 离线样例回放                    │
 │  db/       node:sqlite，迁移脚本，事务封装                                           │
 └───────────────────────────────────────┬───────────────────────────────────────────┘
@@ -27,9 +29,10 @@
 ┌──────────────────────────── packages/shared（纯 TypeScript，无 IO） ───────────────────┐
 │  schema/    Zod：AppDefinition、FieldDef、NodeDef、Binding、FilterExpr、Proposal      │
 │  registry/  组件注册表：端口、params Schema、副作用声明                                  │
-│  validate/  六层校验器 L1–L6                                                         │
+│  validate/  七层校验器 L1–L7                                                         │
 │  patch/     applyPatch（原子、纯函数）                                                │
-│  diff/      computeDiff → MorphDiff                                                 │
+│  diff/      computeDiff → MorphDiff（含暴露对比）                                      │
+│  exposure/  computeExposure、L7 规则、视图快照裁剪（protocol §11）                       │
 │  runtime/   evaluateFilter、绑定图拓扑排序与求值、聚合计算、默认值虚拟填充                 │
 └────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -45,7 +48,7 @@
             ├ stage: understand   读取当前定义 + 记录统计，组装上下文
             ├ stage: plan         模型流式输出思考内容 → 前端“思考”面板
             ├ stage: generate     模型输出 Proposal JSON
-            ├ stage: validate     L1–L6 校验
+            ├ stage: validate     L1–L7 校验
             │     └ 失败 → stage: repair（把 ValidationIssue[] 回馈模型，最多 2 轮）
             └ stage: ready        保存 proposal(pending) + MorphDiff → 前端展示 Diff
 用户批准 ─► POST /api/proposals/:id/approve
@@ -60,7 +63,26 @@ GET definition + GET records
       拓扑排序节点 → CollectionSource 产出 RecordSet → 沿绑定边传播 → 每个可视节点得到输入
   └ Renderer 按 region / order / width 布局，按注册表映射到 React 组件
   └ 用户操作（提交表单 / 签到 / 编辑）→ 记录接口 → invalidate → 重新求值
+  └ 每 3 秒轮询记录，其他设备（分享页）上的操作几秒内可见
 ```
+
+管理页只渲染未归属视图的组件；Studio 预览按页面分标签（管理页 / 各视图），幽灵层照常标注。
+
+### 2.3 分享页（角色视图）
+
+```
+组织者：Studio 右栏“分享” → POST /api/apps/:id/views/:viewId/link（无则创建令牌）
+        → 显示局域网地址 + 二维码（GET /api/share-info 提供本机局域网 IP）
+手机：  /v/:token → GET /api/v/:token
+        └ 服务端：令牌 → (app, viewId) → 当前定义中视图存在且有可见组件，否则 410
+                  → evaluateGraph(全部记录) → 对视图内每个组件按 computeExposure 裁剪
+                  → 下发 { app 名称与图标, view, 精简实体结构, nodes: [{ node, data }] }
+        └ 浏览器：按快照渲染（不再自行求值），每 3 秒刷新
+        └ 提交表单 / 快捷操作 / 导出 / 发件箱 → /api/v/:token/...
+             服务端：组件属于该视图且未隐藏 → 复用 RecordService 的按组件写入规则
+```
+
+浏览器在分享页上拿到的只有快照；管理页那套“拉取全部原始记录、本地求值”的路径对分享页不开放。
 
 ## 3. AI 流水线（PlannerService）
 
@@ -68,7 +90,7 @@ GET definition + GET records
 |---|---|---|
 | understand | 组装上下文：当前 AppDefinition（压缩形式）、组件注册表摘要、记录数与字段样例值、协议规则 | 上下文摘要 |
 | plan / generate | 调用模型（JSON 模式，流式）；`reasoning_content` 作为思考流 | 思考文本增量、输出 JSON 增量 |
-| validate | `JSON.parse` → Zod → L2–L6 | 每层结果 |
+| validate | `JSON.parse` → Zod → L2–L7 | 每层结果 |
 | repair | 把结构化错误与 hint 作为新一轮用户消息回馈模型 | 第几轮修复、修了什么 |
 | ready / failed | 保存提案与 Diff，或返回最终错误 | Diff / 错误说明 |
 
@@ -100,6 +122,7 @@ GET definition + GET records
 | `records` | id, app_id, entity_id, data_json, created_at, updated_at, deleted_at | 通用业务记录，软删除 |
 | `proposals` | id, app_id, base_version, kind, intent, proposal_json, diff_json, issues_json, trace_json, status, created_at, decided_at | AI 提案及其完整追踪（模型、轮次、耗时、token） |
 | `outbox` | id, app_id, node_id, recipients_json, body, created_at | 模拟发件箱 |
+| `view_links` | token（PK）, app_id, view_id, created_at, revoked_at | 分享令牌；不属于 AppDefinition、不随版本变化；重置 = 吊销旧令牌并生成新令牌 |
 | `audit_events` | id, app_id, type, detail_json, created_at | 审计 |
 
 所有写操作在事务中完成。迁移脚本按序号执行，记录于 `schema_migrations`。
@@ -123,14 +146,24 @@ GET definition + GET records
 | `PATCH/DELETE /api/apps/:id/records/:rid` | 编辑 / 软删除 |
 | `GET /api/apps/:id/export.csv?node=` | 按某节点的绑定链导出（UTF-8 BOM） |
 | `POST /api/apps/:id/outbox` · `GET` | 模拟发送记录 |
+| `POST /api/proposals/:id/approve` 请求体 | `{ confirmExposure?: boolean }`；Diff 要求确认而未带时返回 `409 EXPOSURE_CONFIRM_REQUIRED`（protocol §11.5） |
+| `GET /api/apps/:id/views` | 各视图的分享状态（是否已生成链接、令牌、当前是否可用） |
+| `POST /api/apps/:id/views/:viewId/link` · `/reset` | 获取（无则创建）/ 重置分享链接 |
+| `GET /api/share-info` | 本机局域网地址与端口，供生成二维码；可用 `PUBLIC_BASE_URL` 覆盖 |
+| `GET /api/v/:token` | **分享接口**：视图快照（已裁剪） |
+| `POST /api/v/:token/records` · `/actions/:nodeId` · `/outbox` | **分享接口**：经视图内组件新增记录 / 快捷操作 / 发件箱 |
+| `GET /api/v/:token/export.csv?node=` | **分享接口**：导出视图内 CSVExport 节点的数据（列按暴露规则） |
+
+**访问规则（ADR-0008）**：`/api/v/*` 与 `/api/health` 对任何来源开放；其余接口只接受本机回环地址的连接，否则 `403 ADMIN_LOCAL_ONLY`。`ADMIN_ACCESS=any` 关闭此限制（仅用于自带鉴权的部署）。
 
 ## 6. 前端结构
 
 | 路由 | 页面 |
 |---|---|
 | `/` | App Hub：应用卡片、新建入口（自然语言 / 模板） |
-| `/apps/:id/studio` | AI Studio：左对话与流水线、中实时预览、右 Diff / 版本 / Schema |
-| `/apps/:id` | App Runtime：独立运行界面，可直接给报名者 / 管理员使用 |
+| `/apps/:id/studio` | AI Studio：左对话与流水线、中实时预览（按页面分标签）、右 Diff（含暴露栏）/ 版本 / Schema / 分享 |
+| `/apps/:id` | 管理页：组织者使用，仅本机；不含任何视图组件 |
+| `/v/:token` | 分享页：单列、手机优先；不显示平台导航、AI 状态与 Studio 入口；视图停用时说明原因 |
 
 状态管理：服务端状态用 TanStack Query；Studio 内的流式会话用组件内 reducer；不引入全局状态库。
 组件实现：Tailwind v4 + Radix 原语 + 自写组件（`components/ui`），动画用 Motion（layout 动画实现“变形”）。视觉规范见 `design.md`。
@@ -194,3 +227,5 @@ GET definition + GET records
 - 请求体大小限制；记录数量、节点数、绑定数有上限。
 - API Key 只在服务端读取，不下发前端，不写日志。
 - 业务日期（今天、`$today`、相对日期、时间显示）统一按 `APP_TIMEZONE` 计算，与宿主时区无关（ADR-0005）。
+- 分享页的数据裁剪在服务端完成，前端隐藏不算权限；管理接口按 TCP 对端地址限制为本机，不信任转发头（ADR-0007、ADR-0008）。
+- 分享令牌用 `crypto.randomBytes` 生成，只存服务端；不写日志，不进入提示词、提案、版本或评测记录。
