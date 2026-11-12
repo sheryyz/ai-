@@ -10,7 +10,7 @@
       "displayField": "name",
       "fields": [
         { "id": "name", "label": "姓名", "type": "string", "required": true },
-        { "id": "studentId", "label": "学号", "type": "string", "required": true },
+        { "id": "studentId", "label": "学号", "type": "string", "required": true, "sensitive": true },
         {
           "id": "major",
           "label": "专业",
@@ -18,7 +18,7 @@
           "required": true,
           "options": ["计算机", "软件工程", "人工智能", "电子信息", "数学", "其他"]
         },
-        { "id": "phone", "label": "手机号", "type": "string", "required": false }
+        { "id": "phone", "label": "手机号", "type": "string", "required": false, "sensitive": true }
       ]
     }
   ],
