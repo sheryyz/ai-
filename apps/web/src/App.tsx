@@ -50,7 +50,7 @@ export function App() {
       <MotionConfig reducedMotion="user">
         <RouterProvider router={router} />
         <Toaster
-          position="bottom-right"
+          position="top-center"
           style={toastTokens}
           toastOptions={{ className: 'font-sans text-sm' }}
         />
