@@ -15,8 +15,8 @@ import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import { Modal } from '../../components/ui/dialog'
 import { Input, Label } from '../../components/ui/input'
-import { api, errorMessage, fieldErrors } from '../../lib/api'
-import { type NodeProps, useInvalidateRecords, useRuntime } from '../context'
+import { errorMessage, fieldErrors } from '../../lib/api'
+import { type NodeProps, useRuntime } from '../context'
 import { type DraftValue, FieldInput, fromDraft, initialDraft } from '../FieldInput'
 import { NodeFrame } from '../NodeFrame'
 
@@ -24,7 +24,7 @@ const MAX_SHOWN = 5
 
 /** Generic "find one record and set some fields" — check-in, lend, return… all from params. */
 export function QuickActionNode({ nodeId, title, params, ev, mark }: NodeProps<ParamsOf<'QuickAction'>>) {
-  const { appId, entity, mode, timeZone, today } = useRuntime()
+  const { entity, mode, timeZone, today, ops } = useRuntime()
   const uid = useId()
   const rows = asRows(ev?.inputs.rows)
   const types = fieldTypesOf(entity)
@@ -36,7 +36,6 @@ export function QuickActionNode({ nodeId, title, params, ev, mark }: NodeProps<P
     .filter((f): f is FieldDef => Boolean(f))
   const [answers, setAnswers] = useState<Record<string, DraftValue>>(() => initialDraft(askFields))
   const [askErrors, setAskErrors] = useState<Record<string, string>>({})
-  const invalidate = useInvalidateRecords(appId)
 
   const isEligible = (r: Row) =>
     !params.availableWhen || evaluateFilter(params.availableWhen, r, types, { today })
@@ -54,8 +53,8 @@ export function QuickActionNode({ nodeId, title, params, ev, mark }: NodeProps<P
   async function run(r: Row, ans: Record<string, unknown> = {}) {
     setPending(r.id)
     try {
-      await api.runAction(appId, nodeId, r.id, ans)
-      await invalidate()
+      await ops.runAction(nodeId, r.id, ans)
+      await ops.refresh()
       toast.success(`${text(r, entity.displayField) || '记录'} · ${params.label}完成`)
       setAsking(null)
       setQuery('')

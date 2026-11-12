@@ -8,11 +8,11 @@ import { NodeFrame } from '../NodeFrame'
 const shade = (i: number, n: number) =>
   `color-mix(in oklab, var(--morph) ${Math.round(100 - (i * 70) / Math.max(1, n - 1))}%, var(--surface))`
 
-export function ChartNode({ title, params, ev, mark }: NodeProps<ParamsOf<'Chart'>>) {
+export function ChartNode({ title, params, ev, mark, data }: NodeProps<ParamsOf<'Chart'>>) {
   const { entity } = useRuntime()
-  const rows = asRows(ev?.inputs.rows)
   const field = entity.fields.find((f) => f.id === params.groupBy)
-  const groups = field ? groupCounts(rows, field) : []
+  const groups =
+    data?.kind === 'groups' ? data.groups : field ? groupCounts(asRows(ev?.inputs.rows), field) : []
   const max = Math.max(1, ...groups.map((g) => g.count))
   const total = groups.reduce((s, g) => s + g.count, 0)
   const Icon = params.kind === 'donut' ? ChartPie : ChartBar
@@ -21,7 +21,7 @@ export function ChartNode({ title, params, ev, mark }: NodeProps<ParamsOf<'Chart
     <NodeFrame
       title={title ?? `${field?.label ?? params.groupBy}分布`}
       icon={<Icon className="size-4" />}
-      subtitle={`按「${field?.label ?? params.groupBy}」分组 · ${rows.length} 条`}
+      subtitle={`按「${field?.label ?? params.groupBy}」分组 · ${total} 条`}
       mark={mark}
     >
       {total === 0 ? (

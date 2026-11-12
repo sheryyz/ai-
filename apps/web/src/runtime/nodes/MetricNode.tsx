@@ -32,15 +32,19 @@ function AnimatedNumber({ value, format }: { value: number | null; format: 'numb
   return <>{text}</>
 }
 
-export function MetricNode({ title, params, ev, mark }: NodeProps<ParamsOf<'Metric'>>) {
+export function MetricNode({ title, params, ev, mark, data }: NodeProps<ParamsOf<'Metric'>>) {
   const { entity, today } = useRuntime()
+  const shared = data?.kind === 'metric' ? data : null
   const rows = asRows(ev?.inputs.rows)
-  const value = typeof ev?.outputs.value === 'number' ? ev.outputs.value : null
+  const count = shared ? shared.count : rows.length
+  const value = shared ? shared.value : typeof ev?.outputs.value === 'number' ? ev.outputs.value : null
   const where = params.where
   const matched =
-    params.aggregate === 'ratio' && where
-      ? rows.filter((r) => evaluateFilter(where, r, fieldTypesOf(entity), { today })).length
-      : null
+    params.aggregate !== 'ratio' || !where
+      ? null
+      : shared
+        ? shared.matched
+        : rows.filter((r) => evaluateFilter(where, r, fieldTypesOf(entity), { today })).length
   const progress =
     params.goal && value !== null
       ? Math.min(1, value / params.goal)
@@ -55,10 +59,10 @@ export function MetricNode({ title, params, ev, mark }: NodeProps<ParamsOf<'Metr
       </p>
       <p className="mt-1 text-xs text-muted tabular-nums">
         {matched !== null
-          ? `${matched} / ${rows.length} 条`
+          ? `${matched} / ${count} 条`
           : params.goal
             ? `目标 ${params.goal.toLocaleString('zh-CN')}`
-            : `基于 ${rows.length} 条记录`}
+            : `基于 ${count} 条记录`}
       </p>
       {progress !== null ? (
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">

@@ -4,13 +4,13 @@ import { type FormEvent, useId, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '../../components/ui/button'
 import { Label } from '../../components/ui/input'
-import { api, errorMessage, fieldErrors } from '../../lib/api'
-import { type NodeProps, useInvalidateRecords, useRuntime } from '../context'
+import { errorMessage, fieldErrors } from '../../lib/api'
+import { type NodeProps, useRuntime } from '../context'
 import { type DraftValue, FieldInput, fromDraft, initialDraft } from '../FieldInput'
 import { NodeFrame } from '../NodeFrame'
 
 export function FormNode({ nodeId, title, params, mark }: NodeProps<ParamsOf<'Form'>>) {
-  const { appId, entity, mode } = useRuntime()
+  const { entity, mode, ops } = useRuntime()
   const uid = useId()
   const fields = params.fields
     .map((id) => entity.fields.find((f) => f.id === id))
@@ -18,7 +18,6 @@ export function FormNode({ nodeId, title, params, mark }: NodeProps<ParamsOf<'Fo
   const [draft, setDraft] = useState<Record<string, DraftValue>>(() => initialDraft(fields))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
-  const invalidate = useInvalidateRecords(appId)
   const preview = mode === 'preview'
 
   async function submit(e: FormEvent) {
@@ -27,8 +26,8 @@ export function FormNode({ nodeId, title, params, mark }: NodeProps<ParamsOf<'Fo
     setBusy(true)
     setErrors({})
     try {
-      await api.createRecord(appId, nodeId, fromDraft(fields, draft))
-      await invalidate()
+      await ops.createRecord(nodeId, fromDraft(fields, draft))
+      await ops.refresh()
       toast.success(params.successMessage ?? '已保存')
       setDraft(initialDraft(fields))
     } catch (err) {

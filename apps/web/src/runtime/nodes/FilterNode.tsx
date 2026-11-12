@@ -4,10 +4,12 @@ import { type NodeProps, useRuntime } from '../context'
 import { filterChips } from '../describe'
 import { NodeFrame } from '../NodeFrame'
 
-export function FilterNode({ title, params, ev, mark }: NodeProps<ParamsOf<'Filter'>>) {
+export function FilterNode({ title, params, ev, mark, data }: NodeProps<ParamsOf<'Filter'>>) {
   const { entity } = useRuntime()
-  const input = asRows(ev?.inputs.input)
-  const result = asRows(ev?.outputs.result)
+  const counts =
+    data?.kind === 'count'
+      ? { result: data.count, input: data.total }
+      : { result: asRows(ev?.outputs.result).length, input: asRows(ev?.inputs.input).length }
   return (
     <NodeFrame
       title={title ?? '筛选'}
@@ -15,7 +17,7 @@ export function FilterNode({ title, params, ev, mark }: NodeProps<ParamsOf<'Filt
       mark={mark}
       actions={
         <span className="text-xs text-muted tabular-nums">
-          <span className="text-base font-semibold text-fg">{result.length}</span> / {input.length} 条
+          <span className="text-base font-semibold text-fg">{counts.result}</span> / {counts.input} 条
         </span>
       }
     >

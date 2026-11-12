@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import { EmptyState } from '../../components/ui/feedback'
-import { api, errorMessage } from '../../lib/api'
+import { errorMessage } from '../../lib/api'
 import { relativeTime } from '../../lib/format'
 import { keys, useOutbox } from '../../lib/queries'
 import { type NodeProps, useRuntime } from '../context'
@@ -25,13 +25,14 @@ async function copy(text: string): Promise<boolean> {
 
 /** Drafts only: messages are copied or logged to a simulated outbox, never sent to a real channel. */
 export function MessageDraftNode({ nodeId, title, params, ev, mark }: NodeProps<ParamsOf<'MessageDraft'>>) {
-  const { appId, entity, mode, timeZone } = useRuntime()
+  const { appId, entity, mode, timeZone, ops } = useRuntime()
   const qc = useQueryClient()
   const recipients = asRows(ev?.inputs.recipients)
   const outbox = useOutbox(appId, mode === 'live')
   const [copied, setCopied] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const live = mode === 'live'
+  const canRecord = mode !== 'preview'
   const drafts = recipients.map((r) => ({
     id: r.id,
     to: String(r.values[entity.displayField] ?? r.id),
@@ -49,8 +50,8 @@ export function MessageDraftNode({ nodeId, title, params, ev, mark }: NodeProps<
   async function record() {
     setBusy(true)
     try {
-      const entry = await api.recordOutbox(appId, nodeId)
-      await qc.invalidateQueries({ queryKey: keys.outbox(appId) })
+      const entry = await ops.recordOutbox(nodeId)
+      if (live) await qc.invalidateQueries({ queryKey: keys.outbox(appId) })
       toast.success(`已记录 ${entry.recipientCount} 条草稿到模拟发件箱（未真实发送）`)
     } catch (e) {
       toast.error(errorMessage(e))
@@ -111,7 +112,7 @@ export function MessageDraftNode({ nodeId, title, params, ev, mark }: NodeProps<
             >
               <Copy className="size-3.5" /> 复制全部
             </Button>
-            <Button size="sm" variant="primary" loading={busy} disabled={!live} onClick={record}>
+            <Button size="sm" variant="primary" loading={busy} disabled={!canRecord} onClick={record}>
               <Send className="size-3.5" /> 记录到模拟发件箱
             </Button>
           </div>

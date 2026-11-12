@@ -12,12 +12,13 @@ import {
   type ParamsOf,
   primaryEntity,
   type StoredRecord,
+  type ViewNodeData,
 } from '@morphos/shared'
 import { AnimatePresence, motion } from 'motion/react'
 import { useMemo } from 'react'
 import { cn } from '../lib/cn'
 import { useTimeZone, useToday } from '../lib/queries'
-import { RuntimeContext, type RuntimeContextValue, type RuntimeMode } from './context'
+import { RuntimeContext, type RuntimeContextValue, type RuntimeMode, useAdminOps } from './context'
 import type { Mark } from './NodeFrame'
 import { ChartNode } from './nodes/ChartNode'
 import { CSVExportNode } from './nodes/CSVExportNode'
@@ -28,8 +29,13 @@ import { MetricNode } from './nodes/MetricNode'
 import { QuickActionNode } from './nodes/QuickActionNode'
 import { TableNode } from './nodes/TableNode'
 
-function renderNode(node: NodeDef, ev: NodeEval | undefined, mark: Mark | undefined) {
-  const base = { nodeId: node.id, title: node.title, ev, mark }
+export function renderNode(
+  node: NodeDef,
+  ev: NodeEval | undefined,
+  mark: Mark | undefined,
+  data?: ViewNodeData,
+) {
+  const base = { nodeId: node.id, title: node.title, ev, mark, data }
   switch (node.type) {
     case 'Metric':
       return <MetricNode {...base} params={node.params as ParamsOf<'Metric'>} />
@@ -65,6 +71,7 @@ export function AppRuntime({
   records,
   mode = 'live',
   marks,
+  view,
   className,
 }: {
   appId: string
@@ -73,6 +80,8 @@ export function AppRuntime({
   mode?: RuntimeMode
   /** Per-node Diff marks for the ghost preview of a pending proposal. */
   marks?: Map<string, Mark>
+  /** Render one role view (single column, phone width) instead of the admin page (protocol §3.1). */
+  view?: string
   className?: string
 }) {
   const today = useToday()
@@ -81,8 +90,9 @@ export function AppRuntime({
   const rows = useMemo(() => records.map((r) => materialize(r, entity)), [records, entity])
   const graph = useMemo(() => evaluateGraph(definition, rows, { today }), [definition, rows, today])
   const showHidden = mode === 'preview' && [...(marks?.values() ?? [])].includes('hidden')
-  const layout = layoutNodes(definition, { includeHidden: showHidden })
-  const ctx: RuntimeContextValue = { appId, entity, mode, timeZone, today, totalRecords: records.length }
+  const layout = layoutNodes(definition, { includeHidden: showHidden, view })
+  const ops = useAdminOps(appId)
+  const ctx: RuntimeContextValue = { appId, entity, mode, timeZone, today, totalRecords: records.length, ops }
 
   const item = (n: NodeDef, inMain: boolean) => (
     <motion.div
@@ -98,6 +108,18 @@ export function AppRuntime({
       {renderNode(n, graph.get(n.id), marks?.get(n.id))}
     </motion.div>
   )
+
+  if (view !== undefined) {
+    return (
+      <RuntimeContext.Provider value={ctx}>
+        <div className={cn('mx-auto flex w-full max-w-[480px] flex-col gap-4', className)}>
+          <AnimatePresence mode="popLayout" initial={false}>
+            {layout.main.map((n) => item(n, false))}
+          </AnimatePresence>
+        </div>
+      </RuntimeContext.Provider>
+    )
+  }
 
   return (
     <RuntimeContext.Provider value={ctx}>

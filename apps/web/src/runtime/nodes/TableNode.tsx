@@ -21,7 +21,7 @@ import { NodeFrame } from '../NodeFrame'
 import { RecordDialog } from '../RecordDialog'
 
 export function TableNode({ nodeId, title, params, ev, mark }: NodeProps<ParamsOf<'Table'>>) {
-  const { appId, entity, mode, timeZone, totalRecords } = useRuntime()
+  const { appId, entity, mode, timeZone, totalRecords, ops } = useRuntime()
   const rows = asRows(ev?.inputs.rows)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
@@ -78,9 +78,9 @@ export function TableNode({ nodeId, title, params, ev, mark }: NodeProps<ParamsO
       subtitle={`${filtered.length}${filtered.length !== rows.length ? ` / ${rows.length}` : ''} 条`}
       mark={mark}
       actions={
-        live && rows.length ? (
+        mode !== 'preview' && rows.length ? (
           <a
-            href={api.exportUrl(appId, nodeId)}
+            href={ops.exportUrl(nodeId)}
             className="inline-flex size-8 items-center justify-center rounded-[var(--radius-control)] text-muted hover:bg-surface-2 hover:text-fg"
             title="导出当前表格为 CSV"
             aria-label="导出当前表格为 CSV"
