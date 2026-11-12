@@ -88,6 +88,7 @@ export function createRecord(
   appId: string,
   formNodeId: string,
   input: Record<string, unknown>,
+  auditDetail: object = {},
 ): Row {
   const app = getApp(ctx, appId)
   const form = visibleNode(app.definition, formNodeId, 'Form')
@@ -105,7 +106,7 @@ export function createRecord(
         'INSERT INTO records (id, app_id, entity_id, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
       )
       .run(id, appId, entity.id, JSON.stringify(r.values), at, at)
-    audit(ctx.db, appId, 'record.created', { recordId: id, via: formNodeId }, ctx.now())
+    audit(ctx.db, appId, 'record.created', { recordId: id, via: formNodeId, ...auditDetail }, ctx.now())
   })
   return materialize(getStored(ctx, appId, id), entity)
 }
@@ -196,6 +197,7 @@ export function runQuickAction(
   nodeId: string,
   recordId: string,
   answers: Record<string, unknown>,
+  auditDetail: object = {},
 ): Row {
   const app = getApp(ctx, appId)
   const node = visibleNode(app.definition, nodeId, 'QuickAction')
@@ -224,7 +226,10 @@ export function runQuickAction(
     'update',
   )
   if (!r.ok) throw invalid(r.errors)
-  writeUpdate(ctx, appId, getStored(ctx, appId, recordId), r.values, 'quickaction.executed', { via: nodeId })
+  writeUpdate(ctx, appId, getStored(ctx, appId, recordId), r.values, 'quickaction.executed', {
+    via: nodeId,
+    ...auditDetail,
+  })
   return materialize(getStored(ctx, appId, recordId), entity)
 }
 
@@ -259,7 +264,7 @@ export function exportCsv(
 // ── simulated outbox ─────────────────────────────────────────────────────────
 
 /** Records drafts in the simulated outbox. Nothing is sent to any real SMS/IM channel. */
-export function recordOutbox(ctx: Ctx, appId: string, nodeId: string): OutboxEntry {
+export function recordOutbox(ctx: Ctx, appId: string, nodeId: string, auditDetail: object = {}): OutboxEntry {
   const app = getApp(ctx, appId)
   const node = visibleNode(app.definition, nodeId, 'MessageDraft')
   const p = node.params as ParamsOf<'MessageDraft'>
@@ -286,7 +291,13 @@ export function recordOutbox(ctx: Ctx, appId: string, nodeId: string): OutboxEnt
         'INSERT INTO outbox (id, app_id, node_id, channel, messages_json, recipient_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
       )
       .run(entry.id, appId, nodeId, entry.channel, JSON.stringify(messages), messages.length, entry.createdAt)
-    audit(ctx.db, appId, 'outbox.recorded', { outboxId: entry.id, recipients: messages.length }, ctx.now())
+    audit(
+      ctx.db,
+      appId,
+      'outbox.recorded',
+      { outboxId: entry.id, recipients: messages.length, ...auditDetail },
+      ctx.now(),
+    )
   })
   return entry
 }

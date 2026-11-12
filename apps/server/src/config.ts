@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 /** Repository root (apps/server/src → ../../..). */
 export const REPO_ROOT = path.resolve(import.meta.dirname, '../../..')
+export const WEB_DIST = path.join(REPO_ROOT, 'apps/web/dist')
 
 const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8787),
@@ -20,6 +21,8 @@ const EnvSchema = z.object({
     .default(DEFAULT_TIME_ZONE)
     .refine(isValidTimeZone, { error: '不是有效的 IANA 时区，例如 Asia/Shanghai' }),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  ADMIN_ACCESS: z.enum(['local', 'any']).default('local'),
+  PUBLIC_BASE_URL: z.url().optional(),
 })
 
 export interface AppConfig {
@@ -28,6 +31,10 @@ export interface AppConfig {
   nodeEnv: 'development' | 'production' | 'test'
   /** Business time zone for "today", $today and timestamps (ADR-0005). */
   timeZone: string
+  /** ADR-0008: 'local' = admin API only from loopback; 'any' only behind your own auth. */
+  adminAccess: 'local' | 'any'
+  /** Overrides the LAN addresses offered for share links (e.g. a tunnel or deployed URL). */
+  publicBaseUrl: string | undefined
   llm: {
     baseUrl: string
     model: string
@@ -56,6 +63,8 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
     databasePath: e.DATABASE_PATH === ':memory:' ? ':memory:' : path.resolve(REPO_ROOT, e.DATABASE_PATH),
     nodeEnv: e.NODE_ENV,
     timeZone: e.APP_TIMEZONE,
+    adminAccess: e.ADMIN_ACCESS,
+    publicBaseUrl: e.PUBLIC_BASE_URL?.replace(/\/+$/, ''),
     llm: {
       baseUrl: e.LLM_BASE_URL.replace(/\/+$/, ''),
       model: e.LLM_MODEL,

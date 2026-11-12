@@ -1,5 +1,5 @@
 import { formatPath, z } from '@morphos/shared'
-import type { Request } from 'express'
+import type { Request, Response } from 'express'
 import { badRequest } from '../errors'
 
 export function parseBody<T extends z.ZodType>(schema: T, req: Request): z.infer<T> {
@@ -20,3 +20,13 @@ export function intParam(value: string | undefined, name: string): number {
 }
 
 export const ValuesSchema = z.record(z.string(), z.unknown())
+
+export function sendCsv(res: Response, out: { filename: string; csv: string; count: number }): void {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="export.csv"; filename*=UTF-8''${encodeURIComponent(out.filename)}`,
+  )
+  res.setHeader('X-Record-Count', String(out.count))
+  res.send(out.csv)
+}

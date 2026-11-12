@@ -13,7 +13,7 @@ import {
   runQuickAction,
   updateRecord,
 } from '../services/records'
-import { parseBody, ValuesSchema } from './util'
+import { parseBody, sendCsv, ValuesSchema } from './util'
 
 const Create = z.object({ nodeId: z.string(), values: ValuesSchema })
 const Update = z.object({ nodeId: z.string(), values: ValuesSchema })
@@ -54,14 +54,7 @@ export function recordsRouter(ctx: Ctx): Router {
   r.get('/apps/:id/export.csv', (req, res) => {
     const node = typeof req.query.node === 'string' ? req.query.node : ''
     if (!node) throw badRequest('缺少 node 参数')
-    const { filename, csv, count } = exportCsv(ctx, req.params.id, node)
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="export.csv"; filename*=UTF-8''${encodeURIComponent(filename)}`,
-    )
-    res.setHeader('X-Record-Count', String(count))
-    res.send(csv)
+    sendCsv(res, exportCsv(ctx, req.params.id, node))
   })
 
   r.get('/apps/:id/outbox', (req, res) => {

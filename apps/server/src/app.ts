@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { type HealthInfo, PROTOCOL_VERSION } from '@morphos/shared'
 import express, { type ErrorRequestHandler } from 'express'
-import { type AppConfig, REPO_ROOT } from './config'
+import { type AppConfig, WEB_DIST } from './config'
 import type { Ctx } from './context'
 import { type DB, openDatabase } from './db'
 import { HttpError } from './errors'
@@ -10,6 +10,7 @@ import { createLiveClient, type LlmClient } from './llm/client'
 import { aiRouter } from './routes/ai'
 import { appsRouter } from './routes/apps'
 import { recordsRouter } from './routes/records'
+import { viewsRouter } from './routes/views'
 
 export interface AppDeps {
   db?: DB
@@ -51,6 +52,7 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
     res.json(health)
   })
 
+  app.use('/api', viewsRouter(ctx))
   app.use('/api', appsRouter(ctx))
   app.use('/api', recordsRouter(ctx))
   app.use('/api', aiRouter(ctx, { replaySpeed: deps.replaySpeed }))
@@ -60,10 +62,9 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
   })
 
   // Production: serve the built web app from the same port.
-  const webDist = path.join(REPO_ROOT, 'apps/web/dist')
-  if (config.nodeEnv === 'production' && existsSync(webDist)) {
-    app.use(express.static(webDist))
-    app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.join(webDist, 'index.html')))
+  if (config.nodeEnv === 'production' && existsSync(WEB_DIST)) {
+    app.use(express.static(WEB_DIST))
+    app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.join(WEB_DIST, 'index.html')))
   }
 
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
