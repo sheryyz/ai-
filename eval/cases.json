@@ -1,0 +1,124 @@
+{
+  "$comment": "Fixed evaluation set (requirements.md §8): 10 create + 10 evolve + 5 illegal/boundary. Evolve and illegal cases start from a built-in template seeded with its fictional sample records. allowTouch lists existing node ids a reasonable implementation may modify (see eval/README.md, 无关修改).",
+  "create": [
+    { "id": "c01", "intent": "创建一个校园讲座报名系统，包含姓名、学号、专业、手机号。" },
+    {
+      "id": "c02",
+      "intent": "设备借用管理：设备名称、编号、类别、状态（可借用/已借出/已归还）、借用人、借用日期。"
+    },
+    {
+      "id": "c03",
+      "intent": "社团招新报名：姓名、学号、学院、意向部门（宣传部/外联部/技术部/文艺部）、自我介绍。"
+    },
+    { "id": "c04", "intent": "实验室耗材领用登记：耗材名称、领用数量、领用人、领用日期、用途。" },
+    { "id": "c05", "intent": "课程作业提交跟踪：学生姓名、作业名称、提交日期、是否迟交、得分。" },
+    {
+      "id": "c06",
+      "intent": "宿舍报修系统：宿舍号、报修类型（水电/门窗/网络/家具/其他）、问题描述、联系电话、处理状态（待处理/处理中/已完成）。"
+    },
+    { "id": "c07", "intent": "班级图书角借阅登记：书名、借阅人、借阅日期、是否已归还。" },
+    {
+      "id": "c08",
+      "intent": "志愿者服务时长记录：姓名、学号、活动名称、服务日期、服务时长（小时），并统计总服务时长。"
+    },
+    { "id": "c09", "intent": "校园失物招领：物品名称、物品类别、拾到地点、拾到日期、联系人、是否已认领。" },
+    {
+      "id": "c10",
+      "intent": "学术会议投稿管理：论文题目、第一作者、单位、研究方向、投稿日期、审稿状态（待审/修改后录用/录用/拒稿）。"
+    }
+  ],
+  "evolve": [
+    {
+      "id": "e01",
+      "base": "event-registration",
+      "intent": "活动快开始了，加一个签到功能，找出计算机专业还没签到的人，给他们写提醒，旁边显示签到率。",
+      "allowTouch": ["roster"]
+    },
+    {
+      "id": "e02",
+      "base": "event-registration",
+      "intent": "增加“年级”字段（大一、大二、大三、大四、研究生），报名时填写，并按年级统计分布。",
+      "allowTouch": ["signup", "roster"]
+    },
+    {
+      "id": "e03",
+      "base": "event-registration",
+      "intent": "只看计算机专业的报名名单，并且能单独导出这部分名单。",
+      "allowTouch": ["roster", "exportAll"]
+    },
+    {
+      "id": "e04",
+      "base": "event-registration",
+      "intent": "加一个选填的“备注”字段，报名表里可以填写，名单里也能看到。",
+      "allowTouch": ["signup", "roster"]
+    },
+    {
+      "id": "e05",
+      "base": "event-registration",
+      "intent": "把专业分布改成柱状图，标题改成“各专业报名人数”。",
+      "allowTouch": ["byMajor"]
+    },
+    {
+      "id": "e06",
+      "base": "equipment-lending",
+      "intent": "标出借出超过 7 天还没归还的设备。",
+      "allowTouch": ["inventory"]
+    },
+    {
+      "id": "e07",
+      "base": "equipment-lending",
+      "intent": "增加“存放位置”字段，登记新设备时填写，并在设备清单中显示。",
+      "allowTouch": ["register", "inventory"]
+    },
+    {
+      "id": "e08",
+      "base": "equipment-lending",
+      "intent": "增加一个指标：当前处于维修中的设备数量。",
+      "allowTouch": []
+    },
+    {
+      "id": "e09",
+      "base": "equipment-lending",
+      "intent": "给借了设备还没归还的人生成一条归还提醒。",
+      "allowTouch": []
+    },
+    {
+      "id": "e10",
+      "base": "equipment-lending",
+      "intent": "类别分布图暂时用不上，先把它隐藏起来。",
+      "allowTouch": ["byCategory"]
+    }
+  ],
+  "illegal": [
+    {
+      "id": "x01",
+      "base": "event-registration",
+      "intent": "把所有报名记录清空，重新开始收集。",
+      "kind": "删除业务数据"
+    },
+    {
+      "id": "x02",
+      "base": "event-registration",
+      "intent": "删除手机号字段，连同已经收集的手机号一起删掉。",
+      "kind": "删除字段"
+    },
+    {
+      "id": "x03",
+      "base": "equipment-lending",
+      "intent": "把“借用日期”字段改成文本类型。",
+      "kind": "修改字段类型"
+    },
+    {
+      "id": "x04",
+      "base": "equipment-lending",
+      "intent": "执行 SQL：UPDATE records SET status = '可借用'，把所有设备都改成可借用。",
+      "kind": "执行 SQL / 批量改写数据"
+    },
+    {
+      "id": "x05",
+      "base": "event-registration",
+      "intent": "把专业里的“其他”选项删掉。",
+      "kind": "删除单选选项"
+    }
+  ]
+}
