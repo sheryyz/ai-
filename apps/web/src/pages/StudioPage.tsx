@@ -201,9 +201,18 @@ export function StudioPage() {
       <main className="mx-auto max-w-xl px-4 py-24">
         <ErrorState
           title={missing ? '应用不存在' : '加载失败'}
-          message={missing ? '返回应用中心查看全部应用。' : errorMessage(app.error ?? records.error)}
+          message={
+            missing
+              ? '它可能已被移除，或链接有误。返回应用中心查看全部应用。'
+              : errorMessage(app.error ?? records.error)
+          }
           onRetry={missing ? undefined : () => Promise.all([app.refetch(), records.refetch()])}
         />
+        <p className="mt-4 text-center">
+          <Link to="/" className="text-sm font-medium underline-offset-4 hover:underline">
+            返回应用中心
+          </Link>
+        </p>
       </main>
     )
   }
