@@ -1,0 +1,30 @@
+{
+  "kind": "patch",
+  "intent": "给报名的同学一个报名页，填完表就行",
+  "summary": "新增分享页「报名页」，只含报名表",
+  "baseVersion": 1,
+  "operations": [
+    {
+      "op": "addView",
+      "view": {
+        "id": "signupPage",
+        "label": "报名页",
+        "audience": "报名的同学"
+      }
+    },
+    {
+      "op": "addNode",
+      "node": {
+        "id": "publicForm",
+        "type": "Form",
+        "view": "signupPage",
+        "title": "报名",
+        "params": {
+          "entityId": "attendee",
+          "fields": ["name", "studentId", "major", "phone"],
+          "successMessage": "报名成功"
+        }
+      }
+    }
+  ]
+}
