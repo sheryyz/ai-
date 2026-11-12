@@ -2,13 +2,49 @@
  * protocol.md §8 — Morph Diff computed from two *complete* definitions, never from the patch text,
  * so the user always sees the real effect regardless of how the model phrased its operations.
  */
+import { computeExposure, type ViewExposure } from './exposure'
 import { REGISTRY } from './registry'
-import type { AppDefinition, Binding, ComponentType, FieldDef, NodeDef, Region } from './schema'
+import {
+  type AppDefinition,
+  type Binding,
+  type ComponentType,
+  type FieldDef,
+  type NodeDef,
+  type Region,
+  type ViewDef,
+  viewsOf,
+} from './schema'
 
+const FIELD_KEYS = ['label', 'description', 'options', 'default', 'sensitive'] as const
 export interface FieldChange {
   fieldId: string
   label: string
-  changes: { key: 'label' | 'description' | 'options' | 'default'; before: unknown; after: unknown }[]
+  changes: { key: (typeof FIELD_KEYS)[number]; before: unknown; after: unknown }[]
+}
+
+const VIEW_KEYS = ['label', 'audience', 'description', 'restrictedFields'] as const
+export interface ViewChange {
+  viewId: string
+  label: string
+  changes: { key: (typeof VIEW_KEYS)[number]; before: unknown; after: unknown }[]
+}
+
+/** protocol §8: how one role view's exposure moves with this change. */
+export interface ExposureChange {
+  viewId: string
+  label: string
+  audience: string
+  /** null = the view is new. */
+  before: ViewExposure | null
+  /** null = the view is removed. */
+  after: ViewExposure | null
+  newlyRead: string[]
+  newlyWritable: string[]
+  /** Sensitive fields that become readable row by row with this change. */
+  newlySensitive: string[]
+  /** Fields taken out of restrictedFields, or no longer sensitive while the view reads them. */
+  loosened: string[]
+  changed: boolean
 }
 export interface NodeChange {
   nodeId: string
@@ -28,7 +64,12 @@ export interface NodeMove {
   from: Placement
   to: Placement
 }
-export type ImpactKind = 'defaultFill' | 'emptyFill' | 'nodeRemoved' | 'writeCapabilityRemoved'
+export type ImpactKind =
+  | 'defaultFill'
+  | 'emptyFill'
+  | 'nodeRemoved'
+  | 'writeCapabilityRemoved'
+  | 'viewRemoved'
 export interface Impact {
   kind: ImpactKind
   severity: 'info' | 'warning' | 'danger'
@@ -55,7 +96,11 @@ export interface MorphDiff {
   bindings: { added: Binding[]; removed: Binding[] }
   preserved: { recordCount: number; fieldIds: string[] }
   impacts: Impact[]
+  views: { added: ViewDef[]; removed: ViewDef[]; changed: ViewChange[] }
+  exposure: ExposureChange[]
   risk: Risk
+  /** protocol §11.5: approval must carry confirmExposure: true (enforced by the server). */
+  confirmExposure: boolean
   isEmpty: boolean
 }
 
@@ -97,7 +142,7 @@ export function computeDiff(before: AppDefinition | null, after: AppDefinition, 
     const af = aFields.find((x) => x.id === bf.id)
     if (!af) continue
     const changes: FieldChange['changes'] = []
-    for (const key of ['label', 'description', 'options', 'default'] as const) {
+    for (const key of FIELD_KEYS) {
       if (!same(bf[key], af[key])) changes.push({ key, before: bf[key], after: af[key] })
     }
     if (changes.length) fieldsChanged.push({ fieldId: af.id, label: af.label, changes })
@@ -139,8 +184,44 @@ export function computeDiff(before: AppDefinition | null, after: AppDefinition, 
     ? (['name', 'description', 'icon'] as const).filter((k) => before[k] !== after[k])
     : []
 
+  // ── role views & exposure (protocol §8, §11) ─────────────────────────────
+  const bViews = before ? viewsOf(before) : []
+  const aViews = viewsOf(after)
+  const viewsAdded = aViews.filter((v) => !bViews.some((x) => x.id === v.id))
+  const viewsRemoved = bViews.filter((v) => !aViews.some((x) => x.id === v.id))
+  const viewsChanged: ViewChange[] = []
+  for (const bv of bViews) {
+    const av = aViews.find((x) => x.id === bv.id)
+    if (!av) continue
+    const changes = VIEW_KEYS.filter((k) => !same(bv[k], av[k])).map((key) => ({
+      key,
+      before: bv[key],
+      after: av[key],
+    }))
+    if (changes.length) viewsChanged.push({ viewId: av.id, label: av.label, changes })
+  }
+  const exposure = [...aViews, ...viewsRemoved].map((v) =>
+    exposureChange(
+      v,
+      before ? (computeExposure(before, v.id) ?? null) : null,
+      computeExposure(after, v.id) ?? null,
+      {
+        before: new Set(bFields.filter((f) => f.sensitive).map((f) => f.id)),
+        after: new Set(aFields.filter((f) => f.sensitive).map((f) => f.id)),
+      },
+    ),
+  )
+  const confirmExposure = exposure.some((e) => e.newlySensitive.length > 0 || e.loosened.length > 0)
+
   // ── impacts ───────────────────────────────────────────────────────────────
   const impacts: Impact[] = []
+  for (const v of viewsRemoved) {
+    impacts.push({
+      kind: 'viewRemoved',
+      severity: 'warning',
+      message: `分享页「${v.label}」将停用，持链接的${v.audience}打开会看到“此页面已停用”；恢复到包含它的版本即可重新启用`,
+    })
+  }
   if (before) {
     for (const f of fieldsAdded) {
       if (ctx.recordCount === 0) continue
@@ -181,11 +262,16 @@ export function computeDiff(before: AppDefinition | null, after: AppDefinition, 
     })
   }
 
-  const risk: Risk = impacts.some((i) => i.severity === 'danger')
-    ? 'high'
-    : removed.length || hidden.length || bindingsRemoved.length || fieldsChanged.length
-      ? 'medium'
-      : 'low'
+  const risk: Risk =
+    confirmExposure || impacts.some((i) => i.severity === 'danger')
+      ? 'high'
+      : removed.length ||
+          hidden.length ||
+          bindingsRemoved.length ||
+          fieldsChanged.length ||
+          viewsRemoved.length
+        ? 'medium'
+        : 'low'
 
   const isEmpty =
     !appChanged.length &&
@@ -198,11 +284,15 @@ export function computeDiff(before: AppDefinition | null, after: AppDefinition, 
     !hidden.length &&
     !shown.length &&
     !bindingsAdded.length &&
-    !bindingsRemoved.length
+    !bindingsRemoved.length &&
+    !viewsAdded.length &&
+    !viewsRemoved.length &&
+    !viewsChanged.length
 
   const visibleAdded = added.filter((n) => REGISTRY[n.type].visual).length
   const summary = before
     ? summarize([
+        [viewsAdded.length, '新增', '个分享页'],
         [fieldsAdded.length, '新增', '个字段'],
         [visibleAdded, '新增', '个组件'],
         [bindingsAdded.length, '新增', '条数据连接'],
@@ -213,8 +303,10 @@ export function computeDiff(before: AppDefinition | null, after: AppDefinition, 
         [shown.length, '显示', '个组件'],
         [removed.length, '移除', '个组件'],
         [bindingsRemoved.length, '断开', '条数据连接'],
+        [viewsChanged.length, '调整', '个分享页'],
+        [viewsRemoved.length, '移除', '个分享页'],
       ]) || (appChanged.length ? '修改应用信息' : '没有变化')
-    : `创建「${after.name}」：${aFields.length} 个字段、${after.nodes.filter((n) => REGISTRY[n.type].visual).length} 个组件、${after.bindings.length} 条数据连接`
+    : `创建「${after.name}」：${aFields.length} 个字段、${after.nodes.filter((n) => REGISTRY[n.type].visual).length} 个组件、${after.bindings.length} 条数据连接${aViews.length ? `、${aViews.length} 个分享页` : ''}`
 
   return {
     fromVersion: ctx.fromVersion,
@@ -225,8 +317,35 @@ export function computeDiff(before: AppDefinition | null, after: AppDefinition, 
     bindings: { added: bindingsAdded, removed: bindingsRemoved },
     preserved: { recordCount: ctx.recordCount, fieldIds: bFields.map((f) => f.id) },
     impacts,
+    views: { added: viewsAdded, removed: viewsRemoved, changed: viewsChanged },
+    exposure,
     risk,
+    confirmExposure,
     isEmpty,
+  }
+}
+
+const minus = (a: readonly string[], b: readonly string[] = []) => a.filter((x) => !b.includes(x))
+
+function exposureChange(
+  view: ViewDef,
+  b: ViewExposure | null,
+  a: ViewExposure | null,
+  sensitive: { before: Set<string>; after: Set<string> },
+): ExposureChange {
+  const unmarked = a ? a.read.filter((f) => sensitive.before.has(f) && !sensitive.after.has(f)) : []
+  const unrestricted = a && b ? minus(b.restricted, a.restricted) : []
+  return {
+    viewId: view.id,
+    label: a?.label ?? view.label,
+    audience: a?.audience ?? view.audience,
+    before: b,
+    after: a,
+    newlyRead: a ? minus(a.read, b?.read) : [],
+    newlyWritable: a ? minus(a.write, b?.write) : [],
+    newlySensitive: a ? minus(a.sensitiveRead, b?.sensitiveRead) : [],
+    loosened: [...new Set([...unrestricted, ...unmarked])],
+    changed: !same(b, a),
   }
 }
 
