@@ -3,6 +3,7 @@ import type { Row } from './filter'
 import { validateProposal } from './proposal'
 import {
   asRows,
+  bindingColumns,
   evaluateGraph,
   groupCounts,
   layoutNodes,
@@ -12,7 +13,7 @@ import {
   toCSV,
   validateRecordInput,
 } from './runtime'
-import { CTX, checkinProposal, equipmentDef, eventDef, row } from './test-helpers'
+import { CTX, checkinProposal, equipmentDef, eventDef, row, withCheckin, withDesk } from './test-helpers'
 
 describe('virtual default fill (ADR-0002)', () => {
   it('reads missing fields as their default without touching stored data', () => {
@@ -142,5 +143,29 @@ describe('business time zone (ADR-0005)', () => {
     expect(localDate(instant, 'Asia/Shanghai')).toBe('2026-11-11')
     expect(localDate(instant, 'UTC')).toBe('2026-11-10')
     expect(formatTimestamp(instant.toISOString(), 'Asia/Shanghai')).toBe('2026-11-11 02:30')
+  })
+})
+
+describe('bindingColumns (data-flow view)', () => {
+  it('places every bound node right of its furthest upstream node, and sets unbound ones apart', () => {
+    for (const def of [eventDef(), equipmentDef(), withCheckin(), withDesk()]) {
+      const { columns, detached } = bindingColumns(def)
+      const col = new Map(columns.flatMap((c, i) => c.map((id) => [id, i] as const)))
+      for (const b of def.bindings) expect(col.get(b.from.node)!).toBeLessThan(col.get(b.to.node)!)
+      for (const id of col.keys()) {
+        const ups = def.bindings.filter((b) => b.to.node === id).map((b) => col.get(b.from.node)!)
+        expect(col.get(id)).toBe(ups.length ? Math.max(...ups) + 1 : 0)
+      }
+      expect([...col.keys(), ...detached].sort()).toEqual(def.nodes.map((n) => n.id).sort())
+      expect(columns.every((c) => c.length > 0)).toBe(true)
+    }
+  })
+
+  it('reads source → filter → reminder left to right after the check-in evolution; the form has no links', () => {
+    const { columns, detached } = bindingColumns(withCheckin())
+    expect(columns[0]).toEqual(['source'])
+    expect(columns[1]).toContain('csAbsent')
+    expect(columns[2]).toEqual(['remind'])
+    expect(detached).toEqual(['signup'])
   })
 })

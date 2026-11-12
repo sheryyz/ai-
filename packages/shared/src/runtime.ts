@@ -406,3 +406,39 @@ export function layoutNodes(
       .map(({ n }) => n),
   }
 }
+
+export interface BindingColumns {
+  /** Node ids per column, left to right: each node sits one column right of its furthest upstream node. */
+  columns: string[][]
+  /** Nodes with no bindings at all (e.g. forms); drawn apart from the graph. */
+  detached: string[]
+}
+
+/** Column layout of the binding graph for the read-only data-flow view (design.md §3). Assumes acyclic. */
+export function bindingColumns(def: AppDefinition): BindingColumns {
+  const ids = new Set(def.nodes.map((n) => n.id))
+  const edges = def.bindings.filter((b) => ids.has(b.from.node) && ids.has(b.to.node))
+  const linked = new Set(edges.flatMap((b) => [b.from.node, b.to.node]))
+  const depth = new Map<string, number>()
+  for (const id of topoOrder(def)) {
+    if (!linked.has(id)) continue
+    let d = 0
+    for (const b of edges) if (b.to.node === id) d = Math.max(d, (depth.get(b.from.node) ?? 0) + 1)
+    depth.set(id, d)
+  }
+  const declared = new Map(def.nodes.map((n, i) => [n.id, i]))
+  const rowOf = new Map<string, number>()
+  // Within a column, follow the average row of upstream nodes (fewer crossings), then declaration order.
+  const pull = (id: string) => {
+    const ups = edges.filter((b) => b.to.node === id).map((b) => rowOf.get(b.from.node) ?? 0)
+    return ups.length ? ups.reduce((s, x) => s + x, 0) / ups.length : 0
+  }
+  const columns: string[][] = []
+  for (let c = 0; c <= Math.max(-1, ...depth.values()); c++) {
+    const col = def.nodes.filter((n) => depth.get(n.id) === c).map((n) => n.id)
+    col.sort((a, b) => pull(a) - pull(b) || (declared.get(a) ?? 0) - (declared.get(b) ?? 0))
+    for (const [i, id] of col.entries()) rowOf.set(id, i)
+    columns.push(col)
+  }
+  return { columns, detached: def.nodes.filter((n) => !linked.has(n.id)).map((n) => n.id) }
+}
