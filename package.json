@@ -20,7 +20,8 @@
     "build": "npm run build -w @morphos/web",
     "start": "npm run build && npm run start -w @morphos/server",
     "format": "biome check --write .",
-    "prepare": "node -e \"try{require('node:child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\""
+    "prepare": "node -e \"try{require('node:child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\"",
+    "start:restored": "npm run build && tsx apps/server/src/scripts/start-restored.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",

@@ -2,7 +2,16 @@
  * AI Studio (design.md §3): conversation + pipeline | live / ghost preview | Morph Diff · versions · schema.
  * Works for an existing app (/apps/:id/studio) and for creating one (/studio/new?intent=… or ?recording=…).
  */
-import { type AppDefinition, type ProposalRecord, type RecordingInfo, viewsOf } from '@morphos/shared'
+import {
+  type AppDefinition,
+  materialize,
+  type PreparedIntent,
+  type ProposalRecord,
+  primaryEntity,
+  type RecordingInfo,
+  suggestFollowUp,
+  viewsOf,
+} from '@morphos/shared'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -13,6 +22,7 @@ import {
   Layers,
   MessageSquare,
   Share2,
+  ShieldCheck,
   Smartphone,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -20,18 +30,25 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { AppIcon } from '../components/AppIcon'
 import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { ConfirmDialog } from '../components/ui/dialog'
 import { EmptyState, ErrorState, Skeleton } from '../components/ui/feedback'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ApiError, api, errorMessage } from '../lib/api'
 import { cn } from '../lib/cn'
-import { keys, POLL_MS, useAiBlocker } from '../lib/queries'
+import { keys, POLL_MS, useAiBlocker, useToday } from '../lib/queries'
 import { AppRuntime } from '../runtime/AppRuntime'
 import type { Mark } from '../runtime/NodeFrame'
 import { Composer } from '../studio/Composer'
+import { ConstraintsPanel } from '../studio/ConstraintsPanel'
 import { DiffPanel } from '../studio/DiffPanel'
+import { IntentDialog } from '../studio/IntentDialog'
 import { diffMarks } from '../studio/marks'
+import { OptionComparison } from '../studio/OptionComparison'
+import { PhasesPanel } from '../studio/PhasesPanel'
 import { SchemaPanel } from '../studio/SchemaPanel'
 import { SharePanel } from '../studio/SharePanel'
+import { SuggestionCard } from '../studio/SuggestionCard'
 import { TurnCard } from '../studio/TurnCard'
 import { fromRecord, type Turn } from '../studio/turn'
 import { usePlanRunner } from '../studio/usePlanRunner'
@@ -72,6 +89,23 @@ export function StudioPage() {
 
   // A create proposal has no app yet, so it lives in local state until approved.
   const [localProposal, setLocalProposal] = useState<ProposalRecord | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [prepared, setPrepared] = useState<PreparedIntent | null>(null)
+  const [preparing, setPreparing] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const groupId = params.get('group')
+  const briefId = params.get('brief')
+  const savedBrief = useQuery({
+    queryKey: ['intent-brief', briefId],
+    queryFn: () => api.brief(briefId ?? ''),
+    enabled: Boolean(briefId),
+  })
+  const savedGroup = useQuery({
+    queryKey: ['proposal-group', groupId],
+    queryFn: () => api.group(groupId ?? ''),
+    enabled: Boolean(groupId),
+    refetchInterval: groupId ? POLL_MS : false,
+  })
   const [draft, setDraft] = useState('')
   const [view, setView] = useState<View>('live')
   /** Which page of the app the preview shows: the admin page (null) or a role view (protocol §3.1). */
@@ -98,15 +132,39 @@ export function StudioPage() {
   )
   const runner = usePlanRunner(onFinished)
 
-  const pending: ProposalRecord | null = appId
-    ? (proposals.data?.findLast((p) => p.status === 'pending') ?? null)
-    : localProposal?.status === 'pending'
-      ? localProposal
-      : null
+  const choices = appId
+    ? (proposals.data ?? [])
+    : (savedGroup.data?.options.map((o) => o.proposal) ?? (localProposal ? [localProposal] : []))
+  const pending =
+    choices.find((p) => p.id === selectedId && p.status === 'pending') ??
+    choices.findLast((p) => p.status === 'pending') ??
+    null
 
   useEffect(() => {
     if (!pending) setView('live')
   }, [pending])
+
+  // One proactive suggestion from the live app and its records (requirements §7 P1); dismissed per version.
+  const today = useToday()
+  const liveDef = app.data?.definition ?? null
+  const suggestion = useMemo(() => {
+    if (!liveDef || !records.data) return null
+    const entity = primaryEntity(liveDef)
+    return suggestFollowUp(
+      liveDef,
+      records.data.map((r) => materialize(r, entity)),
+      { today },
+    )
+  }, [liveDef, records.data, today])
+  const suggestionKey = suggestion && app.data ? `${appId}:${app.data.version}:${suggestion.metricId}` : null
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set())
+  const [suggestedDraft, setSuggestedDraft] = useState<{ text: string; key: string } | null>(null)
+  const applySuggestion = (text: string, key: string) => {
+    setDraft(text)
+    setDismissed((previous) => new Set(previous).add(key))
+    setSuggestedDraft(null)
+    setTimeout(() => composer.current?.focus(), 50)
+  }
 
   // A proposal that adds a share page opens on it, so the user sees what that audience will get.
   const addedView = pending?.diff?.views?.added[0]?.id
@@ -126,16 +184,70 @@ export function StudioPage() {
     thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: 'smooth' })
   }, [lastLen, history.length, runner.turn?.done])
 
-  const plan = useCallback(
-    (intent: string) => {
+  const prepare = useCallback(
+    async (intent: string, parentId?: string) => {
       const text = intent.trim()
       if (text.length < 2) return
-      setDraft('')
-      setLocalProposal(null)
-      void runner.start({ intent: text, appId: appId ?? undefined }, text)
+      setPreparing(true)
+      try {
+        const result = await api.prepare(text, appId ?? undefined, parentId)
+        setPrepared(result)
+        setParams(
+          (previous) => {
+            const next = new URLSearchParams(previous)
+            next.set('brief', result.id)
+            return next
+          },
+          { replace: true },
+        )
+      } catch (e) {
+        toast.error(errorMessage(e))
+      } finally {
+        setPreparing(false)
+      }
     },
-    [appId, runner],
+    [appId, setParams],
   )
+  const plan = useCallback(
+    (intent: string) => {
+      void prepare(intent)
+    },
+    [prepare],
+  )
+  const closeBrief = () => {
+    setPrepared(null)
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+        next.delete('brief')
+        return next
+      },
+      { replace: true },
+    )
+  }
+  async function generate(answers: number[], choice: 0 | 1 | 'compare') {
+    const brief = prepared ?? savedBrief.data
+    if (!brief) return
+    setGenerating(true)
+    try {
+      const result = await api.options(brief.id, answers, choice)
+      setPrepared(null)
+      setParams({ group: brief.id }, { replace: true })
+      setSelectedId(result.proposals.find((p) => p.status === 'pending')?.id ?? null)
+      setDraft('')
+      setView('proposal')
+      setTab('diff')
+      if (appId) await qc.invalidateQueries({ queryKey: keys.proposals(appId) })
+      await qc.invalidateQueries({ queryKey: ['proposal-group', brief.id] })
+      if (result.failures.length) toast.error(result.failures.join('；'))
+    } catch (e) {
+      toast.error(errorMessage(e))
+      const latest = await api.brief(brief.id).catch(() => null)
+      if (latest?.resolution) setPrepared(latest)
+    } finally {
+      setGenerating(false)
+    }
+  }
   const replay = useCallback(
     (r: RecordingInfo) => {
       setLocalProposal(null)
@@ -158,12 +270,13 @@ export function StudioPage() {
     } else if (intent) plan(intent)
   }, [appId, params, setParams, runner, plan])
 
-  async function approve(confirmExposure: boolean) {
+  async function approve(confirmExposure: boolean, previewToken: string) {
     if (!pending) return
     setBusy('approve')
     try {
-      const r = await api.approve(pending.id, confirmExposure)
+      const r = await api.approve(pending.id, confirmExposure, previewToken)
       await Promise.all([
+        qc.invalidateQueries({ queryKey: ['proposal-group'] }),
         qc.invalidateQueries({ queryKey: keys.apps }),
         qc.invalidateQueries({ queryKey: ['recordings'] }),
         ...(appId
@@ -188,6 +301,7 @@ export function StudioPage() {
       runner.clear()
     } catch (e) {
       toast.error(errorMessage(e))
+      void qc.invalidateQueries({ queryKey: ['proposal-preview', pending.id] })
       if (e instanceof ApiError && e.code === 'VERSION_CONFLICT' && appId) {
         void qc.invalidateQueries({ queryKey: keys.app(appId) })
       }
@@ -201,6 +315,7 @@ export function StudioPage() {
     setBusy('reject')
     try {
       const rejected = await api.reject(pending.id)
+      await qc.invalidateQueries({ queryKey: ['proposal-group'] })
       if (appId) await qc.invalidateQueries({ queryKey: keys.proposals(appId) })
       else setLocalProposal(rejected)
       runner.clear()
@@ -254,15 +369,35 @@ export function StudioPage() {
   const applicable = (recordings.data ?? []).filter((r) =>
     appId ? r.kind !== 'create' && r.applicable : r.kind === 'create',
   )
-  const lockedReason = runner.running
-    ? 'AI 正在规划…'
-    : pending
-      ? '请先在右侧批准、继续修改或拒绝当前提案'
-      : null
+  const lockedReason =
+    preparing || generating
+      ? '正在分析需求或生成方案…'
+      : runner.running
+        ? 'AI 正在规划…'
+        : pending
+          ? '请先在右侧批准、继续修改或拒绝当前提案'
+          : null
   const latestTurn = runner.turn
+  const activeBrief = prepared ?? savedBrief.data
+  const activeGroupId = pending?.groupId ?? groupId
 
   return (
     <div className="grid min-h-[calc(100dvh-3.5rem)] grid-cols-1 xl:h-[calc(100dvh-3.5rem)] xl:grid-cols-[340px_minmax(0,1fr)_380px]">
+      {activeBrief ? (
+        <IntentDialog
+          key={activeBrief.id}
+          prepared={activeBrief}
+          busy={generating}
+          onClose={closeBrief}
+          onGenerate={generate}
+          onResume={() => {
+            setPrepared(null)
+            setParams({ group: activeBrief.id }, { replace: true })
+            setTab('diff')
+            setView('proposal')
+          }}
+        />
+      ) : null}
       {/* ── left: conversation ─────────────────────────────────────────────── */}
       <section className="flex min-h-0 flex-col border-border xl:border-r" aria-label="对话">
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
@@ -303,7 +438,10 @@ export function StudioPage() {
               key={t.key}
               turn={t}
               current={t.proposal?.id === pending?.id}
-              onRetry={aiConfigured ? plan : undefined}
+              onRetry={aiConfigured && !preparing && !generating ? plan : undefined}
+              onRepair={
+                aiConfigured && !preparing && !generating ? (p) => void prepare(p.intent, p.id) : undefined
+              }
               onEdit={(i) => {
                 setDraft(i)
                 composer.current?.focus()
@@ -314,7 +452,10 @@ export function StudioPage() {
             <TurnCard
               turn={latestTurn}
               current={Boolean(pending && latestTurn.proposal?.id === pending.id)}
-              onRetry={aiConfigured ? plan : undefined}
+              onRetry={aiConfigured && !preparing && !generating ? plan : undefined}
+              onRepair={
+                aiConfigured && !preparing && !generating ? (p) => void prepare(p.intent, p.id) : undefined
+              }
               onEdit={(i) => {
                 setDraft(i)
                 composer.current?.focus()
@@ -323,6 +464,36 @@ export function StudioPage() {
           ) : null}
         </div>
         <div className="border-t border-border p-3">
+          {preparing ? (
+            <p role="status" className="mb-2 text-xs text-morph">
+              正在检查需求中的业务歧义与实现取舍…
+            </p>
+          ) : null}
+          {suggestion &&
+          current &&
+          suggestionKey &&
+          !dismissed.has(suggestionKey) &&
+          !pending &&
+          !runner.running ? (
+            <SuggestionCard
+              suggestion={suggestion}
+              entity={primaryEntity(current)}
+              aiBlocker={aiBlocker}
+              onUse={(intent) => {
+                if (draft.trim()) setSuggestedDraft({ text: intent, key: suggestionKey })
+                else applySuggestion(intent, suggestionKey)
+              }}
+              onDismiss={() => setDismissed((previous) => new Set(previous).add(suggestionKey))}
+            />
+          ) : null}
+          <ConfirmDialog
+            open={suggestedDraft !== null}
+            onOpenChange={(open) => !open && setSuggestedDraft(null)}
+            title="替换当前输入？"
+            description="输入框已有尚未发送的内容。确认后将替换为这条建议。"
+            confirmLabel="替换为建议"
+            onConfirm={() => suggestedDraft && applySuggestion(suggestedDraft.text, suggestedDraft.key)}
+          />
           <Composer
             ref={composer}
             value={draft}
@@ -450,7 +621,7 @@ export function StudioPage() {
       {/* ── right: diff / versions / schema ───────────────────────────────── */}
       <section className="flex min-h-0 flex-col border-border bg-surface xl:border-l" aria-label="变更与版本">
         <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
-          <TabsList className="pt-1">
+          <TabsList className="overflow-x-auto pt-1 [&_button]:shrink-0">
             <TabsTrigger value="diff">
               <GitCompare className="size-3.5" /> 变更
               {pending ? <span className="size-1.5 rounded-full bg-morph" /> : null}
@@ -468,27 +639,87 @@ export function StudioPage() {
                 <Share2 className="size-3.5" /> 分享
               </TabsTrigger>
             ) : null}
+            {appId ? (
+              <TabsTrigger value="constraints">
+                <ShieldCheck className="size-3.5" />
+                约束
+              </TabsTrigger>
+            ) : null}
+            {appId ? <TabsTrigger value="phases">阶段</TabsTrigger> : null}
           </TabsList>
           <TabsContent value="diff" className="min-h-0 flex-1 data-[state=inactive]:hidden">
-            {pending ? (
-              <DiffPanel
-                key={pending.id}
-                proposal={pending}
-                before={current}
-                busy={busy}
-                onApprove={approve}
-                onRevise={() => reject(true)}
-                onReject={() => reject(false)}
-              />
-            ) : (
-              <EmptyState
-                className="h-full"
-                icon={<GitCompare className="size-6" />}
-                title="暂无待批准的变更"
-                hint="AI 的每个提案都会先在这里以 Morph Diff 展示：新增、修改、保留、数据暴露与七层校验结果。你批准后才会生效。"
-              />
-            )}
+            <div className="flex h-full min-h-0 flex-col">
+              {activeGroupId ? (
+                <div className="max-h-[35%] shrink-0 overflow-y-auto">
+                  <OptionComparison
+                    groupId={activeGroupId}
+                    selectedId={pending?.id}
+                    onSelect={(p) => {
+                      setSelectedId(p.id)
+                      setView('proposal')
+                    }}
+                  />
+                </div>
+              ) : null}
+              {pending && aiConfigured ? (
+                <div className="border-b border-border px-3 py-2">
+                  <Button
+                    size="sm"
+                    disabled={preparing || generating || busy !== null}
+                    onClick={() => void prepare(pending.intent, pending.id)}
+                  >
+                    分析冲突并建议局部修复
+                  </Button>
+                </div>
+              ) : null}
+              <div className="min-h-0 flex-1">
+                {pending ? (
+                  <DiffPanel
+                    key={pending.id}
+                    proposal={pending}
+                    before={current}
+                    busy={busy}
+                    onApprove={approve}
+                    onRevise={() => reject(true)}
+                    onReject={() => reject(false)}
+                  />
+                ) : (
+                  <EmptyState
+                    className="h-full"
+                    icon={<GitCompare className="size-6" />}
+                    title="暂无待批准的变更"
+                    hint="AI 的每个提案都会先在这里以 Morph Diff 展示：新增、修改、保留、数据暴露与七层校验结果。你批准后才会生效。"
+                  />
+                )}
+              </div>
+            </div>
           </TabsContent>
+          {app.data ? (
+            <TabsContent
+              value="phases"
+              className="min-h-0 flex-1 overflow-y-auto data-[state=inactive]:hidden"
+            >
+              <PhasesPanel
+                key={`${app.data.id}:${app.data.version}`}
+                app={app.data}
+                locked={Boolean(pending) || generating || runner.running}
+                onProposed={(p) => {
+                  setSelectedId(p.id)
+                  setView('proposal')
+                  setTab('diff')
+                  void qc.invalidateQueries({ queryKey: keys.proposals(app.data?.id ?? '') })
+                }}
+              />
+            </TabsContent>
+          ) : null}
+          {app.data ? (
+            <TabsContent
+              value="constraints"
+              className="min-h-0 flex-1 overflow-y-auto data-[state=inactive]:hidden"
+            >
+              <ConstraintsPanel app={app.data} />
+            </TabsContent>
+          ) : null}
           {appId && app.data ? (
             <TabsContent
               value="versions"

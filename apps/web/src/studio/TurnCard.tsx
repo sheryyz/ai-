@@ -22,6 +22,7 @@ export function OriginBadge({
   proposal?: ProposalRecord
 }) {
   const tz = useTimeZone()
+  if (origin === 'manual') return <Badge tone="neutral">人工配置</Badge>
   if (origin === 'recorded') {
     const rec = proposal?.trace.recording
     // Model and date sit outside the pill so they can wrap in the narrow conversation column.
@@ -83,6 +84,7 @@ export function TurnCard({
   turn,
   onRetry,
   onEdit,
+  onRepair,
   current,
 }: {
   turn: Turn
@@ -90,6 +92,7 @@ export function TurnCard({
   onRetry?: (intent: string) => void
   /** Put this intent into the composer for editing. */
   onEdit?: (intent: string) => void
+  onRepair?: (proposal: ProposalRecord) => void
   /** The turn whose proposal is currently awaiting a decision. */
   current?: boolean
 }) {
@@ -121,6 +124,17 @@ export function TurnCard({
           ) : null}
         </div>
         <Pipeline turn={turn} />
+        {p?.optionLabel ? (
+          <p className="text-xs font-medium">
+            方案：{p.optionLabel}
+            {p.parentId ? ' · 基于原提案的局部修复' : ''}
+          </p>
+        ) : null}
+        {p && ['invalid', 'refused'].includes(p.status) && onRepair ? (
+          <Button size="sm" onClick={() => onRepair(p)}>
+            分析冲突并建议局部修复
+          </Button>
+        ) : null}
         {turn.context ? <p className="text-[11px] leading-relaxed text-muted">{turn.context}</p> : null}
 
         {turn.rounds.map((r) => (

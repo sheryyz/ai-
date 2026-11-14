@@ -2,7 +2,7 @@
  * Role views across two devices (AC-15 / 16 / 21 / 22): the organizer on a desktop, a participant or
  * volunteer on a phone-sized browser context. Offline: the share pages come from recorded model responses.
  */
-import { type APIRequestContext, type Browser, devices, expect, type Page, test } from '@playwright/test'
+import { type APIRequestContext, type Browser, devices, expect, type Page, test } from './fixtures'
 
 type Plan = { type: string; proposal?: { id: string } }
 

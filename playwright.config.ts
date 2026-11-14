@@ -17,6 +17,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: 'zh-CN',
+    extraHTTPHeaders: { 'X-MorphOS-Request': '1' },
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
   },

@@ -1,6 +1,16 @@
 import type { AppSummary, TemplateInfo } from '@morphos/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, ArrowUp, Database, LayoutGrid, Pencil, PlayCircle, Plus, Wand } from 'lucide-react'
+import {
+  ArrowRight,
+  ArrowUp,
+  Database,
+  LayoutGrid,
+  Pencil,
+  PlayCircle,
+  Plus,
+  Trash2,
+  Wand,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -8,7 +18,7 @@ import { AppIcon } from '../components/AppIcon'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
-import { Modal } from '../components/ui/dialog'
+import { ConfirmDialog, Modal } from '../components/ui/dialog'
 import { EmptyState, ErrorState, Skeleton } from '../components/ui/feedback'
 import { Input, Label } from '../components/ui/input'
 import { api, errorMessage } from '../lib/api'
@@ -116,6 +126,20 @@ function RenameDialog({ app, onClose }: { app: AppSummary | null; onClose: () =>
 
 function AppCard({ app, onRename }: { app: AppSummary; onRename: () => void }) {
   const tz = useTimeZone()
+  const qc = useQueryClient()
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const remove = useMutation({
+    mutationFn: () => api.deleteApp(app.id),
+    onSuccess: async () => {
+      await qc.cancelQueries({ queryKey: keys.app(app.id) })
+      qc.removeQueries({ queryKey: keys.app(app.id) })
+      setConfirmDelete(false)
+      qc.setQueryData<AppSummary[]>(keys.apps, (apps) => apps?.filter((a) => a.id !== app.id))
+      toast.success(`已删除「${app.name}」`)
+      await qc.invalidateQueries({ queryKey: keys.apps })
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  })
   return (
     <Card className="group relative flex flex-col p-4 transition-shadow duration-150 hover:shadow-[0_2px_8px_rgb(0_0_0/0.06)]">
       <div className="flex items-start gap-3">
@@ -138,6 +162,16 @@ function AppCard({ app, onRename }: { app: AppSummary; onRename: () => void }) {
           >
             <Pencil className="size-3.5" />
           </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="hover:text-danger"
+            aria-label={`删除「${app.name}」`}
+            title="删除应用"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
           <Link
             to={`/apps/${app.id}/studio`}
             className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-control)] px-2 text-xs font-medium text-morph hover:bg-morph-soft"
@@ -157,6 +191,18 @@ function AppCard({ app, onRename }: { app: AppSummary; onRename: () => void }) {
         {SOURCE_LABELS[app.lastChange.source]} · {relativeTime(app.lastChange.at, tz)}
         {app.lastChange.intent ? ` · ${app.lastChange.intent}` : ''}
       </p>
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => {
+          if (!remove.isPending) setConfirmDelete(open)
+        }}
+        title={`删除「${app.name}」？`}
+        description={`应用将从列表移除，所有分享页面立即停用。${app.recordCount} 条业务记录与版本历史会保留，目前界面暂不提供恢复入口。`}
+        confirmLabel="删除应用"
+        danger
+        loading={remove.isPending}
+        onConfirm={() => remove.mutate()}
+      />
     </Card>
   )
 }

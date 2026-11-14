@@ -19,6 +19,7 @@ import { audit, tx } from '../db'
 import { HttpError, notFound } from '../errors'
 import { commitVersionUnsafe, createAppUnsafe, getApp } from './apps'
 import { requireExposureConfirmation } from './exposure-confirm'
+import { requireFreshPreview } from './impact'
 
 interface ProposalRow {
   id: string
@@ -37,6 +38,9 @@ interface ProposalRow {
   result_version: number | null
   created_at: string
   decided_at: string | null
+  group_id: string | null
+  parent_id: string | null
+  option_label: string | null
 }
 
 const toRecord = (r: ProposalRow): ProposalRecord => ({
@@ -56,9 +60,15 @@ const toRecord = (r: ProposalRow): ProposalRecord => ({
   resultVersion: r.result_version,
   createdAt: r.created_at,
   decidedAt: r.decided_at,
+  groupId: r.group_id,
+  parentId: r.parent_id,
+  optionLabel: r.option_label,
 })
 
 export interface NewProposal {
+  groupId?: string
+  parentId?: string
+  optionLabel?: string
   appId: string | null
   baseVersion: number | null
   kind: 'create' | 'patch' | 'refusal'
@@ -76,6 +86,10 @@ export function saveProposal(ctx: Ctx, p: NewProposal): ProposalRecord {
   const id = newId('prop')
   const at = ctx.now().toISOString()
   tx(ctx.db, () => {
+    const chosen =
+      p.groupId &&
+      ctx.db.prepare("SELECT id FROM proposals WHERE group_id = ? AND status = 'approved'").get(p.groupId)
+    const status = p.status === 'pending' && chosen ? 'rejected' : p.status
     ctx.db
       .prepare(
         `INSERT INTO proposals (id, app_id, base_version, kind, intent, origin, proposal_json, diff_json, issues_json,
@@ -94,10 +108,13 @@ export function saveProposal(ctx: Ctx, p: NewProposal): ProposalRecord {
         JSON.stringify(p.issues),
         JSON.stringify(p.trace),
         p.after ? JSON.stringify(p.after) : null,
-        p.status,
+        status,
         at,
       )
-    audit(ctx.db, p.appId, 'proposal.created', { proposalId: id, kind: p.kind, status: p.status }, ctx.now())
+    ctx.db
+      .prepare('UPDATE proposals SET group_id = ?, parent_id = ?, option_label = ? WHERE id = ?')
+      .run(p.groupId ?? null, p.parentId ?? null, p.optionLabel ?? null, id)
+    audit(ctx.db, p.appId, 'proposal.created', { proposalId: id, kind: p.kind, status }, ctx.now())
   })
   return getProposal(ctx, id)
 }
@@ -105,6 +122,7 @@ export function saveProposal(ctx: Ctx, p: NewProposal): ProposalRecord {
 export function getProposal(ctx: Ctx, id: string): ProposalRecord {
   const r = ctx.db.prepare('SELECT * FROM proposals WHERE id = ?').get(id) as ProposalRow | undefined
   if (!r) throw notFound('提案')
+  if (r.app_id) getApp(ctx, r.app_id)
   return toRecord(r)
 }
 
@@ -122,15 +140,39 @@ function assertPending(p: ProposalRecord) {
   }
 }
 
+function closeAlternatives(ctx: Ctx, p: ProposalRecord) {
+  const rows = ctx.db
+    .prepare(
+      "SELECT id FROM proposals WHERE status = 'pending' AND id <> ? AND ((group_id IS NOT NULL AND group_id = ?) OR id = ?)",
+    )
+    .all(p.id, p.groupId ?? null, p.parentId ?? null) as { id: string }[]
+  for (const row of rows) {
+    ctx.db
+      .prepare("UPDATE proposals SET status = 'rejected', decided_at = ? WHERE id = ?")
+      .run(ctx.now().toISOString(), row.id)
+    audit(ctx.db, p.appId, 'proposal.superseded', { proposalId: row.id, chosen: p.id }, ctx.now())
+  }
+}
+
 export function approveProposal(
   ctx: Ctx,
   id: string,
-  opts: { confirmExposure?: boolean } = {},
+  opts: { confirmExposure?: boolean; previewToken?: string } = {},
 ): { proposal: ProposalRecord; appId: string; version: number } {
   return tx(ctx.db, () => {
     const p = getProposal(ctx, id)
     assertPending(p)
-    const source = p.origin === 'recorded' ? 'recorded' : 'ai'
+    if (
+      p.groupId &&
+      ctx.db
+        .prepare("SELECT id FROM proposals WHERE group_id = ? AND status = 'approved' AND id <> ?")
+        .get(p.groupId, p.id)
+    )
+      throw new HttpError(409, 'OPTION_ALREADY_CHOSEN', '同组方案已有一个生效，不能再次批准其他方案')
+    if (p.parentId && !['pending', 'invalid', 'refused'].includes(getProposal(ctx, p.parentId).status))
+      throw new HttpError(409, 'REPAIR_UNAVAILABLE', '原提案已处理，请重新规划修复')
+    requireFreshPreview(ctx, id, opts.previewToken)
+    const source = p.origin === 'recorded' ? 'recorded' : p.origin === 'manual' ? 'manual' : 'ai'
     const decidedAt = ctx.now().toISOString()
 
     if (p.kind === 'create') {
@@ -155,6 +197,7 @@ export function approveProposal(
         )
         .run(appId, appId, decidedAt, id)
       audit(ctx.db, appId, 'proposal.approved', { proposalId: id, version: 1 }, ctx.now())
+      closeAlternatives(ctx, p)
       return { proposal: getProposal(ctx, id), appId, version: 1 }
     }
 
@@ -191,6 +234,7 @@ export function approveProposal(
       audit(ctx.db, p.appId, 'proposal.approved', { proposalId: id, version }, ctx.now())
       if (confirmed)
         audit(ctx.db, p.appId, 'exposure.confirmed', { proposalId: id, version, views: confirmed }, ctx.now())
+      closeAlternatives(ctx, p)
       return { proposal: getProposal(ctx, id), appId: p.appId, version }
     }
 

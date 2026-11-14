@@ -3,6 +3,7 @@ import path from 'node:path'
 import { type HealthInfo, PROTOCOL_VERSION } from '@morphos/shared'
 import express, { type ErrorRequestHandler } from 'express'
 import { adminLocalOnly, type RemoteAddressOf, socketAddress } from './access'
+import { authRouter, requireAdmin } from './auth'
 import { type AppConfig, WEB_DIST } from './config'
 import type { Ctx } from './context'
 import { type DB, openDatabase } from './db'
@@ -10,8 +11,10 @@ import { HttpError } from './errors'
 import { createLiveClient, type LlmClient } from './llm/client'
 import { aiRouter } from './routes/ai'
 import { appsRouter } from './routes/apps'
+import { guidanceRouter } from './routes/guidance'
 import { recordsRouter } from './routes/records'
 import { viewsRouter } from './routes/views'
+import { workspaceRouter } from './routes/workspace'
 
 export interface AppDeps {
   db?: DB
@@ -56,10 +59,14 @@ export function createApp(config: AppConfig, deps: AppDeps = {}) {
   })
 
   app.use('/api', adminLocalOnly(config, deps.remoteAddress ?? socketAddress))
+  app.use('/api/auth', authRouter(ctx, deps.remoteAddress ?? socketAddress))
+  app.use('/api', requireAdmin(ctx))
+  app.use('/api', workspaceRouter(ctx))
   app.use('/api', viewsRouter(ctx))
   app.use('/api', appsRouter(ctx))
   app.use('/api', recordsRouter(ctx))
   app.use('/api', aiRouter(ctx, { replaySpeed: deps.replaySpeed }))
+  app.use('/api', guidanceRouter(ctx))
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: '接口不存在' } })

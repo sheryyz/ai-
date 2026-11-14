@@ -107,4 +107,53 @@ CREATE TABLE view_links (
 CREATE UNIQUE INDEX idx_view_links_active ON view_links (app_id, view_id) WHERE revoked_at IS NULL;
 `,
   },
+  {
+    version: 4,
+    name: 'app_soft_delete',
+    sql: 'ALTER TABLE apps ADD COLUMN deleted_at TEXT;',
+  },
+  {
+    version: 5,
+    name: 'business_constraints',
+    sql: `CREATE TABLE app_constraints (
+      id TEXT PRIMARY KEY,
+      app_id TEXT NOT NULL REFERENCES apps(id),
+      label TEXT NOT NULL,
+      rule_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      revoked_at TEXT
+    );
+    CREATE INDEX idx_constraints_app ON app_constraints(app_id, revoked_at);`,
+  },
+  {
+    version: 6,
+    name: 'guided_evolution',
+    sql: `CREATE TABLE intent_briefs (
+      id TEXT PRIMARY KEY, app_id TEXT REFERENCES apps(id), base_version INTEGER,
+      intent TEXT NOT NULL, brief_json TEXT NOT NULL, context_json TEXT NOT NULL,
+      signature TEXT NOT NULL, parent_id TEXT REFERENCES proposals(id),
+      created_at TEXT NOT NULL, consumed_at TEXT
+    );
+    ALTER TABLE proposals ADD COLUMN group_id TEXT;
+    ALTER TABLE proposals ADD COLUMN parent_id TEXT;
+    ALTER TABLE proposals ADD COLUMN option_label TEXT;
+    CREATE TABLE app_phases (
+      id TEXT PRIMARY KEY, app_id TEXT NOT NULL REFERENCES apps(id), name TEXT NOT NULL,
+      visibility_json TEXT NOT NULL, created_at TEXT NOT NULL, revoked_at TEXT
+    );`,
+  },
+  {
+    version: 7,
+    name: 'admin_authentication',
+    sql: `CREATE TABLE admin_account (
+      id INTEGER PRIMARY KEY CHECK (id = 1), username TEXT NOT NULL,
+      password_hash TEXT NOT NULL, salt TEXT NOT NULL
+    );
+    CREATE TABLE admin_sessions (
+      token_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, revoked INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE admin_login_limit (
+      id INTEGER PRIMARY KEY CHECK (id = 1), attempts INTEGER NOT NULL, reset_at INTEGER NOT NULL
+    );`,
+  },
 ]

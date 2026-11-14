@@ -12,12 +12,17 @@ import {
   type ProposalRecord,
   REGISTRY,
 } from '@morphos/shared'
+import { useQuery } from '@tanstack/react-query'
 import { Check, Database, Info, Lock, ShieldCheck, TriangleExclamationPoint, Users } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
+import { ErrorState, Skeleton } from '../components/ui/feedback'
+import { api, errorMessage } from '../lib/api'
 import { cn } from '../lib/cn'
+import { POLL_MS } from '../lib/queries'
 import { describeValue } from '../runtime/describe'
+import { BusinessImpactPanel } from './BusinessImpactPanel'
 import { IssueList } from './IssueList'
 import { OriginBadge } from './TurnCard'
 
@@ -559,11 +564,18 @@ export function DiffPanel({
   before: AppDefinition | null
   busy: 'approve' | 'reject' | null
   /** confirmExposure: the user ticked the exposure confirmation (only offered when the Diff asks for it). */
-  onApprove: (confirmExposure: boolean) => void
+  onApprove: (confirmExposure: boolean, previewToken: string) => void
   onRevise: () => void
   onReject: () => void
 }) {
-  const [confirmed, setConfirmed] = useState(false)
+  const preview = useQuery({
+    queryKey: ['proposal-preview', proposal.id],
+    queryFn: () => api.preview(proposal.id),
+    refetchInterval: busy ? false : POLL_MS,
+    retry: 1,
+  })
+  const [confirmedToken, setConfirmedToken] = useState<string | null>(null)
+  const confirmed = Boolean(preview.data && confirmedToken === preview.data.previewToken)
   const diff = proposal.diff
   if (!diff) return null
   const risk = RISK[diff.risk]
@@ -580,7 +592,7 @@ export function DiffPanel({
           <p className="text-sm leading-relaxed font-medium">{diff.summary}</p>
           {before ? (
             <p className="text-[11px] text-muted">
-              基于 v{diff.fromVersion}，批准后生成 v{diff.fromVersion + 1}；可随时在版本中恢复
+              基于 v{diff.fromVersion}，批准后生成 v{diff.fromVersion + 1}；恢复历史版本也需符合已确认约束
             </p>
           ) : (
             <p className="text-[11px] text-muted">批准后创建应用（v1）</p>
@@ -593,12 +605,23 @@ export function DiffPanel({
             </ul>
           ) : null}
         </div>
+        {preview.isPending ? (
+          <Skeleton className="h-24" />
+        ) : preview.isError ? (
+          <ErrorState message={errorMessage(preview.error)} onRetry={() => preview.refetch()} />
+        ) : (
+          <BusinessImpactPanel preview={preview.data} />
+        )}
         <DiffBody diff={diff} before={before} after={proposal.after} />
         <ValidationSummary proposal={proposal} />
       </div>
       {confirmLines.length ? (
         <div className="border-t border-border bg-surface px-3 pt-3">
-          <ExposureConfirm lines={confirmLines} checked={confirmed} onChange={setConfirmed} />
+          <ExposureConfirm
+            lines={confirmLines}
+            checked={confirmed}
+            onChange={(v) => setConfirmedToken(v ? (preview.data?.previewToken ?? null) : null)}
+          />
         </div>
       ) : null}
       <div className="flex gap-2 border-t border-border bg-surface p-3">
@@ -606,9 +629,17 @@ export function DiffPanel({
           variant="morph"
           className="flex-1 justify-center"
           loading={busy === 'approve'}
-          disabled={busy !== null || (confirmLines.length > 0 && !confirmed)}
+          disabled={
+            busy !== null ||
+            !preview.data ||
+            preview.isError ||
+            preview.data.constraintIssues.length > 0 ||
+            (confirmLines.length > 0 && !confirmed)
+          }
           title={confirmLines.length && !confirmed ? '请先勾选上方的公开确认' : undefined}
-          onClick={() => onApprove(confirmLines.length > 0 && confirmed)}
+          onClick={() =>
+            preview.data && onApprove(confirmLines.length > 0 && confirmed, preview.data.previewToken)
+          }
         >
           批准并生效
         </Button>

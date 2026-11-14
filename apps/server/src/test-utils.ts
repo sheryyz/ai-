@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'node:crypto'
 // Test-only helpers for API tests (Supertest + in-memory SQLite + fixed clock).
 import type { PlanEvent } from '@morphos/shared'
 import request from 'supertest'
@@ -31,7 +32,19 @@ export function testServer(
     replaySpeed: 0,
     remoteAddress: (req) => req.header(PEER_HEADER) ?? req.socket.remoteAddress,
   })
-  return { app, ctx, api: () => request(app) }
+  // Seed an authenticated session for domain tests; auth.test.ts exercises real setup/login separately.
+  const token = randomBytes(32).toString('hex')
+  ctx.db
+    .prepare('INSERT OR IGNORE INTO admin_account VALUES (1, ?, ?, ?)')
+    .run('test-admin', 'test-only', 'test-only')
+  ctx.db
+    .prepare('INSERT INTO admin_sessions(token_hash, expires_at) VALUES (?, ?)')
+    .run(createHash('sha256').update(token).digest('hex'), ctx.now().getTime() + 86400000)
+  return {
+    app,
+    ctx,
+    api: () => request.agent(app).set('Cookie', `morphos_session=${token}`).set('X-MorphOS-Request', '1'),
+  }
 }
 
 export async function createFromTemplate(

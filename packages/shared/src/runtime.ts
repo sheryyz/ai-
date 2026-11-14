@@ -7,6 +7,7 @@ import {
   evaluateFilter,
   type FieldType,
   type FieldValue,
+  type FilterExpr,
   getRowValue,
   isDateString,
   type Row,
@@ -214,6 +215,22 @@ export function evaluateGraph(def: AppDefinition, rows: Row[], ctx: EvalContext)
     result.set(id, { inputs, outputs })
   }
   return result
+}
+
+/** Conditions on the record input, ordered from source to destination. */
+export function recordScope(def: AppDefinition, nodeId: string): FilterExpr[] {
+  const conditions: FilterExpr[] = []
+  const seen = new Set<string>()
+  let node = def.nodes.find((n) => n.id === nodeId)
+  while (node && !seen.has(node.id)) {
+    seen.add(node.id)
+    const input = REGISTRY[node.type].inputs.find((p) => p.type === 'RecordSet')
+    const id = node.id
+    const edge = input && def.bindings.find((b) => b.to.node === id && b.to.port === input.name)
+    node = edge && def.nodes.find((n) => n.id === edge.from.node)
+    if (node?.type === 'Filter') conditions.unshift((node.params as ParamsOf<'Filter'>).filter)
+  }
+  return conditions
 }
 
 export function asRows(v: NodeValue | undefined): Row[] {

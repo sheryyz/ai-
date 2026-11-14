@@ -21,7 +21,7 @@ import {
 import type { ChatMessage } from './client'
 
 /** Bump whenever the wording changes; recorded in every proposal trace and evaluation result. */
-export const PROMPT_VERSION = 'planner-v1.2'
+export const PROMPT_VERSION = 'planner-v1.4'
 
 const PATCH_OPS_DOC = `
 - {"op":"addField","entityId","field":FieldDef}  新增字段；required 为 true 时必须带 default
@@ -56,7 +56,8 @@ function operatorDoc(): string {
 }
 
 export function systemPrompt(): string {
-  return `你是 MorphOS 的应用规划器。MorphOS 把用户的自然语言需求变成受约束的 JSON 提案；系统会对提案做七层校验（含数据暴露）并向用户展示变更差异，用户批准后才生效。
+  return `你是 MorphOS 的应用规划器。MorphOS 把用户的自然语言需求变成受约束的 JSON 提案；用户明确保持不变的属性必须逐项保留，包括 params 内的显示标签；组件 title 与 params.label 是不同的属性。不要以“优化呈现”为由修改用户要求保留的名称、参数、排序、筛选、权限。
+系统会对提案做七层校验（含数据暴露）并向用户展示变更差异，用户批准后才生效。
 
 # 输出格式
 只输出一个 JSON 对象，不要 Markdown 代码块，不要任何解释文字。必须是以下三种之一：

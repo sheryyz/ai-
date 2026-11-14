@@ -21,6 +21,7 @@ describe('suggestFollowUp (requirements §7 P1)', () => {
       metricLabel: '签到率',
       rate: 1 / 6,
       where: { field: 'checkedIn', operator: 'eq', value: true },
+      scope: [],
       total: 6,
       remaining: 5,
       unreached: 3,
@@ -45,6 +46,47 @@ describe('suggestFollowUp (requirements §7 P1)', () => {
     const r = patchOn(withCheckin(), [{ op: 'hideNode', nodeId: 'remind' }])
     expect(r.ok).toBe(true)
     expect(suggestFollowUp(r.after!, sixPeople(), CTX)).toMatchObject({ unreached: 5, partlyReached: false })
+  })
+
+  it('keeps the full upstream scope of a ratio metric', () => {
+    const scoped = patchOn(withCheckin(), [
+      {
+        op: 'addNode',
+        node: {
+          id: 'csOnly',
+          type: 'Filter',
+          params: { filter: { field: 'major', operator: 'eq', value: '计算机' } },
+        },
+      },
+      {
+        op: 'bind',
+        binding: {
+          id: 'b_cs',
+          from: { node: 'source', port: 'records' },
+          to: { node: 'csOnly', port: 'input' },
+        },
+      },
+      { op: 'unbind', bindingId: 'b_rate' },
+      {
+        op: 'bind',
+        binding: {
+          id: 'b_rate',
+          from: { node: 'csOnly', port: 'result' },
+          to: { node: 'rate', port: 'rows' },
+        },
+      },
+      { op: 'hideNode', nodeId: 'remind' },
+    ]).after!
+    const people = [
+      ...['甲', '乙', '丙', '丁', '戊'].map((name) => person(name, '计算机')),
+      person('外部', '其他', true),
+    ]
+    expect(suggestFollowUp(scoped, people, CTX)).toMatchObject({
+      total: 5,
+      remaining: 5,
+      rate: 0,
+      scope: [{ field: 'major', operator: 'eq', value: '计算机' }],
+    })
   })
 
   it('works on any domain from component types alone, and not at all without a ratio metric', () => {

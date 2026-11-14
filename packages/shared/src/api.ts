@@ -2,6 +2,8 @@
  * HTTP response shapes shared by server and web (architecture.md §5).
  * Types only — no runtime code, so this module adds nothing to either bundle.
  */
+
+import type { BusinessImpact } from './business-impact'
 import type { MorphDiff } from './diff'
 import type { ViewExposure } from './exposure'
 import type { ValidationIssue } from './issues'
@@ -80,6 +82,13 @@ export interface RecordsResponse {
   records: StoredRecord[]
 }
 
+export interface ProposalPreview {
+  impact: BusinessImpact
+  previewToken: string
+  computedAt: string
+  constraintIssues: ValidationIssue[]
+}
+
 export interface ApiErrorBody {
   error: { code: string; message: string; details?: unknown }
 }
@@ -143,6 +152,9 @@ export interface ProposalRecord {
   resultVersion: number | null
   createdAt: string
   decidedAt: string | null
+  groupId?: string | null
+  parentId?: string | null
+  optionLabel?: string | null
 }
 
 export type PlanEvent =

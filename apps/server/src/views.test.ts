@@ -58,6 +58,21 @@ async function eventWithDesk(opts: { env?: Record<string, string> } = {}) {
   return { ...server, model, app, plan, approve, token }
 }
 
+it('deleting an app stops existing share links and their writes', async () => {
+  const { api, ctx, app, token } = await eventWithDesk()
+  try {
+    const before = ctx.db.prepare('SELECT * FROM records WHERE app_id = ?').all(app.id)
+    await api().get(`/api/v/${token}`).expect(200)
+    await api().delete(`/api/apps/${app.id}`).expect(204)
+    await api().get(`/api/v/${token}`).expect(410)
+    await api().post(`/api/v/${token}/actions/deskAction`).send({ recordId: 'any', answers: {} }).expect(410)
+    await api().get(`/api/v/${token}/export.csv?node=deskAction`).expect(410)
+    expect(ctx.db.prepare('SELECT * FROM records WHERE app_id = ?').all(app.id)).toEqual(before)
+  } finally {
+    ctx.db.close()
+  }
+})
+
 const deskRows = (snap: ViewSnapshot) => {
   const n = snap.nodes.find((x) => x.node.id === 'deskAction')
   return n?.data.kind === 'rows' ? n.data.rows : []

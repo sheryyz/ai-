@@ -97,6 +97,14 @@ const STEPS: Step[] = [
     on: '04-equipment-create',
     approve: true,
   },
+  {
+    id: '09-equipment-reborrow',
+    title: '场景 B · 已归还设备再次借出',
+    intent:
+      '保留“已归还”状态。修复借用循环：状态为可借用或已归还的设备都能再次借出，每次借出重新填写借用人，借用日期更新为今天；借出后状态为已借出，归还后仍为已归还。只调整现有借出操作，保留全部已有字段、归还操作、超期筛选和其他组件，不新增记录或改动历史记录。',
+    on: '05-equipment-overdue',
+    approve: true,
+  },
 ]
 
 const only = process.argv

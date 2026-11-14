@@ -5,7 +5,7 @@
  */
 import { type EvalContext, evaluateFilter, type FilterExpr, type Row } from './filter'
 import type { ParamsOf } from './registry'
-import { asRows, evaluateGraph, fieldTypesOf, primaryEntity } from './runtime'
+import { asRows, evaluateGraph, fieldTypesOf, primaryEntity, recordScope } from './runtime'
 import type { AppDefinition } from './schema'
 
 /** A rate under this suggests following up the records that do not meet it yet. */
@@ -20,6 +20,7 @@ export interface FollowUpSuggestion {
   rate: number
   /** The metric's condition; records not meeting it are the ones to follow up. */
   where: FilterExpr
+  scope: FilterExpr[]
   /** Records the metric counts over. */
   total: number
   /** Records not meeting `where`. */
@@ -66,6 +67,7 @@ export function suggestFollowUp(
       metricLabel: n.title ?? p.label,
       rate,
       where,
+      scope: recordScope(def, n.id),
       total: input.length,
       remaining: remaining.length,
       unreached,

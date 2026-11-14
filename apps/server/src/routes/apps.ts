@@ -1,10 +1,11 @@
-import { IconNameSchema, type PatchOp, z } from '@morphos/shared'
+import { BusinessRuleSchema, IconNameSchema, type PatchOp, z } from '@morphos/shared'
 import { Router } from 'express'
 import { type Ctx, evalCtx } from '../context'
 import { HttpError } from '../errors'
 import {
   applyManualPatch,
   createApp,
+  deleteApp,
   getApp,
   getVersion,
   listApps,
@@ -12,6 +13,7 @@ import {
   previewRestore,
   restoreVersion,
 } from '../services/apps'
+import { activeConstraints, addConstraint, revokeConstraint } from '../services/constraints'
 import { seedRecords } from '../services/records'
 import { getTemplate, listTemplates, resolveSamples } from '../services/templates'
 import { intParam, parseBody } from './util'
@@ -30,6 +32,13 @@ const UpdateApp = z.object({
 })
 
 const Restore = z.object({ baseVersion: z.number().int().min(1), confirmExposure: z.boolean().optional() })
+const ConfirmConstraint = z
+  .object({
+    baseVersion: z.number().int().min(1),
+    label: z.string().trim().min(1).max(120),
+    rule: BusinessRuleSchema,
+  })
+  .strict()
 
 export function appsRouter(ctx: Ctx): Router {
   const r = Router()
@@ -58,6 +67,25 @@ export function appsRouter(ctx: Ctx): Router {
 
   r.get('/apps/:id', (req, res) => {
     res.json({ app: getApp(ctx, req.params.id) })
+  })
+
+  r.delete('/apps/:id', (req, res) => {
+    deleteApp(ctx, req.params.id)
+    res.status(204).end()
+  })
+
+  r.get('/apps/:id/constraints', (req, res) => {
+    getApp(ctx, req.params.id)
+    res.setHeader('Cache-Control', 'no-store')
+    res.json({ constraints: activeConstraints(ctx, req.params.id) })
+  })
+  r.post('/apps/:id/constraints', (req, res) => {
+    const b = parseBody(ConfirmConstraint, req)
+    res.status(201).json({ constraint: addConstraint(ctx, req.params.id, b.baseVersion, b.label, b.rule) })
+  })
+  r.delete('/apps/:id/constraints/:ruleId', (req, res) => {
+    revokeConstraint(ctx, req.params.id, req.params.ruleId)
+    res.status(204).end()
   })
 
   r.patch('/apps/:id', (req, res) => {

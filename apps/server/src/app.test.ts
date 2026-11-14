@@ -2,6 +2,7 @@ import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 import { createApp } from './app'
 import { assertNodeVersion, parseConfig } from './config'
+import { testServer } from './test-utils'
 
 describe('GET /api/health', () => {
   it('reports AI as configured without leaking the key', async () => {
@@ -24,8 +25,8 @@ describe('GET /api/health', () => {
   })
 
   it('returns a structured 404 for unknown API routes', async () => {
-    const { app } = createApp(parseConfig({ NODE_ENV: 'test', DATABASE_PATH: ':memory:' }))
-    const res = await request(app).get('/api/nope').expect(404)
+    const { api } = testServer()
+    const res = await api().get('/api/nope').expect(404)
     expect(res.body.error.code).toBe('NOT_FOUND')
   })
 })

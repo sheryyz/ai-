@@ -1,10 +1,16 @@
 /** Thin fetch wrapper. Every non-2xx response becomes an ApiError carrying the server's { code, message }. */
 import type {
   AppDetail,
+  AppPhase,
   AppSummary,
+  BusinessConstraint,
+  BusinessRule,
   HealthInfo,
   MorphDiff,
   OutboxEntry,
+  PhaseInput,
+  PreparedIntent,
+  ProposalPreview,
   ProposalRecord,
   RecordingInfo,
   Row,
@@ -38,7 +44,10 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   try {
     res = await fetch(path, {
       method,
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers: {
+        'X-MorphOS-Request': '1',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
@@ -47,6 +56,8 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   if (res.status === 204) return undefined as T
   const data: unknown = await res.json().catch(() => null)
   if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/api/auth/') && !path.startsWith('/api/v/'))
+      window.dispatchEvent(new Event('morphos:unauthorized'))
     if (isErrorBody(data))
       throw new ApiError(res.status, data.error.code, data.error.message, data.error.details)
     throw new ApiError(res.status, 'HTTP_ERROR', `请求失败（HTTP ${res.status}）`)
@@ -69,10 +80,37 @@ export function errorMessage(e: unknown): string {
 }
 
 export const api = {
+  prepare: (intent: string, appId?: string, parentId?: string) =>
+    request<{ prepared: PreparedIntent }>('POST', '/api/ai/prepare', { intent, appId, parentId }).then(
+      (r) => r.prepared,
+    ),
+  brief: (id: string) =>
+    request<{ prepared: PreparedIntent }>('GET', `/api/intent-briefs/${id}`).then((r) => r.prepared),
+  options: (briefId: string, answers: number[], choice: 0 | 1 | 'compare') =>
+    request<{ proposals: ProposalRecord[]; failures: string[]; brief: PreparedIntent }>(
+      'POST',
+      '/api/ai/options',
+      { briefId, answers, choice },
+    ),
+  group: (id: string) =>
+    request<{
+      options: { proposal: ProposalRecord; preview: ProposalPreview | null; error: string | null }[]
+      computedAt: string
+    }>('GET', `/api/proposal-groups/${id}`),
+  phases: (id: string) =>
+    request<{ phases: AppPhase[] }>('GET', `/api/apps/${id}/phases`).then((r) => r.phases),
+  savePhase: (id: string, phase: PhaseInput) =>
+    request<{ phase: AppPhase }>('POST', `/api/apps/${id}/phases`, phase),
+  proposePhase: (id: string, phaseId: string) =>
+    request<{ proposal: ProposalRecord }>('POST', `/api/apps/${id}/phases/${phaseId}/propose`).then(
+      (r) => r.proposal,
+    ),
+  removePhase: (id: string, phaseId: string) => request<void>('DELETE', `/api/apps/${id}/phases/${phaseId}`),
   health: () => request<HealthInfo>('GET', '/api/health'),
   templates: () => request<{ templates: TemplateInfo[] }>('GET', '/api/templates').then((r) => r.templates),
   apps: () => request<{ apps: AppSummary[] }>('GET', '/api/apps').then((r) => r.apps),
   app: (id: string) => request<{ app: AppDetail }>('GET', `/api/apps/${id}`).then((r) => r.app),
+  deleteApp: (id: string) => request<void>('DELETE', `/api/apps/${id}`),
   createFromTemplate: (templateId: string, withSampleData: boolean) =>
     request<{ app: AppDetail }>('POST', '/api/apps', { templateId, withSampleData }).then((r) => r.app),
   updateApp: (id: string, baseVersion: number, changes: { name?: string; description?: string }) =>
@@ -102,11 +140,12 @@ export const api = {
   proposals: (id: string) =>
     request<{ proposals: ProposalRecord[] }>('GET', `/api/apps/${id}/proposals`).then((r) => r.proposals),
   /** confirmExposure is required by the server when the Diff asks for it (protocol §11.5). */
-  approve: (proposalId: string, confirmExposure = false) =>
+  preview: (proposalId: string) => request<ProposalPreview>('GET', `/api/proposals/${proposalId}/preview`),
+  approve: (proposalId: string, confirmExposure = false, previewToken?: string) =>
     request<{ proposal: ProposalRecord; appId: string; version: number; app: AppDetail }>(
       'POST',
       `/api/proposals/${proposalId}/approve`,
-      { confirmExposure },
+      { confirmExposure, previewToken },
     ),
   reject: (proposalId: string) =>
     request<{ proposal: ProposalRecord }>('POST', `/api/proposals/${proposalId}/reject`).then(
@@ -131,6 +170,18 @@ export const api = {
 
   views: (id: string) =>
     request<{ views: ViewLinkInfo[] }>('GET', `/api/apps/${id}/views`).then((r) => r.views),
+  constraints: (id: string) =>
+    request<{ constraints: BusinessConstraint[] }>('GET', `/api/apps/${id}/constraints`).then(
+      (r) => r.constraints,
+    ),
+  addConstraint: (id: string, baseVersion: number, label: string, rule: BusinessRule) =>
+    request<{ constraint: BusinessConstraint }>('POST', `/api/apps/${id}/constraints`, {
+      baseVersion,
+      label,
+      rule,
+    }),
+  revokeConstraint: (id: string, ruleId: string) =>
+    request<void>('DELETE', `/api/apps/${id}/constraints/${ruleId}`),
   ensureLink: (id: string, viewId: string) =>
     request<{ token: string }>('POST', `/api/apps/${id}/views/${viewId}/link`).then((r) => r.token),
   resetLink: (id: string, viewId: string) =>

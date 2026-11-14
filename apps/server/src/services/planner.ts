@@ -8,6 +8,7 @@
 import {
   type AppDefinition,
   computeDiff,
+  constraintIssues,
   hasErrors,
   issue,
   type PlanEvent,
@@ -34,12 +35,19 @@ import {
   repairMessage,
 } from '../llm/prompt'
 import { getApp } from './apps'
+import { activeConstraints } from './constraints'
 import { saveProposal } from './proposals'
 import { listStored } from './records'
 
 export const MAX_REPAIR_ROUNDS = 2
 
 export interface PlanInput {
+  /** Server-owned, user-confirmed preparation. Never accepted as free-form HTTP instructions. */
+  guidance?: string
+  expectedVersion?: number
+  groupId?: string
+  parentId?: string
+  optionLabel?: string
   intent: string
   /** Present for evolution (patch); absent for creating a new app. */
   appId?: string
@@ -126,6 +134,10 @@ export async function runPlan(
   // ── understand ────────────────────────────────────────────────────────────
   emit({ type: 'stage', stage: 'understand', status: 'running' })
   const initial = input.appId ? getApp(ctx, input.appId) : null
+  if (input.expectedVersion !== undefined && initial?.version !== input.expectedVersion) {
+    emit({ type: 'error', code: 'VERSION_CONFLICT', message: '应用已变化，请重新确认需求' })
+    return null
+  }
   const records = input.appId ? listStored(ctx, input.appId) : []
   const regenerate = initial !== null && input.strategy === 'regenerate'
   const mode = initial && !regenerate ? 'patch' : 'create'
@@ -211,6 +223,8 @@ export async function runPlan(
       raw,
       current ? { current: { definition: current.definition, version: current.version } } : {},
     )
+    if (v.ok && v.after && current)
+      v.issues.push(...constraintIssues(v.after, activeConstraints(ctx, current.id)))
     const errors = v.issues.filter((i) => i.level === 'error')
     if (!errors.length && v.after && v.proposal?.kind !== 'refusal') {
       const diff = computeDiff(current?.definition ?? null, v.after, {
@@ -250,7 +264,12 @@ export async function runPlan(
       emit({ type: 'stage', stage: 'plan', status: 'running', round })
       const t0 = Date.now()
       let generating = false
-      const result = await client.chat(buildMessages(task, history), {
+      const rules = input.appId ? activeConstraints(ctx, input.appId) : []
+      const baseTask = input.guidance ? `${task}\n\n${input.guidance}` : task
+      const governedTask = rules.length
+        ? `${baseTask}\n\n管理者已确认的持续业务约束（只读，所有后续演进均须遵守，不得解除或绕过；冲突时保留规则并说明原因）：\n${JSON.stringify(rules.map(({ id, label, rule }) => ({ id, label, rule })))}`
+        : baseTask
+      const result = await client.chat(buildMessages(governedTask, history), {
         json: true,
         signal,
         onReasoning: (delta) => emit({ type: 'thinking', round, delta }),
@@ -328,6 +347,9 @@ export async function runPlan(
     : null
   const kind = final?.kind ?? (mode === 'create' ? 'create' : 'patch')
   const saved = saveProposal(ctx, {
+    groupId: input.groupId,
+    parentId: input.parentId,
+    optionLabel: input.optionLabel,
     appId: input.appId ?? null,
     baseVersion: current?.version ?? null,
     kind,

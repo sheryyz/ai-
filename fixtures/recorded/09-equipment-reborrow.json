@@ -1,0 +1,409 @@
+{
+  "id": "09-equipment-reborrow",
+  "title": "场景 B · 已归还设备再次借出",
+  "kind": "patch",
+  "intent": "保留“已归还”状态。修复借用循环：状态为可借用或已归还的设备都能再次借出，每次借出重新填写借用人，借用日期更新为今天；借出后状态为已借出，归还后仍为已归还。只调整现有借出操作，保留全部已有字段、归还操作、超期筛选和其他组件，不新增记录或改动历史记录。",
+  "model": "deepseek-flash",
+  "recordedAt": "2026-11-14T09:58:25.885Z",
+  "promptVersion": "planner-v1.3",
+  "temperature": 0.2,
+  "base": {
+    "version": 2,
+    "definition": {
+      "schemaVersion": 1,
+      "name": "设备借用管理",
+      "description": "登记设备信息与借用情况，支持借出、归还操作与类别统计。",
+      "icon": "package",
+      "entities": [
+        {
+          "id": "device",
+          "label": "设备",
+          "displayField": "name",
+          "fields": [
+            {
+              "id": "name",
+              "label": "设备名称",
+              "type": "string",
+              "required": true
+            },
+            {
+              "id": "code",
+              "label": "编号",
+              "type": "string",
+              "required": true
+            },
+            {
+              "id": "category",
+              "label": "类别",
+              "type": "enum",
+              "required": false,
+              "options": [
+                "电脑",
+                "投影仪",
+                "相机",
+                "音响",
+                "实验仪器",
+                "其他"
+              ]
+            },
+            {
+              "id": "status",
+              "label": "状态",
+              "type": "enum",
+              "required": true,
+              "default": "可借用",
+              "options": [
+                "可借用",
+                "已借出",
+                "已归还"
+              ]
+            },
+            {
+              "id": "borrower",
+              "label": "借用人",
+              "type": "string",
+              "required": false
+            },
+            {
+              "id": "borrowDate",
+              "label": "借用日期",
+              "type": "date",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "source",
+          "type": "CollectionSource",
+          "params": {
+            "entityId": "device"
+          }
+        },
+        {
+          "id": "metricTotal",
+          "type": "Metric",
+          "title": "设备总数",
+          "region": "main",
+          "order": 1,
+          "width": "half",
+          "params": {
+            "label": "设备总数",
+            "aggregate": "count",
+            "format": "number"
+          }
+        },
+        {
+          "id": "metricBorrowed",
+          "type": "Metric",
+          "title": "已借出设备",
+          "region": "main",
+          "order": 2,
+          "width": "half",
+          "params": {
+            "label": "已借出设备",
+            "aggregate": "count",
+            "where": {
+              "field": "status",
+              "operator": "eq",
+              "value": "已借出"
+            },
+            "format": "number"
+          }
+        },
+        {
+          "id": "chartCategory",
+          "type": "Chart",
+          "title": "类别分布",
+          "region": "main",
+          "order": 3,
+          "width": "half",
+          "params": {
+            "kind": "bar",
+            "groupBy": "category"
+          }
+        },
+        {
+          "id": "tableDevice",
+          "type": "Table",
+          "title": "设备清单",
+          "region": "main",
+          "order": 4,
+          "width": "full",
+          "params": {
+            "columns": [
+              "name",
+              "code",
+              "category",
+              "status",
+              "borrower",
+              "borrowDate",
+              "createdAt"
+            ],
+            "searchable": true,
+            "editable": true,
+            "allowDelete": true,
+            "pageSize": 20
+          }
+        },
+        {
+          "id": "formDevice",
+          "type": "Form",
+          "title": "登记设备",
+          "region": "aside",
+          "order": 1,
+          "params": {
+            "entityId": "device",
+            "fields": [
+              "name",
+              "code",
+              "category",
+              "status",
+              "borrower",
+              "borrowDate"
+            ],
+            "submitLabel": "保存",
+            "successMessage": "设备已登记"
+          }
+        },
+        {
+          "id": "qaBorrow",
+          "type": "QuickAction",
+          "title": "借出设备",
+          "region": "aside",
+          "order": 2,
+          "params": {
+            "label": "借出设备",
+            "searchFields": [
+              "name",
+              "code",
+              "borrower"
+            ],
+            "ask": [
+              "borrower",
+              "borrowDate"
+            ],
+            "set": {
+              "status": "已借出"
+            },
+            "availableWhen": {
+              "field": "status",
+              "operator": "eq",
+              "value": "可借用"
+            },
+            "buttonLabel": "确认借出"
+          }
+        },
+        {
+          "id": "qaReturn",
+          "type": "QuickAction",
+          "title": "归还设备",
+          "region": "aside",
+          "order": 3,
+          "params": {
+            "label": "归还设备",
+            "searchFields": [
+              "name",
+              "code",
+              "borrower"
+            ],
+            "set": {
+              "status": "已归还"
+            },
+            "availableWhen": {
+              "field": "status",
+              "operator": "eq",
+              "value": "已借出"
+            },
+            "buttonLabel": "确认归还"
+          }
+        },
+        {
+          "id": "exportDevice",
+          "type": "CSVExport",
+          "title": "导出设备清单",
+          "region": "aside",
+          "order": 4,
+          "params": {
+            "columns": [
+              "name",
+              "code",
+              "category",
+              "status",
+              "borrower",
+              "borrowDate"
+            ],
+            "filename": "设备借用清单"
+          }
+        },
+        {
+          "id": "filterOverdue",
+          "type": "Filter",
+          "title": "借出超7天",
+          "region": "main",
+          "order": 5,
+          "params": {
+            "filter": {
+              "op": "and",
+              "conditions": [
+                {
+                  "field": "status",
+                  "operator": "eq",
+                  "value": "已借出"
+                },
+                {
+                  "field": "borrowDate",
+                  "operator": "lte",
+                  "value": {
+                    "relative": "daysAgo",
+                    "days": 7
+                  }
+                }
+              ]
+            },
+            "showChips": true
+          }
+        },
+        {
+          "id": "tableOverdue",
+          "type": "Table",
+          "title": "超期未还设备",
+          "region": "main",
+          "order": 6,
+          "width": "full",
+          "params": {
+            "columns": [
+              "name",
+              "code",
+              "category",
+              "status",
+              "borrower",
+              "borrowDate",
+              "createdAt"
+            ],
+            "searchable": true,
+            "editable": true,
+            "allowDelete": false,
+            "pageSize": 10
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b1",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "metricTotal",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b2",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "metricBorrowed",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b3",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "chartCategory",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b4",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "tableDevice",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b5",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "qaBorrow",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b6",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "qaReturn",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b7",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "exportDevice",
+            "port": "rows"
+          }
+        },
+        {
+          "id": "b8",
+          "from": {
+            "node": "source",
+            "port": "records"
+          },
+          "to": {
+            "node": "filterOverdue",
+            "port": "input"
+          }
+        },
+        {
+          "id": "b9",
+          "from": {
+            "node": "filterOverdue",
+            "port": "result"
+          },
+          "to": {
+            "node": "tableOverdue",
+            "port": "rows"
+          }
+        }
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "reasoning": "用户要求修复借用循环：qaBorrow 的 availableWhen 目前只允许\"可借用\"，需要允许\"可借用\"或\"已归还\"。set 中增加 borrowDate: \"$today\"。ask 已经包含 borrower 和 borrowDate——用户说\"每次借出重新填写借用人，借用日期更新为今天\"。可以保留 ask borrower，移除 ask borrowDate（因为日期固定为今天），或保留。最合理：ask 只留 borrower，set 加 borrowDate: \"$today\"。\n\n操作：updateNode qaBorrow，params 浅合并：availableWhen 改为 or 条件，ask: [\"borrower\"]，set: {\"status\":\"已借出\",\"borrowDate\":\"$today\"}。注意浅合并：params 会与原 params 浅合并，所以 set 整体替换，ask 整体替换，都写全。\n\n输出。",
+      "content": "{\"kind\":\"patch\",\"intent\":\"修复借用循环：可借用或已归还的设备都能再次借出，借出时重新填写借用人、借用日期自动设为今天，借出后状态为已借出，归还后仍为已归还，其他组件与历史记录保持不变\",\"summary\":\"仅调整“借出设备”快捷操作：可执行条件放宽为状态为“可借用”或“已归还”，借出时只询问借用人并将借用日期更新为今天\",\"baseVersion\":2,\"operations\":[{\"op\":\"updateNode\",\"nodeId\":\"qaBorrow\",\"params\":{\"ask\":[\"borrower\"],\"set\":{\"status\":\"已借出\",\"borrowDate\":\"$today\"},\"availableWhen\":{\"op\":\"or\",\"conditions\":[{\"field\":\"status\",\"operator\":\"eq\",\"value\":\"可借用\"},{\"field\":\"status\",\"operator\":\"eq\",\"value\":\"已归还\"}]}}}]}",
+      "usage": {
+        "promptTokens": 4465,
+        "completionTokens": 374,
+        "reasoningTokens": 184,
+        "totalTokens": 4839
+      },
+      "finishReason": "stop",
+      "ms": 3844
+    }
+  ]
+}

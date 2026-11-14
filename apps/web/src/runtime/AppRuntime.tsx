@@ -28,6 +28,7 @@ import { MessageDraftNode } from './nodes/MessageDraftNode'
 import { MetricNode } from './nodes/MetricNode'
 import { QuickActionNode } from './nodes/QuickActionNode'
 import { TableNode } from './nodes/TableNode'
+import { ResultExplanation } from './ResultExplanation'
 
 export function renderNode(
   node: NodeDef,
@@ -101,11 +102,14 @@ export function AppRuntime({
       {...GROW}
       className={cn(
         inMain && (n.width === 'half' ? '@lg/main:col-span-1' : '@lg/main:col-span-2'),
-        'min-w-0',
+        'flex min-w-0 flex-col',
       )}
       data-node={n.id}
     >
-      {renderNode(n, graph.get(n.id), marks?.get(n.id))}
+      <div className="min-h-0 flex-1">{renderNode(n, graph.get(n.id), marks?.get(n.id))}</div>
+      {['Metric', 'MessageDraft', 'QuickAction', 'Table', 'CSVExport'].includes(n.type) ? (
+        <ResultExplanation definition={definition} records={records} nodeId={n.id} />
+      ) : null}
     </motion.div>
   )
 

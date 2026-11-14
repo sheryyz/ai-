@@ -1,9 +1,13 @@
-import { Monitor, Moon, Smartphone, Sun } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Monitor, Moon, Settings, Smartphone, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router'
-import { ApiError } from '../lib/api'
-import { useApps, useHealth } from '../lib/queries'
+import { toast } from 'sonner'
+import { ApiError, errorMessage, request } from '../lib/api'
+import { useHealth } from '../lib/queries'
+import { LoginPage } from '../pages/LoginPage'
 import { Button } from './ui/button'
+import { ErrorState } from './ui/feedback'
 
 export function Logo() {
   return (
@@ -105,8 +109,29 @@ function RemoteNotice() {
 }
 
 export function Shell() {
-  const apps = useApps()
-  const remote = apps.error instanceof ApiError && apps.error.code === 'ADMIN_LOCAL_ONLY'
+  const cache = useQueryClient()
+  const auth = useQuery({
+    queryKey: ['auth'],
+    queryFn: () =>
+      request<{ setupRequired: boolean; authenticated: boolean; username: string | null }>(
+        'GET',
+        '/api/auth/status',
+      ),
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  })
+  const [loggingOut, setLoggingOut] = useState(false)
+  useEffect(() => {
+    const expired = () => {
+      cache.clear()
+      void auth.refetch()
+    }
+    window.addEventListener('morphos:unauthorized', expired)
+    return () => window.removeEventListener('morphos:unauthorized', expired)
+  }, [cache, auth.refetch])
+  const remote = auth.error instanceof ApiError && auth.error.code === 'ADMIN_LOCAL_ONLY'
+  const signedIn = auth.data?.authenticated === true && !auth.isError
+
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur">
@@ -119,12 +144,62 @@ export function Shell() {
             <span className="text-[15px] font-semibold tracking-tight">MorphOS</span>
           </Link>
           <div className="flex items-center gap-2">
-            {remote ? null : <StatusPill />}
+            {signedIn ? (
+              <>
+                <Link
+                  to="/settings"
+                  aria-label="工作区设置"
+                  title="工作区设置"
+                  className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-fg"
+                >
+                  <Settings className="size-4" />
+                </Link>
+                <span className="hidden text-xs text-muted sm:inline">{auth.data?.username}</span>
+                <div className="hidden sm:block">
+                  <StatusPill />
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  loading={loggingOut}
+                  onClick={async () => {
+                    setLoggingOut(true)
+                    try {
+                      await request('POST', '/api/auth/logout')
+                      cache.clear()
+                      await auth.refetch()
+                    } catch (e) {
+                      toast.error(errorMessage(e))
+                    } finally {
+                      setLoggingOut(false)
+                    }
+                  }}
+                >
+                  退出登录
+                </Button>
+              </>
+            ) : null}
             <ThemeToggle />
           </div>
         </div>
       </header>
-      {remote ? <RemoteNotice /> : <Outlet />}
+      {remote ? (
+        <RemoteNotice />
+      ) : auth.isPending ? (
+        <main className="p-12 text-center text-sm text-muted">正在连接工作区…</main>
+      ) : auth.isError ? (
+        <ErrorState message={errorMessage(auth.error)} onRetry={() => auth.refetch()} />
+      ) : signedIn ? (
+        <Outlet />
+      ) : (
+        <LoginPage
+          setupRequired={auth.data.setupRequired}
+          onSuccess={() => {
+            cache.clear()
+            void auth.refetch()
+          }}
+        />
+      )}
     </div>
   )
 }

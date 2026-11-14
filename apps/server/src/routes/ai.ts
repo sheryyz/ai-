@@ -5,6 +5,7 @@ import { HttpError } from '../errors'
 import type { LlmClient } from '../llm/client'
 import { createReplayClient, getRecording, isApplicable, loadRecordings, recordingInfo } from '../llm/replay'
 import { getApp } from '../services/apps'
+import { previewProposal } from '../services/impact'
 import { runPlan } from '../services/planner'
 import { approveProposal, getProposal, listProposals, rejectProposal } from '../services/proposals'
 import { parseBody } from './util'
@@ -14,7 +15,10 @@ const PlanBody = z.union([
   z.object({ recordingId: z.string(), appId: z.string().optional() }),
 ])
 
-const Approve = z.object({ confirmExposure: z.boolean().optional() })
+const Approve = z.object({
+  confirmExposure: z.boolean().optional(),
+  previewToken: z.string().length(64).optional(),
+})
 
 export function aiRouter(ctx: Ctx, deps: { replaySpeed?: number } = {}): Router {
   const r = Router()
@@ -85,6 +89,11 @@ export function aiRouter(ctx: Ctx, deps: { replaySpeed?: number } = {}): Router 
 
   r.get('/proposals/:id', (req, res) => {
     res.json({ proposal: getProposal(ctx, req.params.id) })
+  })
+
+  r.get('/proposals/:id/preview', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store')
+    res.json(previewProposal(ctx, req.params.id))
   })
 
   r.get('/apps/:id/proposals', (req, res) => {

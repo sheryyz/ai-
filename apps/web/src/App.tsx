@@ -8,6 +8,7 @@ import { ApiError } from './lib/api'
 import { HubPage } from './pages/HubPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RuntimePage } from './pages/RuntimePage'
+import { SettingsPage } from './pages/SettingsPage'
 import { SharePage } from './pages/SharePage'
 import { StudioPage } from './pages/StudioPage'
 
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
     element: <Shell />,
     children: [
       { path: '/', element: <HubPage /> },
+      { path: '/settings', element: <SettingsPage /> },
       { path: '/apps/:id', element: <RuntimePage /> },
       { path: '/apps/:id/studio', element: <StudioPage /> },
       { path: '/studio/new', element: <StudioPage /> },

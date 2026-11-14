@@ -66,7 +66,7 @@ export function VersionsPanel({
   return (
     <div className="p-4">
       <p className="mb-3 text-[11px] leading-relaxed text-muted">
-        版本只追加、不改写。恢复 = 用旧版本的界面配置生成一个新版本；业务记录永远不受影响。
+        恢复会用旧配置生成一个新版本，业务记录保持不变。已确认的业务约束持续生效，冲突时需先调整或解除规则。
       </p>
       <ol className="relative space-y-3 border-l border-border pl-4">
         {versions.data.map((v) => {
@@ -124,7 +124,7 @@ export function VersionsPanel({
             <Button
               variant="primary"
               loading={restore.isPending}
-              disabled={!preview.data || (confirmLines.length > 0 && !confirmed)}
+              disabled={!preview.data || preview.isError || (confirmLines.length > 0 && !confirmed)}
               onClick={() => restore.mutate()}
             >
               恢复

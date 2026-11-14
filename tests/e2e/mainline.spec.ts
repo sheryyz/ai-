@@ -2,7 +2,7 @@
  * Both demo scenarios through the real UI, offline: recorded model responses are replayed through the
  * current validator (labelled 非实时生成), everything else — approval, records, restore — is live.
  */
-import { type APIRequestContext, expect, type Page, test } from '@playwright/test'
+import { type APIRequestContext, expect, type Page, test } from './fixtures'
 
 type AppBody = {
   app: { version: number; definition: { nodes: { id: string; type: string; view?: string }[] } }
@@ -213,6 +213,27 @@ test('场景 B：同一引擎从零生成设备借用，表单登记、借出、
   await expect(overdue).toContainText('单反相机')
   await expect(overdue).not.toContainText('投影仪 A')
   await expect(overdue).not.toContainText('笔记本 1 号')
+  expect(await records(request, appId)).toHaveLength(3)
+
+  // A second incremental evolution repairs the repeated lending cycle without changing stored records.
+  const beforeCycle = await records(request, appId)
+  await page.goto(`/apps/${appId}/studio`)
+  await page.getByRole('button', { name: /场景 B · 已归还设备再次借出/ }).click()
+  const impact = page.getByRole('region', { name: '业务影响预演' })
+  await expect(impact).toContainText('可操作对象：1 → 2 条')
+  await approve.click()
+  await expect(page.getByText('已生效：v3')).toBeVisible()
+  expect(await records(request, appId)).toEqual(beforeCycle)
+  await page.goto(`/apps/${appId}`)
+  const again = page.locator('[data-node="qaBorrow"]').locator('li', { hasText: '投影仪 A' })
+  await again.getByRole('button', { name: '确认借出' }).click()
+  const borrowDialog = page.getByRole('dialog')
+  await borrowDialog.getByLabel('借用人').fill('新借用人')
+  await expect(borrowDialog.getByLabel('借用日期')).toHaveCount(0)
+  await borrowDialog.getByRole('button', { name: '确认借出' }).click()
+  await expect(borrowDialog).toBeHidden()
+  await expect(again).toHaveCount(0)
+  await expect(page.locator('[data-node="qaReturn"]').locator('li', { hasText: '投影仪 A' })).toBeVisible()
   expect(await records(request, appId)).toHaveLength(3)
 
   expect(errors).toEqual([])

@@ -13,7 +13,7 @@ export async function streamPlan(
   try {
     res = await fetch('/api/ai/plan', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-MorphOS-Request': '1' },
       body: JSON.stringify(body),
       signal,
     })
@@ -21,6 +21,7 @@ export async function streamPlan(
     if (signal?.aborted) return
     throw new ApiError(0, 'NETWORK_ERROR', '无法连接服务器，请确认服务已启动')
   }
+  if (res.status === 401) window.dispatchEvent(new Event('morphos:unauthorized'))
   if (!res.ok || !res.body) {
     const data = (await res.json().catch(() => null)) as { error?: { code: string; message: string } } | null
     throw new ApiError(

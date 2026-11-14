@@ -30,6 +30,7 @@ describe('recorded demos (offline mode, AC-10)', () => {
         '06-event-signup-page',
         '07-event-desk',
         '08-event-export',
+        '09-equipment-reborrow',
       ]),
     )
     for (const r of recs)
@@ -185,6 +186,48 @@ describe('recorded demos (offline mode, AC-10)', () => {
     expect(csv.headers['x-record-count']).toBe('1')
     expect(csv.text).toContain('CAM-01')
     expect((await api().get(`/api/apps/${app.id}/records`)).body.records).toEqual(before)
+
+    const cycle = result(
+      (
+        await api()
+          .post('/api/ai/plan')
+          .send({ recordingId: '09-equipment-reborrow', appId: app.id })
+          .expect(200)
+      ).text,
+    )
+    expect(cycle.outcome).toBe('pending')
+    const impact = (await api().get(`/api/proposals/${cycle.proposal.id}/preview`).expect(200)).body
+    expect(impact.impact.changes.find((c: { nodeId: string }) => c.nodeId === lend)).toMatchObject({
+      before: { count: 0 },
+      after: { count: 1 },
+      entered: [{ id: spare, label: '备用镜头' }],
+    })
+    await api()
+      .post(`/api/proposals/${cycle.proposal.id}/approve`)
+      .send({ previewToken: impact.previewToken })
+      .expect(200)
+    expect((await api().get(`/api/apps/${app.id}/records`)).body.records).toEqual(before)
+    const borrowedAgain = await api()
+      .post(`/api/apps/${app.id}/actions/${lend}`)
+      .send({ recordId: spare, answers: { borrower: '新同学' } })
+      .expect(200)
+    expect(borrowedAgain.body.record.values).toMatchObject({
+      status: '已借出',
+      borrower: '新同学',
+      borrowDate: '2026-11-11',
+    })
+    await api()
+      .post(`/api/apps/${app.id}/actions/${lend}`)
+      .send({ recordId: spare, answers: { borrower: '重复借用' } })
+      .expect(409)
+    const returnedAgain = await api()
+      .post(`/api/apps/${app.id}/actions/${giveBack}`)
+      .send({ recordId: spare })
+      .expect(200)
+    expect(returnedAgain.body.record.values.status).toBe('已归还')
+    const stillOverdue = await api().get(`/api/apps/${app.id}/export.csv?node=${overdue.id}`).expect(200)
+    expect(stillOverdue.headers['x-record-count']).toBe('1')
+    expect(stillOverdue.text).toContain('CAM-01')
   })
 
   it('refuses to replay a patch onto an app whose structure differs from the recording', async () => {

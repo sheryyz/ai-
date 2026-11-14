@@ -16,6 +16,7 @@ import {
 import { type Ctx, newId } from '../context'
 import { audit, tx } from '../db'
 import { HttpError, notFound } from '../errors'
+import { assertConstraints } from './constraints'
 import { requireExposureConfirmation } from './exposure-confirm'
 
 interface AppRow {
@@ -26,6 +27,7 @@ interface AppRow {
   has_sample_data: number
   created_at: string
   updated_at: string
+  deleted_at: string | null
 }
 interface VersionRow {
   version: number
@@ -49,6 +51,7 @@ export interface CommitMeta {
 function getAppRow(ctx: Ctx, id: string): AppRow {
   const row = ctx.db.prepare('SELECT * FROM apps WHERE id = ?').get(id) as AppRow | undefined
   if (!row) throw notFound('应用')
+  if (row.deleted_at !== null) throw new HttpError(410, 'APP_DELETED', '此应用已删除')
   return row
 }
 
@@ -77,7 +80,9 @@ function assertValid(definition: AppDefinition): AppDefinition {
 }
 
 export function listApps(ctx: Ctx): AppSummary[] {
-  const rows = ctx.db.prepare('SELECT * FROM apps ORDER BY updated_at DESC').all() as unknown as AppRow[]
+  const rows = ctx.db
+    .prepare('SELECT * FROM apps WHERE deleted_at IS NULL ORDER BY updated_at DESC')
+    .all() as unknown as AppRow[]
   return rows.map((a) => {
     const v = getVersionRow(ctx, a.id, a.current_version)
     const def = JSON.parse(v.definition_json) as AppDefinition
@@ -95,6 +100,20 @@ export function listApps(ctx: Ctx): AppSummary[] {
       createdAt: a.created_at,
       updatedAt: a.updated_at,
     }
+  })
+}
+
+/** Removing an app disables access while retaining its records and immutable versions. Retries are safe. */
+export function deleteApp(ctx: Ctx, id: string): void {
+  tx(ctx.db, () => {
+    const app = ctx.db.prepare('SELECT * FROM apps WHERE id = ?').get(id) as AppRow | undefined
+    if (!app) throw notFound('应用')
+    if (app.deleted_at !== null) return
+    const at = ctx.now()
+    ctx.db
+      .prepare('UPDATE apps SET deleted_at = ?, updated_at = ? WHERE id = ?')
+      .run(at.toISOString(), at.toISOString(), id)
+    audit(ctx.db, id, 'app.deleted', {}, at)
   })
 }
 
@@ -192,6 +211,7 @@ export function commitVersionUnsafe(
       },
     )
   }
+  assertConstraints(ctx, appId, def)
   const next = baseVersion + 1
   const at = ctx.now().toISOString()
   insertVersion(ctx, appId, next, def, meta, at)
@@ -241,6 +261,7 @@ export function getVersion(
   appId: string,
   version: number,
 ): VersionInfo & { definition: AppDefinition } {
+  getAppRow(ctx, appId)
   const r = getVersionRow(ctx, appId, version)
   return {
     version: r.version,
@@ -258,6 +279,7 @@ export function getVersion(
 export function previewRestore(ctx: Ctx, appId: string, version: number): MorphDiff {
   const app = getApp(ctx, appId)
   const target = getVersion(ctx, appId, version)
+  assertConstraints(ctx, appId, target.definition)
   return computeDiff(app.definition, target.definition, {
     fromVersion: app.version,
     recordCount: app.recordCount,
