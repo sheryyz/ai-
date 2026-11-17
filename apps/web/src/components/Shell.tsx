@@ -121,6 +121,14 @@ export function Shell() {
     refetchOnWindowFocus: true,
   })
   const [loggingOut, setLoggingOut] = useState(false)
+  const [workspaceIdentity, setWorkspaceIdentity] = useState<string | null>(null)
+  const identity = auth.data?.authenticated ? auth.data.username : null
+  useEffect(() => {
+    if (identity === workspaceIdentity) return
+    // Another tab may have switched the shared session cookie to a different workspace.
+    cache.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' })
+    setWorkspaceIdentity(identity)
+  }, [cache, identity, workspaceIdentity])
   useEffect(() => {
     const expired = () => {
       cache.clear()
@@ -189,6 +197,8 @@ export function Shell() {
         <main className="p-12 text-center text-sm text-muted">正在连接工作区…</main>
       ) : auth.isError ? (
         <ErrorState message={errorMessage(auth.error)} onRetry={() => auth.refetch()} />
+      ) : signedIn && identity !== workspaceIdentity ? (
+        <main className="p-12 text-center text-sm text-muted">正在切换工作区…</main>
       ) : signedIn ? (
         <Outlet />
       ) : (
