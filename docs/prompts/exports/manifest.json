@@ -1,0 +1,58 @@
+{
+  "exportDate": "2026-11-16",
+  "sourceFile": "rollout-2026-11-13T23-05-56-01a1d571-a2e9-7201-aeb8-90ea50382de1.jsonl",
+  "sourceSha256": "ce719cd2d573d878246856a63361584d35ce3fc2315ab6b08104f0639e1ce4a5",
+  "sourceLineCount": 1861,
+  "exports": [
+    {
+      "file": "01-source-transcript.md",
+      "sourceLines": [
+        937,
+        1320
+      ],
+      "exportedItems": {
+        "user": 4,
+        "assistant": 10,
+        "工具调用": 43,
+        "工具输出": 45
+      },
+      "compactionLines": [
+        1280
+      ],
+      "sha256": "230f9894c880e3d0564125613e9f340d5728e0e85e0396f3b0f51258b9da386f",
+      "bytes": 293054
+    },
+    {
+      "file": "02-source-transcript.md",
+      "sourceLines": [
+        1321,
+        1518
+      ],
+      "exportedItems": {
+        "user": 2,
+        "assistant": 5,
+        "工具调用": 26,
+        "工具输出": 28
+      },
+      "compactionLines": [],
+      "sha256": "13041105c4099a69a14d79c9004702db6a44181157688bdeedfe81de538f97e5",
+      "bytes": 193221
+    },
+    {
+      "file": "03-source-transcript.md",
+      "sourceLines": [
+        1519,
+        1820
+      ],
+      "exportedItems": {
+        "user": 6,
+        "assistant": 12,
+        "工具调用": 35,
+        "工具输出": 37
+      },
+      "compactionLines": [],
+      "sha256": "84c1cf95cb26ff1ab963f12c6f5b26017126bbc40e1e8cc13ab6db5441f56af0",
+      "bytes": 235856
+    }
+  ]
+}
