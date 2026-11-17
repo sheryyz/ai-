@@ -22,6 +22,7 @@ export function testServer(
 ) {
   const config = parseConfig({
     NODE_ENV: 'test',
+    ADMIN_ACCESS: 'local',
     DATABASE_PATH: opts.databasePath ?? ':memory:',
     ...(opts.key ? { LLM_API_KEY: opts.key } : {}),
     ...opts.env,

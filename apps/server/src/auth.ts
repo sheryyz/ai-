@@ -8,7 +8,7 @@ import { HttpError } from './errors'
 
 const COOKIE = 'morphos_session'
 const HOURS = 12 * 60 * 60 * 1000
-const Credentials = z
+export const Credentials = z
   .object({ username: z.string().trim().min(1).max(64), password: z.string().min(12).max(128) })
   .strict()
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
@@ -21,26 +21,26 @@ function token(req: Request) {
       ?.slice(COOKIE.length + 1) ?? ''
   )
 }
-function account(ctx: Ctx) {
+export function account(ctx: Ctx) {
   return ctx.db.prepare('SELECT username, password_hash, salt FROM admin_account WHERE id = 1').get() as
     | { username: string; password_hash: string; salt: string }
     | undefined
 }
-function authenticated(ctx: Ctx, req: Request) {
+export function authenticated(ctx: Ctx, req: Request) {
   return Boolean(
     ctx.db
       .prepare('SELECT 1 FROM admin_sessions WHERE token_hash = ? AND expires_at > ? AND revoked = 0')
       .get(digest(token(req)), ctx.now().getTime()),
   )
 }
-function hash(password: string, salt: string): Promise<Buffer> {
+export function hash(password: string, salt: string): Promise<Buffer> {
   return new Promise((resolve, reject) =>
     scrypt(password, salt, 64, { N: 65536, r: 8, p: 2, maxmem: 128 * 1024 * 1024 }, (error, value) =>
       error ? reject(error) : resolve(value),
     ),
   )
 }
-function session(ctx: Ctx, req: Request, res: Response) {
+export function session(ctx: Ctx, req: Request, res: Response) {
   const value = randomBytes(32).toString('hex')
   ctx.db
     .prepare('INSERT INTO admin_sessions(token_hash, expires_at) VALUES (?, ?)')
@@ -54,7 +54,7 @@ function session(ctx: Ctx, req: Request, res: Response) {
   })
 }
 /** Custom header forces cross-origin browser writes through a CORS preflight; this app grants no CORS access. */
-const writeGuard: RequestHandler = (req, _res, next) => {
+export const writeGuard: RequestHandler = (req, _res, next) => {
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.get('X-MorphOS-Request') !== '1') {
     throw new HttpError(403, 'REQUEST_ORIGIN', '请求验证失败，请刷新页面后重试')
   }
@@ -168,7 +168,7 @@ export function requireAdmin(ctx: Ctx): RequestHandler {
     }
     res.setHeader('Cache-Control', 'no-store')
     if (!account(ctx) || !authenticated(ctx, req))
-      throw new HttpError(401, 'AUTH_REQUIRED', '请登录管理员账号后继续')
+      throw new HttpError(401, 'AUTH_REQUIRED', '请登录工作区账号后继续')
     writeGuard(req, res, next)
   }
 }

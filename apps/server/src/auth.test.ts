@@ -4,7 +4,7 @@ import { createApp } from './app'
 import { parseConfig } from './config'
 
 const credentials = { username: 'owner', password: 'correct-horse-battery-123' }
-const config = () => parseConfig({ NODE_ENV: 'test', DATABASE_PATH: ':memory:' })
+const config = () => parseConfig({ NODE_ENV: 'test', DATABASE_PATH: ':memory:', ADMIN_ACCESS: 'local' })
 describe('single administrator authentication', () => {
   it('protects existing apps, hashes secrets, persists sessions, revokes logout and expires sessions', async () => {
     let now = new Date('2026-11-14T00:00:00Z')

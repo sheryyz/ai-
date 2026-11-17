@@ -21,7 +21,7 @@ const EnvSchema = z.object({
     .default(DEFAULT_TIME_ZONE)
     .refine(isValidTimeZone, { error: '不是有效的 IANA 时区，例如 Asia/Shanghai' }),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  ADMIN_ACCESS: z.enum(['local', 'any']).default('local'),
+  ADMIN_ACCESS: z.enum(['local', 'any']).default('any'),
   PUBLIC_BASE_URL: z.url().optional(),
 })
 
@@ -31,7 +31,7 @@ export interface AppConfig {
   nodeEnv: 'development' | 'production' | 'test'
   /** Business time zone for "today", $today and timestamps (ADR-0005). */
   timeZone: string
-  /** ADR-0008: 'local' = admin API only from loopback; 'any' only behind your own auth. */
+  /** ADR-0009: authenticated network access by default; 'local' opts into loopback only. */
   adminAccess: 'local' | 'any'
   /** Overrides the LAN addresses offered for share links (e.g. a tunnel or deployed URL). */
   publicBaseUrl: string | undefined

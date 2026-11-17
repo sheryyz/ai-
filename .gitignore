@@ -32,3 +32,6 @@ playwright-report/
 
 # Local workspace backups and restored copies (contain private data)
 data/recovery/
+
+# Independent workspace databases (credentials and business data)
+*.workspaces/
