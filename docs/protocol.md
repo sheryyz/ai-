@@ -374,3 +374,7 @@ interface ExposureChange {
 
 - 服务端在批准时按当前定义重新计算 Diff 判断是否需要确认，不采信提案中存的 Diff。
 - 恢复版本（`POST /api/apps/:id/versions/:v/restore`）适用同一规则：恢复到会公开敏感字段或解除限制的版本，同样需要 `confirmExposure: true`。
+
+## 2026-11-17 认证与工作区入口补充
+
+`POST /api/auth/register` 接收 `{username, password}`，成功 201 并设置当前工作区会话；账号重名 409、格式错误 422、限流 429。`/login` 按账号定位工作区，`/status` 返回该会话的登录身份，`/password` 和 `/logout` 只影响本工作区。所有领域接口均在会话指定的独立数据库执行；分享令牌只选择分享数据上下文，不充当管理员会话。AppDefinition 和 Patch 协议不变。
