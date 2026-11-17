@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" width="900" height="250"><defs></defs><rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20.0" y="18.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12.5" fill="#4a4a48" text-anchor="start" font-weight="600" dominant-baseline="middle">TypeScript 代码行数：实现 vs 测试（含空行与注释，脚本实时统计）</text>
+<text x="140.0" y="62.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">packages/shared</text>
+<rect x="150.0" y="50.0" width="323.2" height="24.0" rx="2" fill="#5b4ce0" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="311.6" y="62.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">实现 4,082</text>
+<rect x="473.2" y="50.0" width="113.3" height="24.0" rx="2" fill="#16794a" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="529.8" y="62.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">测试 1,431</text>
+<text x="594.4" y="62.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">12 个测试文件</text>
+<text x="140.0" y="106.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">apps/server</text>
+<rect x="150.0" y="94.0" width="417.8" height="24.0" rx="2" fill="#5b4ce0" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="358.9" y="106.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">实现 5,277</text>
+<rect x="567.8" y="94.0" width="182.2" height="24.0" rx="2" fill="#16794a" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="658.9" y="106.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">测试 2,302</text>
+<text x="758.0" y="106.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">15 个测试文件</text>
+<text x="140.0" y="150.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">apps/web</text>
+<rect x="150.0" y="138.0" width="560.7" height="24.0" rx="2" fill="#5b4ce0" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="430.3" y="150.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">实现 7,082</text>
+<rect x="710.7" y="138.0" width="0.0" height="24.0" rx="2" fill="#16794a" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="718.7" y="150.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">（界面行为由 E2E 覆盖）</text>
+<text x="140.0" y="194.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">tests/e2e</text>
+<rect x="150.0" y="182.0" width="1.7" height="24.0" rx="2" fill="#5b4ce0" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="150.8" y="194.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">实现 21</text>
+<rect x="151.7" y="182.0" width="65.6" height="24.0" rx="2" fill="#16794a" stroke="none" stroke-width="1" opacity="0.85"/>
+<text x="184.5" y="194.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" dominant-baseline="middle">测试 829</text>
+<text x="225.3" y="194.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">6 个测试文件</text>
+<text x="450.0" y="236.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#8a8984" text-anchor="middle" font-weight="400" dominant-baseline="middle">shared 是纯函数层，测试密度最高；web 不含领域逻辑，靠 7 条浏览器 E2E 检验</text>
+</svg>

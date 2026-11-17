@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" width="900" height="270"><defs></defs><rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20.0" y="18.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#4a4a48" text-anchor="start" font-weight="600" dominant-baseline="middle">角色视图评测 8 条用例逐条结果（deepseek-flash · planner-v1.2 · 暴露由 computeExposure 计算）</text>
+<text x="198.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">结果符合预期</text>
+<text x="198.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">首轮通过</text>
+<text x="198.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">暴露期望全部成立</text>
+<text x="198.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="end" font-weight="400" dominant-baseline="middle">禁令守住</text>
+<text x="250.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v01</text>
+<rect x="220.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="250.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="220.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="250.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="220.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="250.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="220.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0" stroke-dasharray="3 3"/>
+<text x="250.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="9.5" fill="#8a8984" text-anchor="middle" font-weight="400" dominant-baseline="middle">不适用</text>
+<text x="330.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v02</text>
+<rect x="300.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="330.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="300.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="330.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="300.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="330.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="300.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="330.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<text x="410.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v03</text>
+<rect x="380.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="410.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="380.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="410.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="380.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="410.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="380.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="410.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<text x="490.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v04</text>
+<rect x="460.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="490.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="460.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="490.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="460.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="490.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="460.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0" stroke-dasharray="3 3"/>
+<text x="490.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="9.5" fill="#8a8984" text-anchor="middle" font-weight="400" dominant-baseline="middle">不适用</text>
+<text x="570.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v05</text>
+<rect x="540.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="570.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="540.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="570.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="540.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="570.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="540.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="570.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<text x="650.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v06</text>
+<rect x="620.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="650.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="620.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="650.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="620.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="650.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="620.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0" stroke-dasharray="3 3"/>
+<text x="650.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="9.5" fill="#8a8984" text-anchor="middle" font-weight="400" dominant-baseline="middle">不适用</text>
+<text x="730.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v07</text>
+<rect x="700.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="730.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="700.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#fdf3e1" stroke="#efc98a" stroke-width="1" opacity="1.0"/>
+<text x="730.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#a45c00" text-anchor="middle" font-weight="600" dominant-baseline="middle">2 轮</text>
+<rect x="700.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="730.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="700.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="730.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<text x="810.0" y="52.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v08</text>
+<rect x="780.0" y="70.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="810.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="780.0" y="110.0" width="60.0" height="28.0" rx="5" fill="#fdf3e1" stroke="#efc98a" stroke-width="1" opacity="1.0"/>
+<text x="810.0" y="124.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#a45c00" text-anchor="middle" font-weight="600" dominant-baseline="middle">2 轮</text>
+<rect x="780.0" y="150.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="810.0" y="164.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<rect x="780.0" y="190.0" width="60.0" height="28.0" rx="5" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="810.0" y="204.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12" fill="#16794a" text-anchor="middle" font-weight="600" dominant-baseline="middle">✓</text>
+<text x="450.0" y="250.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#8a8984" text-anchor="middle" font-weight="400" dominant-baseline="middle">数据：eval/results/2026-11-12-deepseek-flash-views.json。v04–v08 为演示以外领域；每例 1 次，样本小。</text>
+</svg>

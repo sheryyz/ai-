@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" width="900" height="330"><defs></defs><rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="20" y="14" width="274" height="66" rx="8" fill="#e8f1fc" stroke="#9ec5f4" stroke-width="1.2"/>
+<text x="157.0" y="37.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">环境复现</text>
+<text x="157.0" y="58.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">评委能在 10 分钟内跑起来</text>
+<rect x="20.0" y="92.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#9ec5f4" stroke-width="1" opacity="1.0"/>
+<text x="34.0" y="110.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">Node ≥ 22.13 + npm，无需 Docker / pnpm</text>
+<rect x="20.0" y="136.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#9ec5f4" stroke-width="1" opacity="1.0"/>
+<text x="34.0" y="154.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">node:sqlite 内置，无原生编译</text>
+<rect x="20.0" y="180.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#9ec5f4" stroke-width="1" opacity="1.0"/>
+<text x="34.0" y="198.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">依赖版本锁定（package-lock）</text>
+<rect x="20.0" y="224.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#9ec5f4" stroke-width="1" opacity="1.0"/>
+<text x="34.0" y="242.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">.env.example，模型 Key 可选</text>
+<rect x="20.0" y="268.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#9ec5f4" stroke-width="1" opacity="1.0"/>
+<text x="34.0" y="286.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">启动时检查 Node 版本</text>
+<rect x="313" y="14" width="274" height="66" rx="8" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="450.0" y="37.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">行为复现</text>
+<text x="450.0" y="58.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">同样输入得到同样结果</text>
+<rect x="313.0" y="92.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="327.0" y="110.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">真实模型响应录制 → 离线回放</text>
+<rect x="313.0" y="136.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="327.0" y="154.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">回放时经当前校验器重新校验</text>
+<rect x="313.0" y="180.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="327.0" y="198.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">内存数据库 + 固定虚构数据</text>
+<rect x="313.0" y="224.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="327.0" y="242.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">APP_TIMEZONE 固定业务时区</text>
+<rect x="313.0" y="268.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="327.0" y="286.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">200 条单元/接口 + 7 条 E2E</text>
+<rect x="606" y="14" width="274" height="66" rx="8" fill="#eeecfd" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="743.0" y="37.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">过程复现</text>
+<text x="743.0" y="58.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">从意图到代码的路径可追溯</text>
+<rect x="606.0" y="92.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#b8b0f5" stroke-width="1" opacity="1.0"/>
+<text x="620.0" y="110.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">110 次提交，文档先于代码</text>
+<rect x="606.0" y="136.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#b8b0f5" stroke-width="1" opacity="1.0"/>
+<text x="620.0" y="154.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">roadmap 逐阶段写验证方式</text>
+<rect x="606.0" y="180.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#b8b0f5" stroke-width="1" opacity="1.0"/>
+<text x="620.0" y="198.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">8 条 ADR 记录取舍与真实观察</text>
+<rect x="606.0" y="224.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#b8b0f5" stroke-width="1" opacity="1.0"/>
+<text x="620.0" y="242.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">Prompt 原始区间导出 + SHA-256</text>
+<rect x="606.0" y="268.0" width="274.0" height="36.0" rx="6" fill="#ffffff" stroke="#b8b0f5" stroke-width="1" opacity="1.0"/>
+<text x="620.0" y="286.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.2" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">提示词版本写入每条 trace</text>
+<text x="450.0" y="318.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">三层分别回答：能不能跑、跑出来是不是同一个东西、它是怎么被做出来的</text>
+</svg>

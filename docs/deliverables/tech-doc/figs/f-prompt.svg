@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" width="900" height="440"><defs><marker id="ah8f8e89" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8f8e89"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20.0" y="18.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12.5" fill="#4a4a48" text-anchor="start" font-weight="600" dominant-baseline="middle">一次规划请求的消息结构（apps/server/src/llm/prompt.ts，PROMPT_VERSION = planner-v1.4）</text>
+<rect x="20" y="36" width="420" height="392" rx="8" fill="#faf9ff" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="36.0" y="56.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="13.5" fill="#5b4ce0" text-anchor="start" font-weight="600" dominant-baseline="middle">system：systemPrompt()</text>
+<rect x="34.0" y="80.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0"/>
+<text x="46.0" y="96.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">角色与总原则</text>
+<text x="178.0" y="96.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">受约束 JSON 提案；保持不变的属性逐项保留</text>
+<rect x="34.0" y="115.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0"/>
+<text x="46.0" y="131.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">输出格式</text>
+<text x="178.0" y="131.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">create / patch / refusal 三选一，只输出 JSON</text>
+<rect x="34.0" y="150.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0"/>
+<text x="46.0" y="166.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">硬性规则</text>
+<text x="178.0" y="166.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">无删除记录、删字段、改类型；标识符正则</text>
+<rect x="34.0" y="185.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#16794a" stroke-width="1.4" opacity="1.0"/>
+<text x="46.0" y="201.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">AppDefinition 结构</text>
+<text x="178.0" y="201.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">实体 / 字段 / 节点 / 视图 / 绑定 + 数量上限</text>
+<rect x="34.0" y="220.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#16794a" stroke-width="1.4" opacity="1.0"/>
+<text x="46.0" y="236.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">组件注册表</text>
+<text x="178.0" y="236.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">由 REGISTRY 生成：端口类型、params 说明</text>
+<rect x="34.0" y="255.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#16794a" stroke-width="1.4" opacity="1.0"/>
+<text x="46.0" y="271.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">筛选 DSL</text>
+<text x="178.0" y="271.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">由 OPERATORS_BY_TYPE 生成：各类型操作符</text>
+<rect x="34.0" y="290.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0"/>
+<text x="46.0" y="306.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">PatchOp 白名单</text>
+<text x="178.0" y="306.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">14 种允许的增量操作</text>
+<rect x="34.0" y="325.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0"/>
+<text x="46.0" y="341.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">创建 / 演进原则</text>
+<text x="178.0" y="341.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">只做用户明确提出的；复用已有组件</text>
+<rect x="34.0" y="360.0" width="392.0" height="32.0" rx="6" fill="#ffffff" stroke="#d6d5d0" stroke-width="1" opacity="1.0"/>
+<text x="46.0" y="376.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">分享页规则</text>
+<text x="178.0" y="376.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">最少组件、只读表格、禁令写入 restrictedFields</text>
+<rect x="36.0" y="404.0" width="12.0" height="8.0" rx="0" fill="#ffffff" stroke="#16794a" stroke-width="1.4" opacity="1.0"/>
+<text x="54.0" y="408.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10" fill="#16794a" text-anchor="start" font-weight="400" dominant-baseline="middle">绿框：从共享代码生成，提示词不会与校验器脱节</text>
+<rect x="470" y="36" width="410" height="150" rx="8" fill="#f6fbf8" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="486.0" y="56.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="13.5" fill="#16794a" text-anchor="start" font-weight="600" dominant-baseline="middle">user：patchTaskMessage()</text>
+<text x="486.0" y="84.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">· baseVersion（L6 用来检测并发冲突）</text>
+<text x="486.0" y="108.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">· 当前 AppDefinition（压缩 JSON）</text>
+<text x="486.0" y="132.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">· 记录统计：条数、每字段已填数、枚举分布</text>
+<text x="486.0" y="156.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#c62f2f" text-anchor="start" font-weight="400" dominant-baseline="middle">  不含任何一条记录的内容</text>
+<text x="486.0" y="176.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">· 用户原话「…」与输出要求</text>
+<rect x="470" y="204" width="410" height="80" rx="8" fill="#ffffff" stroke="#d6d5d0" stroke-width="1.2"/>
+<text x="486.0" y="224.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="start" font-weight="600" dominant-baseline="middle">assistant：上一轮模型输出（原样）</text>
+<text x="486.0" y="252.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">仅在自修复时出现，供模型对照修改</text>
+<rect x="470" y="300" width="410" height="106" rx="8" fill="#fdeceb" stroke="#f0a8a7" stroke-width="1.2"/>
+<text x="486.0" y="320.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="13" fill="#c62f2f" text-anchor="start" font-weight="600" dominant-baseline="middle">user：repairMessage(issues, round, 2)</text>
+<text x="486.0" y="348.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">[层] 错误码 @ 路径：中文说明</text>
+<text x="486.0" y="370.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#111111" text-anchor="start" font-weight="400" dominant-baseline="middle">   建议：hint（与界面给用户的是同一份）</text>
+<text x="486.0" y="392.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="start" font-weight="400" dominant-baseline="middle">最多 12 条错误；要求重新输出完整提案</text>
+<line x1="675" y1="188" x2="675" y2="202" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<line x1="675" y1="286" x2="675" y2="298" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+</svg>

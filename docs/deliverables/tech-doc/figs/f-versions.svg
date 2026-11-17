@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" width="900" height="340"><defs><marker id="ah8f8e89" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8f8e89"/></marker><marker id="aha45c00" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a45c00"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20.0" y="20.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#5b4ce0" text-anchor="start" font-weight="600" dominant-baseline="middle">app_versions（只追加的配置快照）</text>
+<rect x="20" y="56" width="118" height="58" rx="8" fill="#f5f4f1" stroke="#d6d5d0" stroke-width="1.2"/>
+<text x="79.0" y="75.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v1</text>
+<text x="79.0" y="96.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">创建</text>
+<line x1="140" y1="85" x2="158" y2="85" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="160" y="56" width="118" height="58" rx="8" fill="#f5f4f1" stroke="#d6d5d0" stroke-width="1.2"/>
+<text x="219.0" y="75.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v2</text>
+<text x="219.0" y="96.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">报名页</text>
+<line x1="280" y1="85" x2="298" y2="85" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="300" y="56" width="118" height="58" rx="8" fill="#f5f4f1" stroke="#d6d5d0" stroke-width="1.2"/>
+<text x="359.0" y="75.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v3</text>
+<text x="359.0" y="96.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">签到</text>
+<line x1="420" y1="85" x2="438" y2="85" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="440" y="56" width="118" height="58" rx="8" fill="#f5f4f1" stroke="#d6d5d0" stroke-width="1.2"/>
+<text x="499.0" y="75.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v4</text>
+<text x="499.0" y="96.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">签到台</text>
+<line x1="560" y1="85" x2="578" y2="85" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="580" y="56" width="118" height="58" rx="8" fill="#fdf3e1" stroke="#efc98a" stroke-width="1.2"/>
+<text x="639.0" y="75.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v5</text>
+<text x="639.0" y="96.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">恢复 v1</text>
+<line x1="700" y1="85" x2="718" y2="85" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="720" y="56" width="118" height="58" rx="8" fill="#fdf3e1" stroke="#efc98a" stroke-width="1.2"/>
+<text x="779.0" y="75.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="15" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">v6</text>
+<text x="779.0" y="96.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">恢复 v4</text>
+<path d="M 859,56 C 840,24 560,24 501,52" fill="none" stroke="#a45c00" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#aha45c00)"/>
+<text x="680.0" y="20.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#a45c00" text-anchor="middle" font-weight="400" dominant-baseline="middle">restoredFrom = 4</text>
+<path d="M 719,114 C 640,162 120,162 79,118" fill="none" stroke="#a45c00" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#aha45c00)"/>
+<text x="400.0" y="134.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#a45c00" text-anchor="middle" font-weight="400" dominant-baseline="middle">restoredFrom = 1（恢复 = 新增一个内容等于旧版本的版本，历史不改写）</text>
+<line x1="20" y1="194" x2="880" y2="194" stroke="#111111" stroke-width="1.5" stroke-dasharray="8 5"/>
+<rect x="300.0" y="174.0" width="300.0" height="22.0" rx="0" fill="#ffffff" stroke="none" stroke-width="1" opacity="1.0"/>
+<text x="450.0" y="184.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">两表之间没有级联：恢复、批准提案都不触碰业务记录</text>
+<text x="20.0" y="220.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#16794a" text-anchor="start" font-weight="600" dominant-baseline="middle">records（通用业务记录，JSON 列，软删除）</text>
+<rect x="20.0" y="236.0" width="116.0" height="26.0" rx="4" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="78.0" y="249.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">name</text>
+<rect x="140.0" y="236.0" width="116.0" height="26.0" rx="4" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="198.0" y="249.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">studentId</text>
+<rect x="260.0" y="236.0" width="116.0" height="26.0" rx="4" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="318.0" y="249.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">major</text>
+<rect x="380.0" y="236.0" width="116.0" height="26.0" rx="4" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="438.0" y="249.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">phone</text>
+<rect x="500.0" y="236.0" width="116.0" height="26.0" rx="4" fill="#ffffff" stroke="#93d3b4" stroke-width="1" opacity="1.0" stroke-dasharray="4 3"/>
+<text x="558.0" y="249.0" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">checkedIn</text>
+<text x="78.0" y="280.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">张三</text>
+<text x="198.0" y="280.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">2024001</text>
+<text x="318.0" y="280.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">计算机…</text>
+<text x="438.0" y="280.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">138…01</text>
+<text x="558.0" y="280.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">true</text>
+<text x="78.0" y="304.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">李四</text>
+<text x="198.0" y="304.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">2024002</text>
+<text x="318.0" y="304.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">计算机…</text>
+<text x="438.0" y="304.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#111111" text-anchor="middle" font-weight="400" dominant-baseline="middle">138…02</text>
+<text x="558.0" y="304.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#8a8984" text-anchor="middle" font-weight="400" dominant-baseline="middle">（缺省）</text>
+<rect x="640" y="232" width="240" height="96" rx="8" fill="#ffffff" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="760.0" y="255.2" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="12.5" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">读取时虚拟填充</text>
+<text x="760.0" y="274.8" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">新增字段不回写旧记录</text>
+<text x="760.0" y="290.2" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">缺失键按 default ?? null 补齐</text>
+<text x="760.0" y="305.8" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="10.5" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">旧版本未知的键原样保留</text>
+</svg>

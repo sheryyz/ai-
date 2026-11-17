@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400"><defs><marker id="ah8f8e89" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8f8e89"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="10.0" y="14.0" width="880.0" height="178.0" rx="10" fill="#faf9ff" stroke="#b8b0f5" stroke-width="1" opacity="1.0"/>
+<rect x="10.0" y="208.0" width="880.0" height="178.0" rx="10" fill="#f6fbf8" stroke="#93d3b4" stroke-width="1" opacity="1.0"/>
+<text x="30.0" y="36.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="14" fill="#5b4ce0" text-anchor="start" font-weight="600" dominant-baseline="middle">第一层  开发侧：人 → AI 编码助手（Claude Code / Codex）</text>
+<text x="30.0" y="230.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="14" fill="#16794a" text-anchor="start" font-weight="600" dominant-baseline="middle">第二层  产品侧：用户 → MorphOS 内的规划模型（DeepSeek，OpenAI 兼容）</text>
+<rect x="30" y="56" width="152" height="112" rx="8" fill="#ffffff" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="106.0" y="94.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">意图载体</text>
+<text x="106.0" y="114.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">需求 / 协议 / 架构</text>
+<text x="106.0" y="130.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">设计 / 路线图 / ADR</text>
+<line x1="184" y1="112" x2="200" y2="112" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="200" y="56" width="152" height="112" rx="8" fill="#eeecfd" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="276.0" y="94.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">会话约束</text>
+<text x="276.0" y="114.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">CLAUDE.md</text>
+<text x="276.0" y="130.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">9 条硬约束</text>
+<line x1="354" y1="112" x2="370" y2="112" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="370" y="56" width="152" height="112" rx="8" fill="#eeecfd" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="446.0" y="94.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">执行节奏</text>
+<text x="446.0" y="114.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">阶段验收标准</text>
+<text x="446.0" y="130.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">小步提交 · 先测后报</text>
+<line x1="524" y1="112" x2="540" y2="112" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="540" y="56" width="152" height="112" rx="8" fill="#eeecfd" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="616.0" y="94.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">纠偏机制</text>
+<text x="616.0" y="114.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">冲突先停 · 人决定</text>
+<text x="616.0" y="130.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">ADR 记录理由</text>
+<line x1="694" y1="112" x2="710" y2="112" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="710" y="56" width="152" height="112" rx="8" fill="#eeecfd" stroke="#b8b0f5" stroke-width="1.2"/>
+<text x="786.0" y="94.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">留痕</text>
+<text x="786.0" y="114.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">Git 历史</text>
+<text x="786.0" y="130.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">Prompt 导出 + 哈希</text>
+<rect x="30" y="250" width="152" height="112" rx="8" fill="#ffffff" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="106.0" y="288.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">意图载体</text>
+<text x="106.0" y="308.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">自然语言 → Proposal</text>
+<text x="106.0" y="324.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">（协议定义的 JSON）</text>
+<line x1="184" y1="306" x2="200" y2="306" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="200" y="250" width="152" height="112" rx="8" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="276.0" y="288.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">上下文约束</text>
+<text x="276.0" y="308.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">注册表生成的提示词</text>
+<text x="276.0" y="324.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">只发统计不发记录</text>
+<line x1="354" y1="306" x2="370" y2="306" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="370" y="250" width="152" height="112" rx="8" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="446.0" y="288.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">校验</text>
+<text x="446.0" y="308.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">七层校验器</text>
+<text x="446.0" y="324.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">自修复 ≤ 2 轮</text>
+<line x1="524" y1="306" x2="540" y2="306" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="540" y="250" width="152" height="112" rx="8" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="616.0" y="288.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">人在回路</text>
+<text x="616.0" y="308.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">Morph Diff · 暴露确认</text>
+<text x="616.0" y="324.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">澄清 · 双方案 · 持续约束</text>
+<line x1="694" y1="306" x2="710" y2="306" stroke="#8f8e89" stroke-width="1.4" marker-end="url(#ah8f8e89)"/>
+<rect x="710" y="250" width="152" height="112" rx="8" fill="#e6f5ee" stroke="#93d3b4" stroke-width="1.2"/>
+<text x="786.0" y="288.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600" dominant-baseline="middle">留痕</text>
+<text x="786.0" y="308.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">proposals.trace_json</text>
+<text x="786.0" y="324.5" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">提示词版本号</text>
+<text x="450.0" y="200.0" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" font-size="11.5" fill="#4a4a48" text-anchor="middle" font-weight="400" dominant-baseline="middle">同一原则贯穿两层：先把意图写成可检查的边界，再让 AI 在边界内生成；越界由程序拦截，取舍由人决定</text>
+</svg>
